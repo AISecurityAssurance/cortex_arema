@@ -8,11 +8,16 @@ import { cn } from "@/lib/utils";
 
 const MODELS = ["AWS Bedrock Claude 4 Opus", "AWS Bedrock Claude 4 Sonnet"];
 
+const MODEL_ID_MAP: Record<string, string> = {
+  "AWS Bedrock Claude 4 Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
+  "AWS Bedrock Claude 4 Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+};
+
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null); // 🆕
+  const [error, setError] = useState<string | null>(null);
 
   const [modelA, setModelA] = useState(MODELS[0]);
   const [modelB, setModelB] = useState(MODELS[1]);
@@ -38,6 +43,18 @@ export default function HomePage() {
   const getLabel = (model: string) => (blindMode ? "Model ?" : model);
   const vote = (choice: "A" | "B" | "tie") => setSelected(choice);
 
+  async function getBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(",")[1]; // strip data:image/... prefix
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   const handleGenerate = async () => {
     if (!prompt.trim() && !image) {
       setError("Text prompt and image are required.");
@@ -58,13 +75,48 @@ export default function HomePage() {
     setResponseA("");
     setResponseB("");
 
-    // Simulated delay
-    setTimeout(() => {
-      const imgNote = image ? " (with image)" : "";
-      setResponseA(`(${modelA}) ${prompt}${imgNote} => Simulated response A`);
-      setResponseB(`(${modelB}) ${prompt}${imgNote} => Simulated response B`);
+    try {
+      const imageBase64 = await getBase64(image);
+
+      const commonPayload = {
+        prompt,
+        images: [imageBase64],
+        system_instructions: "You are a helpful assistant.",
+      };
+
+      const [resA, resB] = await Promise.all([
+        fetch("http://localhost:8000/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...commonPayload,
+            model_id: MODEL_ID_MAP[modelA],
+          }),
+        }),
+        fetch("http://localhost:8000/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...commonPayload,
+            model_id: MODEL_ID_MAP[modelB],
+          }),
+        }),
+      ]);
+
+      const dataA = await resA.json();
+      const dataB = await resB.json();
+
+      const parsedA = JSON.parse(dataA.response);
+      const parsedB = JSON.parse(dataB.response);
+
+      setResponseA(parsedA?.content?.[0]?.text ?? "No response.");
+      setResponseB(parsedB?.content?.[0]?.text ?? "No response.");
+    } catch (err) {
+      setError("Failed to generate response. See console for details.");
+      console.error("Error generating response:", err);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const responses = [
@@ -94,19 +146,20 @@ export default function HomePage() {
     <main className="max-w-7xl mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-bold text-center">LLM Arena Clone</h1>
 
-      {/* Toggles */}
       <div className="flex justify-center gap-6 flex-wrap">
         <label className="flex items-center gap-2 text-sm">
           <Switch checked={blindMode} onCheckedChange={setBlindMode} />
           Blind Mode
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <Switch checked={explanationMode} onCheckedChange={setExplanationMode} />
+          <Switch
+            checked={explanationMode}
+            onCheckedChange={setExplanationMode}
+          />
           Show Explanations
         </label>
       </div>
 
-      {/* Image Preview */}
       {imagePreview && (
         <div className="flex justify-center">
           <div className="relative w-full max-w-lg">
@@ -125,7 +178,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Response Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {shuffledResponses.map((resp) => {
           const isSelected = selected === resp.id;
@@ -148,7 +200,9 @@ export default function HomePage() {
                     disabled={blindMode || loading}
                     value={isModelA ? modelA : modelB}
                     onChange={(e) =>
-                      isModelA ? setModelA(e.target.value) : setModelB(e.target.value)
+                      isModelA
+                        ? setModelA(e.target.value)
+                        : setModelB(e.target.value)
                     }
                   >
                     {MODELS.map((m) => (
@@ -163,7 +217,9 @@ export default function HomePage() {
                 <div
                   className={cn(
                     "rounded-md min-h-[6rem] p-4 text-sm whitespace-pre-wrap leading-relaxed",
-                    loading ? "bg-gray-100 dark:bg-zinc-800 animate-pulse" : "bg-muted/20 dark:bg-zinc-900"
+                    loading
+                      ? "bg-gray-100 dark:bg-zinc-800 animate-pulse"
+                      : "bg-muted/20 dark:bg-zinc-900"
                   )}
                 >
                   {resp.content}
@@ -189,7 +245,6 @@ export default function HomePage() {
         })}
       </div>
 
-      {/* Tie Button */}
       <div className="text-center">
         <Button
           variant={selected === "tie" ? "default" : "outline"}
@@ -200,17 +255,15 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {/* Validation Error */}
       {error && (
-        <div className="text-red-600 text-center font-medium mt-2">
-          {error}
-        </div>
+        <div className="text-red-600 text-center font-medium mt-2">{error}</div>
       )}
 
-      {/* Prompt Input + Generate */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Text Prompt <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-1">
+            Text Prompt <span className="text-red-500">*</span>
+          </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -220,7 +273,9 @@ export default function HomePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Image Upload <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-1">
+            Image Upload <span className="text-red-500">*</span>
+          </label>
           <input
             type="file"
             accept="image/*"
