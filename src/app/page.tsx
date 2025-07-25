@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -47,7 +48,7 @@ export default function HomePage() {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const base64 = (reader.result as string).split(",")[1]; // strip data:image/... prefix
+        const base64 = (reader.result as string).split(",")[1]; // remove data:image/...;base64,
         resolve(base64);
       };
       reader.onerror = reject;
@@ -216,13 +217,13 @@ export default function HomePage() {
                 </div>
                 <div
                   className={cn(
-                    "rounded-md min-h-[6rem] p-4 text-sm whitespace-pre-wrap leading-relaxed",
+                    "prose dark:prose-invert max-w-none rounded-md min-h-[6rem] p-4 text-sm leading-relaxed",
                     loading
                       ? "bg-gray-100 dark:bg-zinc-800 animate-pulse"
                       : "bg-muted/20 dark:bg-zinc-900"
                   )}
                 >
-                  {resp.content}
+                  <ReactMarkdown>{resp.content}</ReactMarkdown>
                 </div>
 
                 {explanationMode && (
