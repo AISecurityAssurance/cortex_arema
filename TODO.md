@@ -1,9 +1,9 @@
 ## 🚀 Planned Features
 
 ### 🔌 Backend Integration
-- [ ] Connect to FastAPI (`/generate`) to fetch AWS Bedrock results
-- [ ] Encode image to base64 and send with prompt
-- [ ] Dynamically populate responses from backend
+- [x] Connect to FastAPI (`/generate`) to fetch AWS Bedrock results
+- [x] Encode image to base64 and send with prompt
+- [x] Dynamically populate responses from backend
 
 ### 🧠 Prompt Templates & Modal UI
 - [ ] Add “Prompt Templates” button with modal for structured prompt construction

@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import ModelResponseCard from "@/components/ModelResponseCard";
 
 const MODELS = ["AWS Bedrock Claude 4 Opus", "AWS Bedrock Claude 4 Sonnet"];
-
-const MODEL_ID_MAP: Record<string, string> = {
+const MODEL_MAP: Record<string, string> = {
   "AWS Bedrock Claude 4 Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
   "AWS Bedrock Claude 4 Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
 };
@@ -23,11 +21,8 @@ export default function HomePage() {
   const [modelA, setModelA] = useState(MODELS[0]);
   const [modelB, setModelB] = useState(MODELS[1]);
 
-  const [blindMode, setBlindMode] = useState(false);
-  const [explanationMode, setExplanationMode] = useState(false);
-  const [selected, setSelected] = useState<"A" | "B" | "tie" | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [selected, setSelected] = useState<"A" | "B" | "tie" | null>(null);
   const [responseA, setResponseA] = useState("");
   const [responseB, setResponseB] = useState("");
 
@@ -41,26 +36,23 @@ export default function HomePage() {
     }
   }, [image]);
 
-  const getLabel = (model: string) => (blindMode ? "Model ?" : model);
-  const vote = (choice: "A" | "B" | "tie") => setSelected(choice);
+  const handleModelAChange = (newModel: string) => {
+    setModelA(newModel);
+    if (newModel === modelB) {
+      const fallback = MODELS.find((m) => m !== newModel);
+      if (fallback) setModelB(fallback);
+    }
+  };
 
-  async function getBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(",")[1]; // remove data:image/...;base64,
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
+  const handleModelBChange = (newModel: string) => {
+    setModelB(newModel);
+    if (newModel === modelA) {
+      const fallback = MODELS.find((m) => m !== newModel);
+      if (fallback) setModelA(fallback);
+    }
+  };
 
   const handleGenerate = async () => {
-    if (!prompt.trim() && !image) {
-      setError("Text prompt and image are required.");
-      return;
-    }
     if (!prompt.trim()) {
       setError("Text prompt is required.");
       return;
@@ -76,222 +68,143 @@ export default function HomePage() {
     setResponseA("");
     setResponseB("");
 
+    const base64Image = await toBase64(image);
+
+    const body = {
+      prompt,
+      images: [base64Image],
+      system_instructions: "You are a helpful assistant.",
+    };
+
+    const fetchModel = async (modelKey: string) => {
+      const res = await fetch("http://localhost:8000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...body,
+          model_id: MODEL_MAP[modelKey],
+        }),
+      });
+      const data = await res.json();
+      const parsed = JSON.parse(data.response);
+      return parsed?.content?.[0]?.text || "No response received.";
+    };
+
     try {
-      const imageBase64 = await getBase64(image);
-
-      const commonPayload = {
-        prompt,
-        images: [imageBase64],
-        system_instructions: "You are a helpful assistant.",
-      };
-
-      const [resA, resB] = await Promise.all([
-        fetch("http://localhost:8000/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...commonPayload,
-            model_id: MODEL_ID_MAP[modelA],
-          }),
-        }),
-        fetch("http://localhost:8000/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...commonPayload,
-            model_id: MODEL_ID_MAP[modelB],
-          }),
-        }),
+      const [a, b] = await Promise.all([
+        fetchModel(modelA),
+        fetchModel(modelB),
       ]);
-
-      const dataA = await resA.json();
-      const dataB = await resB.json();
-
-      const parsedA = JSON.parse(dataA.response);
-      const parsedB = JSON.parse(dataB.response);
-
-      setResponseA(parsedA?.content?.[0]?.text ?? "No response.");
-      setResponseB(parsedB?.content?.[0]?.text ?? "No response.");
+      setResponseA(a);
+      setResponseB(b);
     } catch (err) {
-      setError("Failed to generate response. See console for details.");
-      console.error("Error generating response:", err);
+      setError("Error fetching model responses.");
     } finally {
       setLoading(false);
     }
   };
 
-  const responses = [
-    {
-      id: "A",
-      model: modelA,
-      content: loading
-        ? "Generating..."
-        : responseA || "Click 'Generate' to produce a response.",
-      explanation: `${modelA} provides thoughtful context.`,
-    },
-    {
-      id: "B",
-      model: modelB,
-      content: loading
-        ? "Generating..."
-        : responseB || "Click 'Generate' to produce a response.",
-      explanation: `${modelB} emphasizes clarity and accuracy.`,
-    },
-  ];
+  const toBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-  const shuffledResponses = blindMode
-    ? [...responses].sort(() => 0.5 - Math.random())
-    : responses;
+  const handleClear = () => {
+    setPrompt("");
+    setImage(null);
+    setImagePreview(null);
+    setError(null);
+  };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-center">LLM Arena Clone</h1>
+    <main className="max-w-6xl mx-auto p-6 space-y-6">
+      <h1 className="text-3xl font-bold text-center">LLM Arena</h1>
 
-      <div className="flex justify-center gap-6 flex-wrap">
-        <label className="flex items-center gap-2 text-sm">
-          <Switch checked={blindMode} onCheckedChange={setBlindMode} />
-          Blind Mode
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <Switch
-            checked={explanationMode}
-            onCheckedChange={setExplanationMode}
-          />
-          Show Explanations
-        </label>
+      {/* Prompt */}
+      <div>
+        <label className="text-sm font-medium">Enter your prompt</label>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Enter your prompt here"
+          className="w-full h-28 border rounded-md p-3 text-sm dark:bg-zinc-900 dark:text-white"
+        />
       </div>
 
-      {imagePreview && (
-        <div className="flex justify-center">
-          <div className="relative w-full max-w-lg">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-full h-auto rounded-lg border"
-            />
+      {/* Image upload */}
+      <div>
+        <label className="text-sm font-medium">Upload image</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImage(e.target.files?.[0] || null)}
+          className="block w-full mt-2 text-sm"
+        />
+        {imagePreview && (
+          <div className="relative mt-4">
+            <img src={imagePreview} alt="Preview" className="rounded-md" />
             <button
               onClick={() => setImage(null)}
-              className="absolute top-2 right-2 text-sm bg-black bg-opacity-60 text-white px-2 py-1 rounded"
+              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded"
             >
               Remove
             </button>
           </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {shuffledResponses.map((resp) => {
-          const isSelected = selected === resp.id;
-          const isModelA = resp.id === "A";
-          return (
-            <Card
-              key={resp.id}
-              className={cn(
-                "border transition-shadow hover:shadow-lg",
-                isSelected && "border-blue-600 shadow-xl"
-              )}
-            >
-              <CardContent className="p-6 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">
-                    Select Model {blindMode ? "?" : resp.id}
-                  </label>
-                  <select
-                    className="w-full border rounded-md p-2 text-sm"
-                    disabled={blindMode || loading}
-                    value={isModelA ? modelA : modelB}
-                    onChange={(e) =>
-                      isModelA
-                        ? setModelA(e.target.value)
-                        : setModelB(e.target.value)
-                    }
-                  >
-                    {MODELS.map((m) => (
-                      <option key={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="text-sm text-muted-foreground font-semibold">
-                  {getLabel(resp.model)}
-                </div>
-                <div
-                  className={cn(
-                    "prose dark:prose-invert max-w-none rounded-md min-h-[6rem] p-4 text-sm leading-relaxed",
-                    loading
-                      ? "bg-gray-100 dark:bg-zinc-800 animate-pulse"
-                      : "bg-muted/20 dark:bg-zinc-900"
-                  )}
-                >
-                  <ReactMarkdown>{resp.content}</ReactMarkdown>
-                </div>
-
-                {explanationMode && (
-                  <div className="text-xs text-muted-foreground border-t pt-2">
-                    {resp.explanation}
-                  </div>
-                )}
-
-                <Button
-                  className="w-full"
-                  variant={isSelected ? "default" : "outline"}
-                  onClick={() => vote(resp.id as "A" | "B" | "tie")}
-                  disabled={loading}
-                >
-                  {isSelected ? "Selected ✓" : "Vote for this response"}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
+        )}
       </div>
 
-      <div className="text-center">
-        <Button
-          variant={selected === "tie" ? "default" : "outline"}
-          onClick={() => vote("tie")}
-          disabled={loading}
-        >
-          {selected === "tie" ? "Selected Tie ✓" : "Vote Tie"}
+      {/* Action buttons */}
+      <div className="flex gap-4">
+        <Button onClick={handleGenerate} disabled={loading}>
+          {loading ? "Generating..." : "Submit"}
+        </Button>
+        <Button variant="outline" onClick={handleClear}>
+          Clear
         </Button>
       </div>
 
-      {error && (
-        <div className="text-red-600 text-center font-medium mt-2">{error}</div>
-      )}
+      {/* Error message */}
+      {error && <div className="text-red-600 font-medium text-sm">{error}</div>}
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Text Prompt <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the contents of the image or ask a question."
-            className="w-full h-28 border rounded-md p-3 text-sm dark:bg-zinc-900 dark:text-white"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Image Upload <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-            onChange={(e) => setImage(e.target.files?.[0] || null)}
-          />
-        </div>
-
-        <Button
-          className="w-full md:w-48"
-          onClick={handleGenerate}
+      {/* Model responses */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <ModelResponseCard
+          label="Model A"
+          model={modelA}
+          modelOptions={MODELS.filter((m) => m !== modelB)}
+          onModelChange={handleModelAChange}
+          response={responseA}
+          loading={loading}
           disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate"}
-        </Button>
+        />
+        <ModelResponseCard
+          label="Model B"
+          model={modelB}
+          modelOptions={MODELS.filter((m) => m !== modelA)}
+          onModelChange={handleModelBChange}
+          response={responseB}
+          loading={loading}
+          disabled={loading}
+        />
+      </div>
+
+      {/* Vote buttons */}
+      <div className="text-center space-x-2 mt-6">
+        {["A", "B", "tie"].map((choice) => (
+          <Button
+            key={choice}
+            variant={selected === choice ? "default" : "outline"}
+            onClick={() => setSelected(choice as any)}
+            disabled={loading}
+          >
+            {selected === choice
+              ? `Selected ${choice.toUpperCase()} ✓`
+              : `Model ${choice.toUpperCase()}`}
+          </Button>
+        ))}
       </div>
     </main>
   );
