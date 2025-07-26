@@ -1,0 +1,96 @@
+.tooltip-trigger {
+  display: inline-block;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  animation: tooltipFadeIn var(--transition-fast);
+}
+
+.tooltip-content {
+  background: var(--color-text);
+  color: var(--color-background);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  max-width: 250px;
+  box-shadow: var(--shadow-lg);
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+
+/* Arrow positions */
+.tooltip-top .tooltip-arrow {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--color-text);
+  border-bottom: none;
+}
+
+.tooltip-bottom .tooltip-arrow {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: var(--color-text);
+  border-top: none;
+}
+
+.tooltip-left .tooltip-arrow {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--color-text);
+  border-right: none;
+}
+
+.tooltip-right .tooltip-arrow {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--color-text);
+  border-left: none;
+}
+
+/* Animation */
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .tooltip-content {
+  background: var(--color-surface-tertiary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="dark"] .tooltip-top .tooltip-arrow {
+  border-top-color: var(--color-surface-tertiary);
+}
+
+[data-theme="dark"] .tooltip-bottom .tooltip-arrow {
+  border-bottom-color: var(--color-surface-tertiary);
+}
+
+[data-theme="dark"] .tooltip-left .tooltip-arrow {
+  border-left-color: var(--color-surface-tertiary);
+}
+
+[data-theme="dark"] .tooltip-right .tooltip-arrow {
+  border-right-color: var(--color-surface-tertiary);
+}

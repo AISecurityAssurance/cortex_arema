@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { ModelCard } from "@/components/ModelCard";
-import { VoteControls } from "@/components/VoteControls";
-import { PromptForm } from "@/components/PromptForm";
+import { useState } from "react";
+import { Switch } from "@/components/ui/Switch";
+import { ModelComparison, ArenaPromptInput } from "@/components/templates";
+import { usePromptStore } from "@/stores/promptStore";
+import "./page.css";
 
 const MODEL_IDS = {
   "AWS Bedrock Claude 4 Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
@@ -16,7 +16,6 @@ const MODELS = Object.keys(MODEL_IDS);
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [modelA, setModelA] = useState(MODELS[0]);
@@ -30,15 +29,7 @@ export default function HomePage() {
   const [responseA, setResponseA] = useState("");
   const [responseB, setResponseB] = useState("");
 
-  useEffect(() => {
-    if (image) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(image);
-    } else {
-      setImagePreview(null);
-    }
-  }, [image]);
+  const templates = usePromptStore((s) => s.templates).filter((t) => t.template);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !image) {
@@ -51,6 +42,17 @@ export default function HomePage() {
     setSelected(null);
     setResponseA("");
     setResponseB("");
+
+    const toBase64 = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const result = (reader.result as string).split(",")[1];
+          resolve(result);
+        };
+        reader.onerror = (error) => reject(error);
+      });
 
     const base64Image = await toBase64(image);
 
@@ -91,83 +93,79 @@ export default function HomePage() {
     }
   };
 
-  const toBase64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = (reader.result as string).split(",")[1];
-        resolve(result);
-      };
-      reader.onerror = (error) => reject(error);
-    });
+  const handleModelChange = (side: 'A' | 'B', model: string) => {
+    if (side === 'A') {
+      setModelA(model);
+    } else {
+      setModelB(model);
+    }
+  };
 
   const availableModelsFor = (current: string) =>
     MODELS.filter((m) => m !== current);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap justify-center gap-6">
-        <label className="flex items-center gap-2 text-sm">
+    <div className="arena-page">
+      <div className="arena-header">
+        <h1 className="arena-title">AI Model Arena</h1>
+        <p className="arena-subtitle">Compare responses from different AI models</p>
+      </div>
+
+      <div className="arena-controls">
+        <div className="control-item">
           <Switch checked={blindMode} onCheckedChange={setBlindMode} />
-          Blind Mode
-        </label>
-        <label className="flex items-center gap-2 text-sm">
+          <label className="control-label">Blind Mode</label>
+        </div>
+        <div className="control-item">
           <Switch
             checked={explanationMode}
             onCheckedChange={setExplanationMode}
           />
-          Show Explanations
-        </label>
+          <label className="control-label">Show Explanations</label>
+        </div>
       </div>
 
-      <PromptForm
-        prompt={prompt}
-        onPromptChange={setPrompt}
-        onImageChange={setImage}
-        onSubmit={handleGenerate}
-        loading={loading}
-        error={error ?? undefined}
-        imagePreview={imagePreview}
-        onClearImage={() => setImage(null)}
-      />
+      <div className="arena-content">
+        <ArenaPromptInput
+          value={prompt}
+          onChange={setPrompt}
+          onSubmit={handleGenerate}
+          onImageChange={setImage}
+          loading={loading}
+          error={error}
+          templates={templates}
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ModelCard
-          id="A"
-          label="A"
-          model={modelA}
-          models={availableModelsFor(modelB)}
-          response={responseA}
+        <ModelComparison
+          id="main-comparison"
+          models={{
+            modelA: { 
+              name: modelA, 
+              response: responseA, 
+              loading: loading && !responseA 
+            },
+            modelB: { 
+              name: modelB, 
+              response: responseB, 
+              loading: loading && !responseB 
+            }
+          }}
           blindMode={blindMode}
           selected={selected}
-          loading={loading}
-          explanation={
-            explanationMode ? `${modelA} explains with nuance.` : undefined
-          }
-          onModelChange={setModelA}
-          onVote={() => setSelected("A")}
+          onVote={setSelected}
+          onModelChange={handleModelChange}
+          availableModels={MODELS}
         />
-        <ModelCard
-          id="B"
-          label="B"
-          model={modelB}
-          models={availableModelsFor(modelA)}
-          response={responseB}
-          blindMode={blindMode}
-          selected={selected}
-          loading={loading}
-          explanation={explanationMode ? `${modelB} gives clarity.` : undefined}
-          onModelChange={setModelB}
-          onVote={() => setSelected("B")}
-        />
+
+        {selected && (
+          <div className="vote-summary">
+            <p className="vote-summary-text">You selected:</p>
+            <p className="selected-model">
+              {selected === 'tie' ? 'It\'s a tie!' : `Model ${selected}`}
+            </p>
+          </div>
+        )}
       </div>
-
-      <VoteControls
-        selected={selected}
-        onVote={setSelected}
-        disabled={loading}
-      />
     </div>
   );
 }

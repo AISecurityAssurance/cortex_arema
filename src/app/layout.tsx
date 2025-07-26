@@ -1,15 +1,14 @@
-"use client";
-
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/Navbar";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Cortex Arena",
+  description: "AI Model Comparison Platform",
+};
 
 export default function RootLayout({
   children,
@@ -18,16 +17,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={cn(
-          `${geistSans.variable} ${geistMono.variable} antialiased`,
-          "bg-background text-foreground"
-        )}
-      >
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
-          {children}
-        </main>
+      <body className={inter.className}>
+        <div className="app-layout">
+          <Navbar />
+          <main className="main-content">
+            <div className="container">
+              {children}
+            </div>
+          </main>
+        </div>
       </body>
     </html>
   );

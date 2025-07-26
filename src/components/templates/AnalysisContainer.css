@@ -1,0 +1,187 @@
+.analysis-container {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  margin: var(--space-4) 0;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.analysis-container.standalone {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+}
+
+.analysis-container.editing {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+/* Toolbar Styles */
+.analysis-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 48px;
+}
+
+.analysis-container.editing .analysis-toolbar {
+  background: var(--color-primary-light);
+  border-bottom-color: var(--color-primary);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.toolbar-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Toolbar Buttons */
+.toolbar-btn {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+.toolbar-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button Variants */
+.toolbar-btn-edit {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.toolbar-btn-edit:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-hover);
+}
+
+.toolbar-btn-save {
+  color: white;
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.toolbar-btn-save:hover:not(:disabled) {
+  background: #0ea56e;
+  border-color: #0ea56e;
+}
+
+.toolbar-btn-cancel {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.toolbar-btn-cancel:hover:not(:disabled) {
+  background: var(--color-error-light);
+  border-color: var(--color-error);
+}
+
+.toolbar-btn-export {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.toolbar-btn-export:hover:not(:disabled) {
+  background: var(--color-warning-light);
+  border-color: var(--color-warning);
+}
+
+.toolbar-btn-open {
+  color: #9c27b0;
+  border-color: #9c27b0;
+}
+
+.toolbar-btn-open:hover:not(:disabled) {
+  background: #f3e5f5;
+  border-color: #8e24aa;
+}
+
+/* Content Area */
+.analysis-content {
+  padding: var(--space-4);
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
+
+.analysis-container.standalone .analysis-content {
+  padding: var(--space-6);
+}
+
+/* Context Menu Hint */
+.analysis-container::after {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 16px;
+  height: 16px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><path d="M10 3H3v7m0 0h7m11-7h-7v7m7 0h-7m0 11h7v-7m0 7h-7M3 21h7v-7m-7 7v-7"/></svg>') no-repeat center;
+  background-size: contain;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+.analysis-container:hover::after {
+  opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .analysis-toolbar {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    width: 100%;
+  }
+  
+  .toolbar-right {
+    justify-content: flex-end;
+  }
+}

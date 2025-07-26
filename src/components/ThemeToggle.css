@@ -1,0 +1,71 @@
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-secondary);
+  transform: scale(1.05);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.theme-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  transition: all var(--transition-base);
+  color: var(--color-text);
+}
+
+.theme-toggle-sun {
+  color: #f59e0b;
+}
+
+.theme-toggle-moon {
+  color: #6366f1;
+}
+
+.theme-toggle-icon.hidden {
+  opacity: 0;
+  transform: scale(0.5) rotate(180deg);
+}
+
+/* Add subtle animation */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.theme-toggle:hover .theme-toggle-icon:not(.hidden) {
+  animation: rotate 0.5s ease-in-out;
+}

@@ -1,0 +1,212 @@
+.arena-prompt-input {
+  width: 100%;
+}
+
+.prompt-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-error-light);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+}
+
+.error-icon {
+  font-size: var(--font-size-lg);
+}
+
+.prompt-form {
+  width: 100%;
+}
+
+.prompt-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.prompt-textarea-container {
+  position: relative;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.prompt-textarea {
+  flex: 1;
+  min-height: 120px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  line-height: 1.5;
+  resize: vertical;
+  transition: all var(--transition-fast);
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.prompt-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prompt-textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.template-selector {
+  height: fit-content;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.template-selector:hover:not(:disabled) {
+  border-color: var(--color-border-secondary);
+}
+
+.template-selector:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.template-selector:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prompt-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.file-upload-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.file-label:hover {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-secondary);
+}
+
+.file-icon {
+  font-size: var(--font-size-base);
+}
+
+.image-preview-container {
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview {
+  max-width: 120px;
+  max-height: 120px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-error);
+  color: white;
+  border: 2px solid var(--color-background);
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.remove-image-btn:hover {
+  background: var(--color-error);
+  transform: scale(1.1);
+}
+
+.submit-btn {
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .prompt-textarea-container {
+    flex-direction: column;
+  }
+  
+  .template-selector {
+    width: 100%;
+  }
+  
+  .prompt-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .file-upload-section {
+    justify-content: space-between;
+  }
+  
+  .submit-btn {
+    width: 100%;
+  }
+}

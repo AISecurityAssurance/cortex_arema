@@ -2,21 +2,14 @@
 
 import { usePromptStore } from "@/stores/promptStore";
 import { useMemo } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-} from "@/components/ui/select";
+import "./PromptTemplateSelector.css";
 
 type Props = {
   onTemplateInsert: (template: string) => void;
+  className?: string;
 };
 
-export function PromptTemplateSelector({ onTemplateInsert }: Props) {
+export function PromptTemplateSelector({ onTemplateInsert, className = "" }: Props) {
   const { templates } = usePromptStore();
 
   const groupedTemplates = useMemo(() => {
@@ -30,28 +23,36 @@ export function PromptTemplateSelector({ onTemplateInsert }: Props) {
     return groups;
   }, [templates]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    if (selectedId) {
+      const selected = templates.find((t) => t.id === selectedId);
+      if (selected) {
+        onTemplateInsert(selected.template);
+      }
+      // Reset the select to show placeholder
+      e.target.value = "";
+    }
+  };
+
   return (
-    <Select
-      onValueChange={(id) => {
-        const selected = templates.find((t) => t.id === id);
-        if (selected) onTemplateInsert(selected.template);
-      }}
+    <select
+      className={`prompt-template-select ${className}`}
+      onChange={handleChange}
+      defaultValue=""
     >
-      <SelectTrigger className="w-[260px]">
-        <SelectValue placeholder="Insert from template..." />
-      </SelectTrigger>
-      <SelectContent>
-        {Object.entries(groupedTemplates).map(([type, items]) => (
-          <SelectGroup key={type}>
-            <SelectLabel>{type.toUpperCase()}</SelectLabel>
-            {items.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+      <option value="" disabled>
+        Insert from template...
+      </option>
+      {Object.entries(groupedTemplates).map(([type, items]) => (
+        <optgroup key={type} label={type.toUpperCase()}>
+          {items.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }

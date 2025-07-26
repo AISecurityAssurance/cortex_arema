@@ -2,7 +2,7 @@
 .prompts-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 64px - var(--space-8) * 2); /* Account for navbar and main padding */
 }
 
 .prompts-page-header {
@@ -109,11 +109,18 @@
 .setting-item input {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-surface-secondary);
+  background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--color-text);
+  transition: all var(--transition-fast);
+}
+
+.setting-item input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
 .prompts-content {
@@ -254,6 +261,14 @@
   font-size: var(--font-size-sm);
   line-height: 1.5;
   resize: vertical;
+  color: var(--color-text);
+  transition: all var(--transition-fast);
+}
+
+.template-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
 .editor-actions {

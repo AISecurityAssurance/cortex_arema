@@ -2,35 +2,43 @@
 
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import "./ThemeToggle.css";
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-  }, [dark]);
+    // Check for saved theme preference or default to light
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
+    setTheme(initialTheme);
+    document.documentElement.setAttribute('data-theme', initialTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   return (
     <button
-      aria-label="Toggle dark mode"
-      onClick={() => setDark((prev) => !prev)}
-      className="rounded-full p-2 border bg-card shadow hover:bg-muted/50"
+      className="theme-toggle"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
-      <span className="relative w-6 h-6 flex items-center justify-center">
+      <span className="theme-toggle-wrapper">
         <Sun
-          className={cn(
-            "absolute transition-all duration-300",
-            dark ? "opacity-0 scale-75 rotate-90" : "opacity-100 scale-100"
-          )}
-          size={22}
+          className={`theme-toggle-icon theme-toggle-sun ${theme === 'dark' ? 'hidden' : ''}`}
+          size={20}
         />
         <Moon
-          className={cn(
-            "absolute transition-all duration-300",
-            dark ? "opacity-100 scale-100" : "opacity-0 scale-75 -rotate-90"
-          )}
-          size={22}
+          className={`theme-toggle-icon theme-toggle-moon ${theme === 'light' ? 'hidden' : ''}`}
+          size={20}
         />
       </span>
     </button>

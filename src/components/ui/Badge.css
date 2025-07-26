@@ -1,0 +1,78 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+/* Sizes */
+.badge-small {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.badge-medium {
+  padding: calc(var(--space-1) * 1.5) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.badge-large {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-base);
+}
+
+/* Variants */
+.badge-default {
+  background: var(--color-surface-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.badge-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.badge-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--color-warning);
+  color: white;
+}
+
+.badge-error {
+  background: var(--color-error);
+  color: white;
+}
+
+.badge-info {
+  background: var(--color-info);
+  color: white;
+}
+
+/* Rounded variant */
+.badge-rounded {
+  border-radius: var(--radius-full);
+}
+
+/* Hover effects for clickable badges */
+.badge:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* When used as a button */
+button.badge {
+  cursor: pointer;
+  border: none;
+}
+
+button.badge:active {
+  transform: translateY(0);
+}
