@@ -96,7 +96,7 @@ export default function HomePage() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // remove base64 prefix
+        const result = (reader.result as string).split(",")[1];
         resolve(result);
       };
       reader.onerror = (error) => reject(error);
@@ -107,7 +107,6 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      {/* Toggles */}
       <div className="flex flex-wrap justify-center gap-6">
         <label className="flex items-center gap-2 text-sm">
           <Switch checked={blindMode} onCheckedChange={setBlindMode} />
@@ -122,7 +121,6 @@ export default function HomePage() {
         </label>
       </div>
 
-      {/* Prompt + Image Input */}
       <PromptForm
         prompt={prompt}
         onPromptChange={setPrompt}
@@ -134,7 +132,6 @@ export default function HomePage() {
         onClearImage={() => setImage(null)}
       />
 
-      {/* Model Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ModelCard
           id="A"

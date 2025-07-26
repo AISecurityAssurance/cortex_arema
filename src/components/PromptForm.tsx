@@ -1,15 +1,20 @@
-import { Button } from "@/components/ui/button";
+"use client";
 
-type Props = {
+import { ChangeEvent, FormEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { usePromptStore } from "@/stores/promptStore";
+
+interface PromptFormProps {
   prompt: string;
-  onPromptChange: (val: string) => void;
+  onPromptChange: (value: string) => void;
   onImageChange: (file: File | null) => void;
   onSubmit: () => void;
   loading: boolean;
   error?: string;
-  imagePreview: string | null;
+  imagePreview?: string | null;
   onClearImage: () => void;
-};
+}
 
 export function PromptForm({
   prompt,
@@ -20,76 +25,67 @@ export function PromptForm({
   error,
   imagePreview,
   onClearImage,
-}: Props) {
+}: PromptFormProps) {
+  const allTemplates = usePromptStore((s) => s.templates);
+  const templates = allTemplates.filter((t) => t.template);
+
+  const handleTemplateSelect = (e: ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    const selected = templates.find((t) => t.id === selectedId);
+    if (selected) {
+      onPromptChange(prompt + "\n\n" + selected.template);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Text Prompt <span className="text-red-500">*</span>
-        </label>
-        <textarea
+    <div className="space-y-4">
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
+      <div className="flex gap-4">
+        <Textarea
+          placeholder="Enter your prompt here..."
+          className="flex-1 min-h-[120px]"
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          placeholder="Describe the contents of the image or ask a question."
-          className="w-full h-28 border rounded-md p-3 text-sm dark:bg-zinc-900 dark:text-white"
         />
+        <select
+          onChange={handleTemplateSelect}
+          defaultValue=""
+          className="h-fit p-2 border rounded-md text-sm bg-background"
+        >
+          <option value="" disabled>
+            Insert Template
+          </option>
+          {templates.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Image Upload <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => onImageChange(e.target.files?.[0] || null)}
-          className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-        />
-      </div>
-
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => onImageChange(e.target.files?.[0] || null)}
+        className="block w-full text-sm"
+      />
       {imagePreview && (
-        <div className="flex justify-start">
-          <div className="relative w-full max-w-xs">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-full h-auto rounded-lg border"
-            />
-            <button
-              onClick={onClearImage}
-              className="absolute top-2 right-2 text-sm bg-black bg-opacity-60 text-white px-2 py-1 rounded"
-            >
-              Remove
-            </button>
-          </div>
+        <div className="relative max-w-sm">
+          <img src={imagePreview} alt="Selected" className="rounded border" />
+          <button
+            type="button"
+            onClick={onClearImage}
+            className="absolute top-1 right-1 bg-white/80 hover:bg-white text-black px-2 py-1 text-xs rounded"
+          >
+            Remove
+          </button>
         </div>
       )}
 
-      {error && (
-        <div className="text-red-600 text-center font-medium mt-2">{error}</div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          className="w-full sm:w-40"
-          onClick={onSubmit}
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full sm:w-40"
-          onClick={() => {
-            onPromptChange("");
-            onImageChange(null);
-            onClearImage();
-          }}
-        >
-          Clear
-        </Button>
-      </div>
+      <Button onClick={onSubmit} disabled={loading}>
+        {loading ? "Generating..." : "Generate"}
+      </Button>
     </div>
   );
 }

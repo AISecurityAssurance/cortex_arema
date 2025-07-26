@@ -1,3 +1,5 @@
+"use client";
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -8,11 +10,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-export const metadata = {
-  title: "Cortex Arena",
-  description: "Compare LLMs side by side with clarity",
-};
 
 export default function RootLayout({
   children,
