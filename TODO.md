@@ -6,11 +6,11 @@
 - [x] Dynamically populate responses from backend
 
 ### 🧠 Prompt Templates & Modal UI
-- [ ] Add “Prompt Templates” button with modal for structured prompt construction
-  - [ ] STRIDE (Security threats)
+- [x] Add “Prompt Templates” button with structured prompt construction
+  - [x] STRIDE (Security threats)
   - [ ] MAESTRO (Mission-centric)
   - [ ] STPA-SEC (Systems-theoretic)
-- [ ] Generate templated prompt into prompt input field
+- [x] Generate templated prompt into prompt input field
 
 ### 🧪 Evaluation & Testing Features
 - [ ] Built-in prompt injection test cases (for model safety testing)
