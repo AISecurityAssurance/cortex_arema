@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
+import { ProfessionalHeader } from "@/components/header";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Cortex Arena",
-  description: "AI Model Comparison Platform",
+  description: "Professional Security Sandbox Analysis Platform",
 };
 
 export default function RootLayout({
@@ -18,14 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="app-layout">
-          <Navbar />
-          <main className="main-content">
-            <div className="container">
+        <Providers>
+          <div className="app-layout">
+            <ProfessionalHeader />
+            <main className="main-content">
               {children}
-            </div>
-          </main>
-        </div>
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

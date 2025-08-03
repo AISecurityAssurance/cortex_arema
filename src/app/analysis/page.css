@@ -1,0 +1,11 @@
+.analysis-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+}
+
+/* Ensure the three-panel view takes full height minus header */
+.analysis-page .three-panel-view {
+  flex: 1;
+}

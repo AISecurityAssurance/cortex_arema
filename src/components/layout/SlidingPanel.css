@@ -1,0 +1,135 @@
+.sliding-panel {
+  position: relative;
+  height: 100%;
+  background: var(--color-surface);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  display: flex;
+}
+
+.sliding-panel-right {
+  border-left: 1px solid var(--color-border);
+  flex-direction: row;
+}
+
+.sliding-panel-left {
+  border-right: 1px solid var(--color-border);
+  flex-direction: row-reverse;
+}
+
+/* The clickable edge handle */
+.panel-handle {
+  width: 12px;
+  height: 100%;
+  background: var(--color-surface-secondary);
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}
+
+.panel-handle:hover {
+  background: var(--color-primary);
+}
+
+.panel-handle:hover .handle-indicator span {
+  background: white;
+}
+
+/* The grip indicator (3 dots) */
+.handle-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.handle-indicator span {
+  width: 4px;
+  height: 4px;
+  background: var(--color-text-tertiary);
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+/* Content wrapper */
+.panel-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+/* Collapsed state */
+.sliding-panel.collapsed .panel-content-wrapper {
+  opacity: 0;
+  pointer-events: none;
+  padding: 0;
+}
+
+.sliding-panel.collapsed .panel-handle {
+  background: var(--color-primary);
+  animation: pulse 2s infinite;
+}
+
+.sliding-panel.collapsed .handle-indicator {
+  transform: rotate(90deg);
+}
+
+.sliding-panel.collapsed .handle-indicator span {
+  background: white;
+}
+
+/* Pulse animation to indicate collapsible */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Alternative handle design with lines instead of dots */
+.handle-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.handle-lines span {
+  width: 2px;
+  height: 20px;
+  background: var(--color-text-tertiary);
+  border-radius: 1px;
+  transition: background-color 0.2s;
+}
+
+/* Hover effect showing direction */
+.sliding-panel-right .panel-handle::after {
+  content: '◀';
+  position: absolute;
+  right: -20px;
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s, right 0.2s;
+  font-size: 12px;
+}
+
+.sliding-panel-right.collapsed .panel-handle::after {
+  content: '▶';
+  right: 20px;
+}
+
+.sliding-panel-right .panel-handle:hover::after {
+  opacity: 1;
+  right: -25px;
+}
+
+.sliding-panel-right.collapsed .panel-handle:hover::after {
+  right: 15px;
+}

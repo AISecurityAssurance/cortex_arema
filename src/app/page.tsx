@@ -1,170 +1,235 @@
 "use client";
 
-import { useState } from "react";
-import { Switch } from "@/components/ui/Switch";
-import { ModelComparison, ArenaPromptInput } from "@/components/templates";
-import { usePromptStore } from "@/stores/promptStore";
+import React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { SessionStorage } from "@/lib/storage/sessionStorage";
 import "./page.css";
 
-const MODEL_IDS = {
-  "AWS Bedrock Claude 4 Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
-  "AWS Bedrock Claude 4 Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
-};
-
-const MODELS = Object.keys(MODEL_IDS);
-
 export default function HomePage() {
-  const [prompt, setPrompt] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const [modelA, setModelA] = useState(MODELS[0]);
-  const [modelB, setModelB] = useState(MODELS[1]);
-
-  const [blindMode, setBlindMode] = useState(false);
-  const [explanationMode, setExplanationMode] = useState(false);
-  const [selected, setSelected] = useState<"A" | "B" | "tie" | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const [responseA, setResponseA] = useState("");
-  const [responseB, setResponseB] = useState("");
-
-  const templates = usePromptStore((s) => s.templates).filter((t) => t.template);
-
-  const handleGenerate = async () => {
-    if (!prompt.trim() || !image) {
-      setError("Text prompt and image are required.");
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-    setSelected(null);
-    setResponseA("");
-    setResponseB("");
-
-    const toBase64 = (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-          const result = (reader.result as string).split(",")[1];
-          resolve(result);
-        };
-        reader.onerror = (error) => reject(error);
-      });
-
-    const base64Image = await toBase64(image);
-
-    try {
-      const [resA, resB] = await Promise.all([
-        fetch("http://localhost:8000/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model_id: MODEL_IDS[modelA as keyof typeof MODEL_IDS],
-            prompt,
-            images: [base64Image],
-            system_instructions: "You are a helpful assistant.",
-          }),
-        }),
-        fetch("http://localhost:8000/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model_id: MODEL_IDS[modelB as keyof typeof MODEL_IDS],
-            prompt,
-            images: [base64Image],
-            system_instructions: "You are a helpful assistant.",
-          }),
-        }),
-      ]);
-
-      const [jsonA, jsonB] = await Promise.all([resA.json(), resB.json()]);
-      const parsedA = JSON.parse(jsonA.response);
-      const parsedB = JSON.parse(jsonB.response);
-
-      setResponseA(parsedA.content?.[0]?.text ?? "No response.");
-      setResponseB(parsedB.content?.[0]?.text ?? "No response.");
-    } catch (e) {
-      setError("Failed to get response from server.");
-    } finally {
-      setLoading(false);
-    }
+  const handleQuickStart = () => {
+    const session = SessionStorage.createSession("Quick Start Session");
+    router.push(`/analysis?session=${session.id}`);
   };
-
-  const handleModelChange = (side: 'A' | 'B', model: string) => {
-    if (side === 'A') {
-      setModelA(model);
-    } else {
-      setModelB(model);
-    }
-  };
-
-  const availableModelsFor = (current: string) =>
-    MODELS.filter((m) => m !== current);
 
   return (
-    <div className="arena-page">
-      <div className="arena-header">
-        <h1 className="arena-title">AI Model Arena</h1>
-        <p className="arena-subtitle">Compare responses from different AI models</p>
+    <div className="home-page">
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">Cortex Arena</h1>
+          <p className="hero-subtitle">
+            Professional AI-powered security analysis sandbox platform for
+            comprehensive threat modeling and vulnerability assessment
+          </p>
+
+          <div className="hero-actions">
+            <button className="hero-btn primary" onClick={handleQuickStart}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 2L4 5V10C4 13.55 5.84 16.74 8.62 18.47L10 19L11.38 18.47C14.16 16.74 16 13.55 16 10V5L10 2Z" />
+              </svg>
+              Start Security Analysis
+            </button>
+            <Link href="/sessions" className="hero-btn secondary">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M3 4C3 3.45 3.45 3 4 3H16C16.55 3 17 3.45 17 4V16C17 16.55 16.55 17 16 17H4C3.45 17 3 16.55 3 16V4ZM5 5V15H15V5H5ZM7 7H13V8H7V7ZM7 10H13V11H7V10ZM7 13H10V14H7V13Z" />
+              </svg>
+              View Sessions
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="arena-controls">
-        <div className="control-item">
-          <Switch checked={blindMode} onCheckedChange={setBlindMode} />
-          <label className="control-label">Blind Mode</label>
-        </div>
-        <div className="control-item">
-          <Switch
-            checked={explanationMode}
-            onCheckedChange={setExplanationMode}
-          />
-          <label className="control-label">Show Explanations</label>
-        </div>
-      </div>
+      <div className="features-section">
+        <h2 className="section-title">Core Features</h2>
 
-      <div className="arena-content">
-        <ArenaPromptInput
-          value={prompt}
-          onChange={setPrompt}
-          onSubmit={handleGenerate}
-          onImageChange={setImage}
-          loading={loading}
-          error={error}
-          templates={templates}
-        />
-
-        <ModelComparison
-          id="main-comparison"
-          models={{
-            modelA: { 
-              name: modelA, 
-              response: responseA, 
-              loading: loading && !responseA 
-            },
-            modelB: { 
-              name: modelB, 
-              response: responseB, 
-              loading: loading && !responseB 
-            }
-          }}
-          blindMode={blindMode}
-          selected={selected}
-          onVote={setSelected}
-          onModelChange={handleModelChange}
-          availableModels={MODELS}
-        />
-
-        {selected && (
-          <div className="vote-summary">
-            <p className="vote-summary-text">You selected:</p>
-            <p className="selected-model">
-              {selected === 'tie' ? 'It\'s a tie!' : `Model ${selected}`}
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M16 4L8 8V16C8 20.8 10.46 25.16 14.12 27.56L16 28L17.88 27.56C21.54 25.16 24 20.8 24 16V8L16 4Z" />
+              </svg>
+            </div>
+            <h3>Multi-Model Analysis</h3>
+            <p>
+              Compare security findings from multiple AI models including Claude
+              Opus and Sonnet for comprehensive coverage
             </p>
           </div>
-        )}
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M28 8H24V6C24 4.9 23.1 4 22 4H10C8.9 4 8 4.9 8 6V8H4C2.9 8 2 8.9 2 10V26C2 27.1 2.9 28 4 28H28C29.1 28 30 27.1 30 26V10C30 8.9 29.1 8 28 8ZM10 6H22V8H10V6ZM28 26H4V10H28V26Z" />
+                <path d="M16 14C16.55 14 17 14.45 17 15V19C17 19.55 16.55 20 16 20C15.45 20 15 19.55 15 19V15C15 14.45 15.45 14 16 14Z" />
+              </svg>
+            </div>
+            <h3>Professional Validation</h3>
+            <p>
+              Structured validation workflow with multi-dimensional quality
+              assessment and false positive tracking
+            </p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M6 4V28H26V8.83L21.17 4H6ZM8 6H20V10H24V26H8V6ZM22 6.83L23.17 8H22V6.83Z" />
+                <path d="M10 14H22V16H10V14ZM10 18H22V20H10V18ZM10 22H18V24H10V22Z" />
+              </svg>
+            </div>
+            <h3>Comprehensive Reports</h3>
+            <p>
+              Generate detailed markdown reports with executive summaries,
+              findings analysis, and actionable recommendations
+            </p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M8 4C6.9 4 6 4.9 6 6V26C6 27.1 6.9 28 8 28H24C25.1 28 26 27.1 26 26V6C26 4.9 25.1 4 24 4H8ZM8 6H24V26H8V6Z" />
+                <path d="M11 10H21V12H11V10ZM11 14H21V16H11V14ZM11 18H17V20H11V18Z" />
+              </svg>
+            </div>
+            <h3>Template Library</h3>
+            <p>
+              Pre-built templates for STRIDE, STPA-SEC, and custom security
+              analysis frameworks
+            </p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M16 4C9.37 4 4 9.37 4 16C4 22.63 9.37 28 16 28C22.63 28 28 22.63 28 16C28 9.37 22.63 4 16 4ZM16 26C10.49 26 6 21.51 6 16C6 10.49 10.49 6 16 6C21.51 6 26 10.49 26 16C26 21.51 21.51 26 16 26Z" />
+                <path d="M20.29 11.71L14 18L11.71 15.71L10.29 17.13L14 20.84L21.71 13.13L20.29 11.71Z" />
+              </svg>
+            </div>
+            <h3>Session Management</h3>
+            <p>
+              Save, resume, and track multiple security analysis sessions with
+              progress indicators
+            </p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="currentColor"
+              >
+                <path d="M26 16L22 12V15H18V17H22V20L26 16Z" />
+                <path d="M16 4C9.37 4 4 9.37 4 16C4 22.63 9.37 28 16 28C19.13 28 22 27.04 24.36 25.36L22.94 23.94C21 25.26 18.61 26 16 26C10.49 26 6 21.51 6 16C6 10.49 10.49 6 16 6C21.51 6 26 10.49 26 16H28C28 9.37 22.63 4 16 4Z" />
+              </svg>
+            </div>
+            <h3>Architecture Integration</h3>
+            <p>
+              Upload and analyze system architecture diagrams with threat
+              annotations and visual mapping
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="workflow-section">
+        <h2 className="section-title">Security Analysis Workflow</h2>
+
+        <div className="workflow-steps">
+          <div className="workflow-step">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h4>Choose Analysis Framework</h4>
+              <p>Select from STRIDE, STPA-SEC, or custom templates</p>
+            </div>
+          </div>
+
+          <div className="workflow-connector"></div>
+
+          <div className="workflow-step">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h4>Describe Your System</h4>
+              <p>Provide system details and upload architecture diagrams</p>
+            </div>
+          </div>
+
+          <div className="workflow-connector"></div>
+
+          <div className="workflow-step">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h4>AI Analysis</h4>
+              <p>Multiple models analyze your system for vulnerabilities</p>
+            </div>
+          </div>
+
+          <div className="workflow-connector"></div>
+
+          <div className="workflow-step">
+            <div className="step-number">4</div>
+            <div className="step-content">
+              <h4>Validate Findings</h4>
+              <p>Review and validate each finding with quality scores</p>
+            </div>
+          </div>
+
+          <div className="workflow-connector"></div>
+
+          <div className="workflow-step">
+            <div className="step-number">5</div>
+            <div className="step-content">
+              <h4>Generate Report</h4>
+              <p>Export comprehensive security assessment report</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="cta-section">
+        <h2>Ready to enhance your security posture?</h2>
+        <p>Start analyzing your systems with AI-powered security assessment</p>
+        <button className="cta-btn" onClick={handleQuickStart}>
+          Get Started Now
+        </button>
       </div>
     </div>
   );

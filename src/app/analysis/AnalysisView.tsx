@@ -1,0 +1,560 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AnalysisLayout, SlidingPanel } from "@/components/layout";
+import { ModelComparisonView } from "@/components/analysis";
+import { ValidationControls } from "@/components/validation";
+import { useAnalysisSession } from "@/hooks/useAnalysisSession";
+import { useValidation } from "@/hooks/useValidation";
+import { useToast } from "@/contexts/ToastContext";
+import { TemplateStorage } from "@/lib/storage/templateStorage";
+import { PromptProcessor } from "@/lib/prompts/promptProcessor";
+import { FindingExtractor } from "@/lib/analysis/findingExtractor";
+import {
+  SecurityFinding,
+  ThreatAnnotation,
+  FindingValidation,
+  PromptTemplate,
+} from "@/types";
+import "./AnalysisView.css";
+
+const MODEL_IDS = {
+  "Claude Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
+  "Claude Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+};
+
+const MODELS = Object.keys(MODEL_IDS);
+
+interface AnalysisViewProps {
+  sessionId?: string;
+}
+
+export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { showToast } = useToast();
+
+  // Session management
+  const {
+    session,
+    loading: sessionLoading,
+    createSession,
+    updateSession,
+    updateFindings,
+    saveValidation: saveValidationToSession,
+    updateTemplate,
+    updateModels,
+  } = useAnalysisSession(sessionId);
+
+  // Validation management
+  const { validations, addValidation, getStatus, setAllValidations } =
+    useValidation({
+      sessionId,
+      onValidationSave: saveValidationToSession,
+    });
+
+  // Component state
+  const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
+  const [analysisInProgress, setAnalysisInProgress] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Analysis configuration
+  const [prompt, setPrompt] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [isImageValidated, setIsImageValidated] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<PromptTemplate | null>(null);
+  const [modelA, setModelA] = useState(MODELS[0]);
+  const [modelB, setModelB] = useState(MODELS[1]);
+  const [analysisType, setAnalysisType] = useState<
+    "stride" | "stpa-sec" | "custom"
+  >("stride");
+
+  // Initialize session if needed
+  useEffect(() => {
+    if (!sessionId && !sessionLoading && !session) {
+      const templateId = searchParams.get("template");
+      const newSession = createSession("New Analysis Session");
+
+      if (newSession && templateId) {
+        const template = TemplateStorage.getTemplate(templateId);
+        if (template) {
+          setSelectedTemplate(template);
+          updateTemplate(template);
+          setAnalysisType(template.analysisType);
+        }
+      }
+
+      if (newSession) {
+        router.push(`/analysis?session=${newSession.id}`);
+      }
+    }
+  }, [
+    sessionId,
+    sessionLoading,
+    session,
+    createSession,
+    router,
+    searchParams,
+    updateTemplate,
+  ]);
+
+  // Load session data
+  useEffect(() => {
+    if (session && !sessionLoading) {
+      setAllValidations(session.validations);
+
+      // Only update models if they're different from session
+      if (session.modelAId !== modelA || session.modelBId !== modelB) {
+        updateModels(modelA, modelB);
+      }
+
+      if (session.promptTemplate) {
+        setSelectedTemplate(session.promptTemplate);
+        setAnalysisType(session.promptTemplate.analysisType);
+      }
+    }
+  }, [
+    session,
+    sessionLoading,
+    setAllValidations,
+    updateModels,
+    modelA,
+    modelB,
+  ]);
+
+  const handleFindingSelect = (findingId: string) => {
+    setSelectedFinding(findingId);
+  };
+
+  const handleValidationUpdate = (validation: FindingValidation) => {
+    addValidation(validation);
+  };
+
+  const performAnalysis = async () => {
+    console.log("performAnalysis called with state:", {
+      selectedTemplate: selectedTemplate,
+      selectedTemplateName: selectedTemplate?.name,
+      selectedTemplateId: selectedTemplate?.id,
+      prompt: prompt.substring(0, 50),
+      image: image?.name,
+      isImageValidated,
+    });
+
+    // Clear any previous errors
+    setError(null);
+
+    if (!session) {
+      console.log("Blocking: No session");
+      setError("No active session");
+      showToast("Please create or select a session", "error");
+      return;
+    }
+
+    if (!selectedTemplate) {
+      console.log("Blocking: No template selected");
+      setError("Please select a template first");
+      showToast("Please select an analysis template", "error");
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError("Please provide a system description");
+      showToast("Please describe your system", "error");
+      return;
+    }
+
+    // Check if image is being validated
+    if (isValidatingImage) {
+      console.log("Image validation in progress");
+      setError("Please wait for image validation to complete");
+      showToast("Image validation in progress", "warning");
+      return;
+    }
+
+    // Check if there's an image that hasn't been validated
+    if (image && !isImageValidated) {
+      console.log("Blocking analysis due to invalid image");
+      setError("Invalid image uploaded");
+      showToast(
+        "The uploaded image is not a valid architecture diagram",
+        "error"
+      );
+      return;
+    }
+
+    console.log("All validations passed, starting analysis");
+    console.log(
+      "Using validated image:",
+      image && isImageValidated ? image.name : "none"
+    );
+    setAnalysisInProgress(true);
+
+    try {
+      // Process template
+      const variables = PromptProcessor.extractVariablesFromInput(
+        prompt,
+        selectedTemplate
+      );
+      const processed = PromptProcessor.processTemplate(
+        selectedTemplate,
+        variables
+      );
+      const systemPrompt = PromptProcessor.buildSystemPrompt(
+        selectedTemplate.analysisType
+      );
+
+      let finalPrompt = processed.resolvedPrompt;
+      if (image && isImageValidated) {
+        finalPrompt = PromptProcessor.addImageContext(finalPrompt, true);
+      }
+
+      // Prepare image if provided and validated
+      let base64Image: string | undefined;
+      if (image && isImageValidated) {
+        base64Image = await fileToBase64(image);
+      }
+
+      // Call both models in parallel
+      const [responseA, responseB] = await Promise.all([
+        callModel(
+          MODEL_IDS[modelA as keyof typeof MODEL_IDS],
+          finalPrompt,
+          systemPrompt,
+          base64Image
+        ),
+        callModel(
+          MODEL_IDS[modelB as keyof typeof MODEL_IDS],
+          finalPrompt,
+          systemPrompt,
+          base64Image
+        ),
+      ]);
+
+      // Extract findings
+      const findingsA = FindingExtractor.extractFindings(
+        responseA,
+        selectedTemplate.analysisType,
+        modelA
+      );
+
+      const findingsB = FindingExtractor.extractFindings(
+        responseB,
+        selectedTemplate.analysisType,
+        modelB
+      );
+
+      // Update session
+      updateFindings(findingsA, findingsB);
+    } catch (err) {
+      console.error("Analysis error:", err);
+      setError("Failed to complete analysis. Please try again.");
+    } finally {
+      setAnalysisInProgress(false);
+    }
+  };
+
+  const callModel = async (
+    modelId: string,
+    prompt: string,
+    systemPrompt: string,
+    base64Image?: string
+  ): Promise<string> => {
+    const response = await fetch("http://localhost:8000/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model_id: modelId,
+        prompt,
+        images: base64Image ? [base64Image] : [],
+        system_instructions: systemPrompt,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Model call failed: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    const parsed = JSON.parse(json.response);
+    return parsed.content?.[0]?.text ?? "No response from model.";
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = (reader.result as string).split(",")[1];
+        resolve(result);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const validateArchitectureImage = async (file: File): Promise<boolean> => {
+    try {
+      const base64Image = await fileToBase64(file);
+
+      const validationPrompt = `Analyze this image and determine if it appears to be a software/system architecture diagram, network diagram, or technical design diagram. 
+      
+      Look for elements like:
+      - Boxes or shapes representing components/services
+      - Arrows or lines showing connections/data flow
+      - Technical labels or annotations
+      - Network topology elements
+      - System boundaries or layers
+      
+      Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
+
+      const response = await callModel(
+        MODEL_IDS["Claude Opus"],
+        validationPrompt,
+        "You are an image analysis assistant. Analyze images to determine their type and content.",
+        base64Image
+      );
+
+      const isValid = response.trim().toUpperCase().includes("YES");
+      return isValid;
+    } catch (error) {
+      console.error("Error validating image:", error);
+      return false;
+    }
+  };
+
+  const handleImageUpload = async (file: File | null) => {
+    console.log("handleImageUpload called with:", file);
+
+    if (!file) {
+      console.log("No file, clearing image state");
+      setImage(null);
+      setIsImageValidated(false);
+      setIsValidatingImage(false);
+      return;
+    }
+
+    try {
+      setIsValidatingImage(true);
+      // Temporarily set the image to show filename
+      setImage(file);
+      setIsImageValidated(false);
+
+      // Show loading toast
+      showToast("Validating image...", "info");
+
+      const isValid = await validateArchitectureImage(file);
+      console.log("Image validation result:", isValid);
+
+      if (isValid) {
+        console.log("Image is valid, keeping file");
+        setIsImageValidated(true);
+        showToast("Architecture diagram uploaded successfully", "success");
+      } else {
+        console.log("Image is invalid, removing file");
+        setImage(null);
+        setIsImageValidated(false);
+        showToast(
+          "Please upload a valid architecture or system diagram",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error during image validation:", error);
+      setImage(null);
+      setIsImageValidated(false);
+      showToast("Error validating image", "error");
+    } finally {
+      setIsValidatingImage(false);
+    }
+  };
+
+  const selectedFindingData = selectedFinding
+    ? [
+        ...(session?.modelAResults || []),
+        ...(session?.modelBResults || []),
+      ].find((f) => f.id === selectedFinding) || null
+    : null;
+
+  const selectedValidation =
+    selectedFinding && session
+      ? session.validations.find((v) => v.findingId === selectedFinding) || null
+      : null;
+
+  const validationMap = new Map(
+    Array.from(validations.values()).map((v) => [v.findingId, v.status])
+  );
+
+  if (sessionLoading) {
+    return <div className="loading-screen">Loading session...</div>;
+  }
+
+  return (
+    <div className="analysis-view">
+      <div className="analysis-header">
+        {session && (
+          <div className="session-info">
+            <input
+              type="text"
+              className="session-name-input"
+              value={session.name}
+              onChange={(e) => updateSession({ name: e.target.value })}
+              placeholder="Session name..."
+            />
+            <span className="session-id">ID: {session.id.slice(0, 8)}</span>
+          </div>
+        )}
+
+        <div className="analysis-controls">
+          <div className="control-group">
+            <select
+              className="template-select"
+              value={selectedTemplate?.id || ""}
+              onChange={(e) => {
+                const template = TemplateStorage.getTemplate(e.target.value);
+                if (template) {
+                  setSelectedTemplate(template);
+                  updateTemplate(template);
+                  setAnalysisType(template.analysisType);
+                }
+              }}
+            >
+              <option value="">Select template...</option>
+              {TemplateStorage.getActiveTemplates().map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+
+            <label
+              className={`image-upload ${
+                analysisInProgress || isValidatingImage ? "disabled" : ""
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                disabled={analysisInProgress || isValidatingImage}
+                onChange={(e) => {
+                  if (analysisInProgress || isValidatingImage) return;
+                  const file = e.target.files?.[0] || null;
+                  console.log("File input changed:", file);
+                  handleImageUpload(file);
+                }}
+                style={{ display: "none" }}
+              />
+              <span>
+                <svg className="icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z"/>
+                </svg>
+                {isValidatingImage
+                  ? "Validating..."
+                  : image && isImageValidated
+                  ? image.name.slice(0, 20)
+                  : "Upload diagram"}
+              </span>
+            </label>
+          </div>
+
+          <div className="control-group center">
+            <input
+              type="text"
+              className="prompt-input"
+              placeholder="Describe your system architecture..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </div>
+
+          <div className="control-group">
+            <div className="model-selectors">
+              <select
+                value={modelA}
+                onChange={(e) => {
+                  const newModelA = e.target.value;
+                  setModelA(newModelA);
+                  // If only 2 models exist and we're selecting the same as modelB, swap them
+                  if (MODELS.length === 2 && newModelA === modelB) {
+                    setModelB(modelA);
+                    updateModels(newModelA, modelA);
+                  } else {
+                    updateModels(newModelA, modelB);
+                  }
+                }}
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m} disabled={m === modelB}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <span className="vs">vs</span>
+              <select
+                value={modelB}
+                onChange={(e) => {
+                  const newModelB = e.target.value;
+                  setModelB(newModelB);
+                  // If only 2 models exist and we're selecting the same as modelA, swap them
+                  if (MODELS.length === 2 && newModelB === modelA) {
+                    setModelA(modelB);
+                    updateModels(modelB, newModelB);
+                  } else {
+                    updateModels(modelA, newModelB);
+                  }
+                }}
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m} disabled={m === modelA}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              className="analyze-button"
+              onClick={performAnalysis}
+              disabled={analysisInProgress || !selectedTemplate}
+            >
+              {analysisInProgress ? (
+                <>
+                  <span className="spinner"></span>
+                  Analyzing
+                </>
+              ) : (
+                "Analyze"
+              )}
+            </button>
+          </div>
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+      </div>
+
+      <AnalysisLayout
+        centerPanel={
+          <ModelComparisonView
+            modelAResults={session?.modelAResults || []}
+            modelBResults={session?.modelBResults || []}
+            selectedFinding={selectedFinding || undefined}
+            onFindingSelect={handleFindingSelect}
+            modelAName={modelA}
+            modelBName={modelB}
+            validations={validationMap}
+          />
+        }
+        rightPanel={
+          <SlidingPanel side="right" width="380px">
+            <ValidationControls
+              finding={selectedFindingData}
+              validation={selectedValidation}
+              onValidationUpdate={handleValidationUpdate}
+            />
+          </SlidingPanel>
+        }
+      />
+    </div>
+  );
+};
