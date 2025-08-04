@@ -36,16 +36,20 @@ export default function HomePage() {
               </svg>
               Start Security Analysis
             </button>
-            <Link href="/sessions" className="hero-btn secondary">
+            <Link href="/pipeline-editor" className="hero-btn secondary">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path d="M3 4C3 3.45 3.45 3 4 3H16C16.55 3 17 3.45 17 4V16C17 16.55 16.55 17 16 17H4C3.45 17 3 16.55 3 16V4ZM5 5V15H15V5H5ZM7 7H13V8H7V7ZM7 10H13V11H7V10ZM7 13H10V14H7V13Z" />
+                <path d="M4 4C4 2.9 4.9 2 6 2H8L10 4H14C15.1 4 16 4.9 16 6V8H14V6H9.17L7.17 4H6V12H10V14H6C4.9 14 4 13.1 4 12V4Z" />
+                <path d="M12 10V12H10V14H12V16H14V14H16V12H14V10H12Z" />
+                <circle cx="6" cy="8" r="1.5" />
+                <circle cx="14" cy="8" r="1.5" />
+                <path d="M6 8L14 8" stroke="currentColor" strokeWidth="0.5" />
               </svg>
-              View Sessions
+              Visual Pipeline Editor
             </Link>
           </div>
         </div>
