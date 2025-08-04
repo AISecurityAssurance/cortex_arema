@@ -1,65 +1,72 @@
 import { useState, useCallback } from "react";
 import { PipelineNode, Connection } from "../types/pipeline";
-import { PipelineExecutionState, NodeExecutionState, ValidationResult } from "../types/execution";
+import {
+  PipelineExecutionState,
+  NodeExecutionState,
+  ValidationResult,
+} from "../types/execution";
 import { TemplateStorage } from "@/lib/storage/templateStorage";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
 
 export function usePipelineExecution() {
   const [executionState, setExecutionState] = useState<PipelineExecutionState>({
-    pipelineId: '',
-    status: 'idle',
+    pipelineId: "",
+    status: "idle",
     nodeStates: new Map(),
-    totalProgress: 0
+    totalProgress: 0,
   });
 
-  const validatePipeline = (nodes: PipelineNode[], connections: Connection[]): ValidationResult => {
+  const validatePipeline = (
+    nodes: PipelineNode[],
+    connections: Connection[]
+  ): ValidationResult => {
     const errors = [];
     const warnings = [];
 
     if (nodes.length === 0) {
       errors.push({
-        message: 'Pipeline is empty',
-        type: 'missing_connection' as const
+        message: "Pipeline is empty",
+        type: "missing_connection" as const,
       });
     }
 
-    const inputNodes = nodes.filter(n => n.type.startsWith('input-'));
-    const analysisNodes = nodes.filter(n => n.type.startsWith('analysis-'));
-    const outputNodes = nodes.filter(n => n.type.startsWith('output-'));
+    const inputNodes = nodes.filter((n) => n.type.startsWith("input-"));
+    const analysisNodes = nodes.filter((n) => n.type.startsWith("analysis-"));
+    const outputNodes = nodes.filter((n) => n.type.startsWith("output-"));
 
     if (inputNodes.length === 0) {
       errors.push({
-        message: 'Pipeline needs at least one input node',
-        type: 'missing_connection' as const
+        message: "Pipeline needs at least one input node",
+        type: "missing_connection" as const,
       });
     }
 
     if (analysisNodes.length === 0) {
       errors.push({
-        message: 'Pipeline needs at least one analysis node',
-        type: 'missing_connection' as const
+        message: "Pipeline needs at least one analysis node",
+        type: "missing_connection" as const,
       });
     }
 
-    analysisNodes.forEach(node => {
-      const hasInput = connections.some(c => c.to.nodeId === node.id);
+    analysisNodes.forEach((node) => {
+      const hasInput = connections.some((c) => c.to.nodeId === node.id);
       if (!hasInput) {
         errors.push({
           nodeId: node.id,
           message: `Analysis node "${node.id}" has no input connection`,
-          type: 'missing_connection' as const
+          type: "missing_connection" as const,
         });
       }
     });
 
-    outputNodes.forEach(node => {
-      const hasInput = connections.some(c => c.to.nodeId === node.id);
+    outputNodes.forEach((node) => {
+      const hasInput = connections.some((c) => c.to.nodeId === node.id);
       if (!hasInput) {
         warnings.push({
           nodeId: node.id,
           message: `Output node "${node.id}" has no input connection`,
-          type: 'unused_output' as const
+          type: "unused_output" as const,
         });
       }
     });
@@ -67,20 +74,23 @@ export function usePipelineExecution() {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   };
 
-  const buildExecutionOrder = (nodes: PipelineNode[], connections: Connection[]): string[] => {
+  const buildExecutionOrder = (
+    nodes: PipelineNode[],
+    connections: Connection[]
+  ): string[] => {
     const graph = new Map<string, string[]>();
     const inDegree = new Map<string, number>();
 
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       graph.set(node.id, []);
       inDegree.set(node.id, 0);
     });
 
-    connections.forEach(conn => {
+    connections.forEach((conn) => {
       const fromList = graph.get(conn.from.nodeId) || [];
       fromList.push(conn.to.nodeId);
       graph.set(conn.from.nodeId, fromList);
@@ -101,7 +111,7 @@ export function usePipelineExecution() {
       result.push(nodeId);
 
       const neighbors = graph.get(nodeId) || [];
-      neighbors.forEach(neighbor => {
+      neighbors.forEach((neighbor) => {
         const newDegree = (inDegree.get(neighbor) || 0) - 1;
         inDegree.set(neighbor, newDegree);
         if (newDegree === 0) {
@@ -153,74 +163,78 @@ export function usePipelineExecution() {
 
   const executeNode = async (node: PipelineNode, inputs: any): Promise<any> => {
     switch (node.type) {
-      case 'input-diagram':
+      case "input-diagram":
         const diagramConfig = (node as any).config;
         if (!diagramConfig.file) {
-          throw new Error('No diagram file uploaded');
+          throw new Error("No diagram file uploaded");
         }
         const diagramBase64 = await fileToBase64(diagramConfig.file);
-        return { 
-          type: 'diagram', 
+        return {
+          type: "diagram",
           data: diagramConfig.file,
-          base64: diagramBase64
+          base64: diagramBase64,
         };
 
-      case 'input-text':
+      case "input-text":
         const textConfig = (node as any).config;
         if (!textConfig.systemName) {
-          throw new Error('System name is required');
+          throw new Error("System name is required");
         }
         return {
-          type: 'text',
+          type: "text",
           data: {
             systemName: textConfig.systemName,
             description: textConfig.description,
-            context: textConfig.context
-          }
+            context: textConfig.context,
+          },
         };
 
-      case 'analysis-stride':
-      case 'analysis-stpa-sec':
+      case "analysis-stride":
+      case "analysis-stpa-sec":
         const analysisConfig = (node as any).config;
-        
+
         // Get the template
-        const template = TemplateStorage.getTemplate(analysisConfig.promptTemplate);
+        const template = TemplateStorage.getTemplate(
+          analysisConfig.promptTemplate
+        );
         if (!template) {
-          throw new Error(`Template ${analysisConfig.promptTemplate} not found`);
+          throw new Error(
+            `Template ${analysisConfig.promptTemplate} not found`
+          );
         }
 
         // Prepare inputs
-        let systemDescription = '';
-        let architectureComponents = '';
-        let base64Image = '';
-        
+        let systemDescription = "";
+        let architectureComponents = "";
+        let base64Image = "";
+
         // Handle different input types
         if (inputs) {
           if (Array.isArray(inputs)) {
-            inputs.forEach(input => {
-              if (input?.type === 'text') {
+            inputs.forEach((input) => {
+              if (input?.type === "text") {
                 systemDescription = `System Name: ${input.data.systemName}\nDescription: ${input.data.description}\nContext: ${input.data.context}`;
                 architectureComponents = input.data.description;
               }
-              if (input?.type === 'diagram') {
+              if (input?.type === "diagram") {
                 base64Image = input.base64;
-                architectureComponents += '\n[Architecture diagram provided]';
+                architectureComponents += "\n[Architecture diagram provided]";
               }
             });
           } else {
-            if (inputs.type === 'text') {
+            if (inputs.type === "text") {
               systemDescription = `System Name: ${inputs.data.systemName}\nDescription: ${inputs.data.description}\nContext: ${inputs.data.context}`;
               architectureComponents = inputs.data.description;
             }
-            if (inputs.type === 'diagram') {
+            if (inputs.type === "diagram") {
               base64Image = inputs.base64;
-              architectureComponents = '[Architecture diagram provided]';
+              architectureComponents = "[Architecture diagram provided]";
             }
           }
         }
 
         if (!systemDescription && !base64Image) {
-          throw new Error('No input data available for analysis');
+          throw new Error("No input data available for analysis");
         }
 
         // Process the template with variables
@@ -228,27 +242,37 @@ export function usePipelineExecution() {
           systemDescription,
           architectureComponents,
           controlStructure: architectureComponents, // For STPA-SEC
-          systemName: systemDescription.split('\n')[0]?.replace('System Name: ', '') || 'System',
+          systemName:
+            systemDescription.split("\n")[0]?.replace("System Name: ", "") ||
+            "System",
           components: architectureComponents,
-          dataFlows: 'Data flows as shown in the architecture'
+          dataFlows: "Data flows as shown in the architecture",
         };
 
-        const processedPrompt = PromptProcessor.processTemplate(template, variables);
-        
+        const processedPrompt = PromptProcessor.processTemplate(
+          template,
+          variables
+        );
+
         // Add image context if available
-        const finalPrompt = base64Image 
-          ? PromptProcessor.addImageContext(processedPrompt.resolvedPrompt, true)
+        const finalPrompt = base64Image
+          ? PromptProcessor.addImageContext(
+              processedPrompt.resolvedPrompt,
+              true
+            )
           : processedPrompt.resolvedPrompt;
 
         // Build system prompt
-        const systemPrompt = PromptProcessor.buildSystemPrompt(node.type === 'analysis-stride' ? 'stride' : 'stpa-sec');
+        const systemPrompt = PromptProcessor.buildSystemPrompt(
+          node.type === "analysis-stride" ? "stride" : "stpa-sec"
+        );
 
         try {
           // Call the actual model API
-          console.log('Calling model API with:', {
+          console.log("Calling model API with:", {
             modelId: analysisConfig.modelId,
             promptLength: finalPrompt.length,
-            hasImage: !!base64Image
+            hasImage: !!base64Image,
           });
 
           const modelResponse = await callModelAPI(
@@ -258,12 +282,12 @@ export function usePipelineExecution() {
             base64Image
           );
 
-          console.log('Model response received, extracting findings...');
+          console.log("Model response received, extracting findings...");
 
           // Extract findings from the response
           const findings = FindingExtractor.extractFindings(
             modelResponse,
-            node.type === 'analysis-stride' ? 'stride' : 'stpa-sec',
+            node.type === "analysis-stride" ? "stride" : "stpa-sec",
             analysisConfig.modelId
           );
 
@@ -271,152 +295,198 @@ export function usePipelineExecution() {
 
           // If no findings were extracted, create a basic finding from the response
           if (findings.length === 0) {
-            console.log('No structured findings extracted, creating basic finding');
+            console.log(
+              "No structured findings extracted, creating basic finding"
+            );
             findings.push({
               id: `finding_${Date.now()}_1`,
-              title: 'Security Analysis Results',
+              title: "Security Analysis Results",
               description: modelResponse.substring(0, 500),
-              severity: 'medium',
-              category: node.type === 'analysis-stride' ? 'General' : 'General Analysis',
+              severity: "medium",
+              category:
+                node.type === "analysis-stride"
+                  ? "General"
+                  : "General Analysis",
               modelSource: analysisConfig.modelId,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
             });
           }
 
           return {
-            type: 'findings',
+            type: "findings",
             data: findings,
-            rawResponse: modelResponse
+            rawResponse: modelResponse,
           };
         } catch (error) {
-          console.error('Error calling model API:', error);
-          
+          console.error("Error calling model API:", error);
+
           // If API fails, throw error to be caught by execution engine
-          throw new Error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(
+            `Analysis failed: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
         }
 
-      case 'output-results':
+      case "output-results":
         return inputs;
 
       default:
-        throw new Error(`Unknown node type: ${node.type}`);
+        throw new Error(
+          `Unknown node type: ${(node as { type: string }).type}`
+        );
     }
   };
 
-  const runPipeline = useCallback(async ({ nodes, connections }: { nodes: PipelineNode[], connections: Connection[] }) => {
-    const validation = validatePipeline(nodes, connections);
-    
-    if (!validation.isValid) {
-      console.error('Pipeline validation failed:', validation.errors);
-      setExecutionState(prev => ({
-        ...prev,
-        status: 'error',
-        error: validation.errors[0].message
-      }));
-      return;
-    }
+  const runPipeline = useCallback(
+    async ({
+      nodes,
+      connections,
+    }: {
+      nodes: PipelineNode[];
+      connections: Connection[];
+    }) => {
+      const validation = validatePipeline(nodes, connections);
 
-    const executionOrder = buildExecutionOrder(nodes, connections);
-    const nodeResults = new Map<string, any>();
-    const nodeStates = new Map<string, NodeExecutionState>();
-
-    nodes.forEach(node => {
-      nodeStates.set(node.id, {
-        nodeId: node.id,
-        status: 'idle'
-      });
-    });
-
-    setExecutionState({
-      pipelineId: `pipeline_${Date.now()}`,
-      status: 'running',
-      nodeStates,
-      totalProgress: 0,
-      startTime: Date.now()
-    });
-
-    try {
-      for (let i = 0; i < executionOrder.length; i++) {
-        const nodeId = executionOrder[i];
-        const node = nodes.find(n => n.id === nodeId);
-        if (!node) continue;
-
-        nodeStates.set(nodeId, {
-          nodeId,
-          status: 'running',
-          startTime: Date.now()
-        });
-
-        setExecutionState(prev => ({
+      if (!validation.isValid) {
+        console.error("Pipeline validation failed:", validation.errors);
+        setExecutionState((prev) => ({
           ...prev,
-          nodeStates: new Map(nodeStates),
-          currentNodeId: nodeId,
-          totalProgress: ((i + 0.5) / executionOrder.length) * 100
+          status: "error",
+          error: validation.errors[0].message,
         }));
-
-        const inputConnections = connections.filter(c => c.to.nodeId === nodeId);
-        const inputs = inputConnections.map(conn => nodeResults.get(conn.from.nodeId));
-        const combinedInput = inputs.length === 1 ? inputs[0] : inputs;
-
-        try {
-          const result = await executeNode(node, combinedInput);
-          nodeResults.set(nodeId, result);
-
-          nodeStates.set(nodeId, {
-            nodeId,
-            status: 'complete',
-            duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0),
-            results: result
-          });
-        } catch (error) {
-          nodeStates.set(nodeId, {
-            nodeId,
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error',
-            duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0)
-          });
-          throw error;
-        }
-
-        setExecutionState(prev => ({
-          ...prev,
-          nodeStates: new Map(nodeStates),
-          totalProgress: ((i + 1) / executionOrder.length) * 100
-        }));
+        return;
       }
 
-      setExecutionState(prev => ({
-        ...prev,
-        status: 'complete',
-        endTime: Date.now(),
-        totalProgress: 100
-      }));
-    } catch (error) {
-      setExecutionState(prev => ({
-        ...prev,
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Pipeline execution failed',
-        endTime: Date.now()
-      }));
-    }
-  }, []);
+      const executionOrder = buildExecutionOrder(nodes, connections);
+      const nodeResults = new Map<string, any>();
+      const nodeStates = new Map<string, NodeExecutionState>();
+
+      // Set all nodes to idle initially
+      nodes.forEach((node) => {
+        nodeStates.set(node.id, {
+          nodeId: node.id,
+          status: "idle",
+        });
+      });
+
+      // Set nodes in execution order to waiting (except the first ones with no dependencies)
+      const nodesWithDependencies = new Set<string>();
+      connections.forEach((conn) => {
+        nodesWithDependencies.add(conn.to.nodeId);
+      });
+
+      executionOrder.forEach((nodeId) => {
+        if (nodesWithDependencies.has(nodeId)) {
+          nodeStates.set(nodeId, {
+            nodeId,
+            status: "waiting",
+          });
+        }
+      });
+
+      setExecutionState({
+        pipelineId: `pipeline_${Date.now()}`,
+        status: "running",
+        nodeStates,
+        totalProgress: 0,
+        startTime: Date.now(),
+      });
+
+      try {
+        for (let i = 0; i < executionOrder.length; i++) {
+          const nodeId = executionOrder[i];
+          const node = nodes.find((n) => n.id === nodeId);
+          if (!node) continue;
+
+          nodeStates.set(nodeId, {
+            nodeId,
+            status: "running",
+            startTime: Date.now(),
+          });
+
+          setExecutionState((prev) => ({
+            ...prev,
+            nodeStates: new Map(nodeStates),
+            currentNodeId: nodeId,
+            totalProgress: ((i + 0.5) / executionOrder.length) * 100,
+          }));
+
+          const inputConnections = connections.filter(
+            (c) => c.to.nodeId === nodeId
+          );
+          const inputs = inputConnections.map((conn) =>
+            nodeResults.get(conn.from.nodeId)
+          );
+          const combinedInput = inputs.length === 1 ? inputs[0] : inputs;
+
+          try {
+            const result = await executeNode(node, combinedInput);
+            nodeResults.set(nodeId, result);
+
+            nodeStates.set(nodeId, {
+              nodeId,
+              status: "complete",
+              duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0),
+              results: result,
+            });
+          } catch (error) {
+            nodeStates.set(nodeId, {
+              nodeId,
+              status: "error",
+              error: error instanceof Error ? error.message : "Unknown error",
+              duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0),
+            });
+            throw error;
+          }
+
+          setExecutionState((prev) => ({
+            ...prev,
+            nodeStates: new Map(nodeStates),
+            totalProgress: ((i + 1) / executionOrder.length) * 100,
+          }));
+        }
+
+        setExecutionState((prev) => ({
+          ...prev,
+          status: "complete",
+          endTime: Date.now(),
+          totalProgress: 100,
+        }));
+      } catch (error) {
+        setExecutionState((prev) => ({
+          ...prev,
+          status: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Pipeline execution failed",
+          endTime: Date.now(),
+        }));
+      }
+    },
+    []
+  );
 
   const cancelExecution = useCallback(() => {
-    setExecutionState(prev => ({
+    setExecutionState((prev) => ({
       ...prev,
-      status: 'idle',
-      totalProgress: 0
+      status: "idle",
+      totalProgress: 0,
     }));
   }, []);
 
-  const getNodeExecutionState = useCallback((nodeId: string): NodeExecutionState | undefined => {
-    return executionState.nodeStates.get(nodeId);
-  }, [executionState]);
+  const getNodeExecutionState = useCallback(
+    (nodeId: string): NodeExecutionState | undefined => {
+      return executionState.nodeStates.get(nodeId);
+    },
+    [executionState]
+  );
 
   return {
     executionState,
     runPipeline,
     cancelExecution,
-    getNodeExecutionState
+    getNodeExecutionState,
   };
 }

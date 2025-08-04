@@ -215,16 +215,95 @@
   box-shadow: 0 0 0 1px var(--node-selected);
 }
 
+.pipeline-node.waiting {
+  border-color: rgba(59, 130, 246, 0.5);
+  opacity: 0.8;
+  border-style: dashed;
+  animation: nodeWaiting 2s ease-in-out infinite;
+}
+
+@keyframes nodeWaiting {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .pipeline-node.running {
   border-color: var(--node-running);
+  animation: nodeRunning 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.pipeline-node.running::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border-radius: 0.5rem;
+  background: radial-gradient(circle, transparent, rgba(59, 130, 246, 0.4));
+  animation: nodePulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes nodeRunning {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+  }
+}
+
+@keyframes nodePulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 .pipeline-node.complete {
   border-color: var(--node-complete);
+  animation: nodeComplete 0.5s ease-out;
+}
+
+@keyframes nodeComplete {
+  0% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  }
 }
 
 .pipeline-node.error {
   border-color: var(--node-error);
+  animation: nodeError 0.3s ease-out;
+}
+
+@keyframes nodeError {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 .node-header {
@@ -234,6 +313,8 @@
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--panel-border);
   border-radius: 0.5rem 0.5rem 0 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .node-header.input {
@@ -246,6 +327,30 @@
 
 .node-header.output {
   background: linear-gradient(90deg, var(--node-output), transparent);
+}
+
+.pipeline-node.running .node-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  animation: headerShimmer 2s infinite;
+}
+
+@keyframes headerShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .node-title {
