@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { SecurityFinding, ValidationStatus } from '@/types';
 import './FindingCard.css';
 
@@ -81,7 +82,9 @@ export const FindingCard: React.FC<FindingCardProps> = ({
 
       <h4 className="finding-title">{finding.title}</h4>
       
-      <p className="finding-description">{finding.description}</p>
+      <div className="finding-description">
+        <ReactMarkdown>{finding.description}</ReactMarkdown>
+      </div>
 
       {finding.confidence && (
         <div className="finding-confidence">
@@ -101,7 +104,9 @@ export const FindingCard: React.FC<FindingCardProps> = ({
           <span className="mitigations-label">Mitigations:</span>
           <ul className="mitigations-list">
             {finding.mitigations.slice(0, 2).map((mitigation, index) => (
-              <li key={index} className="mitigation-item">{mitigation}</li>
+              <li key={index} className="mitigation-item">
+                <ReactMarkdown>{mitigation}</ReactMarkdown>
+              </li>
             ))}
             {finding.mitigations.length > 2 && (
               <li className="mitigation-more">

@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { NodeExecutionState } from "../types/execution";
+import "./ResultsModal.css";
 
 interface ResultsModalProps {
   nodeId: string;
@@ -11,6 +13,8 @@ interface ResultsModalProps {
 }
 
 export function ResultsModal({ nodeId, nodeType, executionState, onClose }: ResultsModalProps) {
+  const [showRawResponse, setShowRawResponse] = React.useState(false);
+  
   // Prevent body scroll when modal is open
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -79,8 +83,6 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
     }
 
     if (nodeType === 'analysis-stride' || nodeType === 'analysis-stpa-sec') {
-      const [showRawResponse, setShowRawResponse] = React.useState(false);
-      
       return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -112,15 +114,13 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
               overflowY: 'auto'
             }}>
               <h5 style={{ marginBottom: '0.5rem', color: '#3b82f6' }}>Raw Model Response:</h5>
-              <pre style={{
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.8)',
-                lineHeight: '1.5'
+              <div className="results-modal-markdown" style={{
+                fontSize: '0.875rem',
+                color: 'rgba(255,255,255,0.9)',
+                lineHeight: '1.6'
               }}>
-                {results.rawResponse}
-              </pre>
+                <ReactMarkdown>{results.rawResponse}</ReactMarkdown>
+              </div>
             </div>
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
@@ -149,15 +149,17 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
                         {finding.severity}
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>
-                      {finding.description}
-                    </p>
+                    <div className="results-modal-markdown" style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>
+                      <ReactMarkdown>{finding.description}</ReactMarkdown>
+                    </div>
                     {finding.mitigations && finding.mitigations.length > 0 && (
                       <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
                         <strong style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Mitigations:</strong>
                         <ul style={{ margin: '0.25rem 0 0 1.5rem', padding: 0, fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>
                           {finding.mitigations.map((mitigation: string, idx: number) => (
-                            <li key={idx}>{mitigation}</li>
+                            <li key={idx} className="results-modal-markdown mitigation-item">
+                              <ReactMarkdown>{mitigation}</ReactMarkdown>
+                            </li>
                           ))}
                         </ul>
                       </div>

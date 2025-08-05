@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { SecurityFinding, FindingValidation } from '@/types';
 import { RatingScale } from './RatingScale';
 import { StatusButtons } from './StatusButtons';
@@ -112,7 +113,9 @@ export const ValidationControls: React.FC<ValidationControlsProps> = ({
           </span>
           <h4 className="finding-title">{finding.title}</h4>
         </div>
-        <p className="finding-description">{finding.description}</p>
+        <div className="finding-description">
+          <ReactMarkdown>{finding.description}</ReactMarkdown>
+        </div>
       </div>
 
       <div className="validation-section">

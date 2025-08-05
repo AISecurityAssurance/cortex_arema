@@ -138,6 +138,70 @@
   overflow: hidden;
 }
 
+/* Markdown styles within findings */
+.finding-description p {
+  margin: 0 0 0.5rem 0;
+  font-size: inherit;
+  color: inherit;
+  line-height: inherit;
+}
+
+.finding-description p:last-child {
+  margin-bottom: 0;
+}
+
+.finding-description code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: var(--font-family-mono);
+  color: var(--color-primary);
+}
+
+.finding-description pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.finding-description pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.finding-description strong {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.finding-description em {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.finding-description ul,
+.finding-description ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.finding-description li {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.finding-description blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: var(--space-3);
+  margin: 0.5rem 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
 /* Confidence */
 .finding-confidence {
   display: flex;
@@ -206,6 +270,21 @@
   content: '•';
   position: absolute;
   left: 0;
+  color: var(--color-primary);
+}
+
+/* Markdown styles within mitigations */
+.mitigation-item p {
+  margin: 0;
+  display: inline;
+}
+
+.mitigation-item code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.1rem 0.2rem;
+  border-radius: 0.2rem;
+  font-size: 0.85em;
+  font-family: var(--font-family-mono);
   color: var(--color-primary);
 }
 
