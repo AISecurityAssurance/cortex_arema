@@ -28,16 +28,25 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
         return (
           <>
             <div className="config-section">
-              <label className="config-label">Upload Architecture Diagram</label>
+              <label className="config-label">
+                Upload Architecture Diagram <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileUpload}
                 className="config-input"
+                style={{
+                  borderColor: !(node as any).config.file ? '#ef4444' : undefined
+                }}
               />
-              {(node as any).config.fileName && (
-                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
-                  File: {(node as any).config.fileName}
+              {(node as any).config.fileName ? (
+                <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#10b981' }}>
+                  ✓ File: {(node as any).config.fileName}
+                </div>
+              ) : (
+                <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Architecture diagram is required for analysis
                 </div>
               )}
             </div>
@@ -82,6 +91,26 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
       case 'analysis-stpa-sec':
         return (
           <>
+            <div className="config-section">
+              <label className="config-label">
+                System Description <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <textarea
+                value={(node as any).config.systemDescription || ''}
+                onChange={(e) => onUpdateConfig({ ...(node as any).config, systemDescription: e.target.value })}
+                className="config-textarea"
+                placeholder="Required: Describe the system being analyzed (e.g., 'E-commerce platform with microservices architecture handling payment processing and user authentication')"
+                style={{ 
+                  minHeight: '80px',
+                  borderColor: !(node as any).config.systemDescription ? '#ef4444' : undefined 
+                }}
+              />
+              {!(node as any).config.systemDescription && (
+                <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  System description is required for analysis
+                </div>
+              )}
+            </div>
             <div className="config-section">
               <label className="config-label">Model</label>
               <select

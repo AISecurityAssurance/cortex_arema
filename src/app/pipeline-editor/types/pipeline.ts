@@ -36,6 +36,7 @@ export interface StrideAnalysisNode extends BaseNode {
     modelId: string;
     temperature: number;
     promptTemplate: string;
+    systemDescription: string;
   };
   inputs: ["diagram_data" | "text_data"];
   outputs: ["findings_data"];
@@ -49,6 +50,7 @@ export interface StpaSecAnalysisNode extends BaseNode {
     modelId: string;
     temperature: number;
     promptTemplate: string;
+    systemDescription: string;
   };
   inputs: ["diagram_data" | "text_data"];
   outputs: ["findings_data"];

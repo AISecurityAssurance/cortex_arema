@@ -84,14 +84,34 @@ export function BaseNode({
   const getNodeDescription = () => {
     switch (node.type) {
       case "input-diagram":
-        return (node as any).config.fileName || "No file uploaded";
+        const hasFile = (node as any).config.file || (node as any).config.fileName;
+        return (
+          <>
+            <div>{(node as any).config.fileName || "No file uploaded"}</div>
+            {!hasFile && (
+              <div style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>
+                ⚠️ Diagram upload required
+              </div>
+            )}
+          </>
+        );
       case "input-text":
         return (node as any).config.systemName || "No system name";
       case "analysis-stride":
       case "analysis-stpa-sec":
-        return `Model: ${
-          (node as any).config.modelId?.split(".")[2] || "Not selected"
-        }`;
+        const modelName = (node as any).config.modelId?.split(".")[2] || "Not selected";
+        const hasSystemDesc = (node as any).config.systemDescription && 
+                              (node as any).config.systemDescription.trim() !== '';
+        return (
+          <>
+            <div>Model: {modelName}</div>
+            {!hasSystemDesc && (
+              <div style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>
+                ⚠️ System description required
+              </div>
+            )}
+          </>
+        );
       case "output-results":
         return `Mode: ${(node as any).config.displayMode}`;
       default:

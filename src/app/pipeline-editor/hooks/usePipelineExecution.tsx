@@ -42,6 +42,30 @@ export function usePipelineExecution() {
       });
     }
 
+    // Validate input nodes have required data
+    inputNodes.forEach((node) => {
+      if (node.type === "input-diagram") {
+        const config = (node as any).config;
+        if (!config.file && !config.fileName) {
+          errors.push({
+            nodeId: node.id,
+            message: `Architecture diagram node "${node.id}" requires a file upload`,
+            type: "missing_connection" as const,
+          });
+        }
+      }
+      if (node.type === "input-text") {
+        const config = (node as any).config;
+        if (!config.systemName || config.systemName.trim() === '') {
+          warnings.push({
+            nodeId: node.id,
+            message: `Text input node "${node.id}" has no system name`,
+            type: "unused_output" as const,
+          });
+        }
+      }
+    });
+
     if (analysisNodes.length === 0) {
       errors.push({
         message: "Pipeline needs at least one analysis node",
@@ -55,6 +79,16 @@ export function usePipelineExecution() {
         errors.push({
           nodeId: node.id,
           message: `Analysis node "${node.id}" has no input connection`,
+          type: "missing_connection" as const,
+        });
+      }
+      
+      // Validate system description for STRIDE and STPA-SEC nodes
+      const nodeConfig = (node as any).config;
+      if (!nodeConfig.systemDescription || nodeConfig.systemDescription.trim() === '') {
+        errors.push({
+          nodeId: node.id,
+          message: `Analysis node "${node.id}" requires a system description`,
           type: "missing_connection" as const,
         });
       }
@@ -128,8 +162,20 @@ export function usePipelineExecution() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1];
-        resolve(result);
+        const dataUrl = reader.result as string;
+        // Extract base64 portion after the comma
+        const base64 = dataUrl.split(",")[1];
+        if (!base64) {
+          reject(new Error("Failed to extract base64 from data URL"));
+          return;
+        }
+        console.log("Base64 extraction:", {
+          originalLength: dataUrl.length,
+          base64Length: base64.length,
+          hasDataPrefix: dataUrl.startsWith("data:"),
+          extractedCorrectly: !base64.includes("data:") && !base64.includes(",")
+        });
+        resolve(base64);
       };
       reader.onerror = (error) => reject(error);
     });
@@ -141,24 +187,46 @@ export function usePipelineExecution() {
     systemPrompt: string,
     base64Image?: string
   ): Promise<string> => {
-    const response = await fetch("http://localhost:8000/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model_id: modelId,
-        prompt,
-        images: base64Image ? [base64Image] : [],
-        system_instructions: systemPrompt,
-      }),
+    console.log("Calling model API with:", {
+      modelId,
+      promptLength: prompt.length,
+      systemPromptLength: systemPrompt.length,
+      hasImage: !!base64Image,
+      imageCount: base64Image ? 1 : 0,
+      imageBase64Length: base64Image ? base64Image.length : 0,
     });
 
-    if (!response.ok) {
-      throw new Error(`Model API call failed: ${response.statusText}`);
-    }
+    const requestBody = {
+      model_id: modelId,
+      prompt,
+      images: base64Image ? [base64Image] : [],
+      system_instructions: systemPrompt,
+    };
+    
+    console.log("Request body size:", JSON.stringify(requestBody).length, "bytes");
 
-    const json = await response.json();
-    const parsed = JSON.parse(json.response);
-    return parsed.content?.[0]?.text ?? "No response from model.";
+    try {
+      const response = await fetch("http://localhost:8000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Model API error response:", errorText);
+        throw new Error(`Model API call failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const json = await response.json();
+      console.log("Model API response received, parsing...");
+      
+      const parsed = JSON.parse(json.response);
+      return parsed.content?.[0]?.text ?? "No response from model.";
+    } catch (error) {
+      console.error("Error calling model API:", error);
+      throw error;
+    }
   };
 
   const executeNode = async (node: PipelineNode, inputs: any): Promise<any> => {
@@ -166,13 +234,32 @@ export function usePipelineExecution() {
       case "input-diagram":
         const diagramConfig = (node as any).config;
         if (!diagramConfig.file) {
-          throw new Error("No diagram file uploaded");
+          console.error("Diagram node validation failed:", {
+            nodeId: node.id,
+            config: diagramConfig,
+            hasFile: !!diagramConfig.file,
+            hasFileName: !!diagramConfig.fileName
+          });
+          throw new Error("Architecture diagram is required. Please upload a diagram file in the node configuration.");
         }
+        console.log("Processing diagram file:", {
+          fileName: diagramConfig.fileName,
+          fileType: diagramConfig.file.type,
+          fileSize: diagramConfig.file.size,
+        });
         const diagramBase64 = await fileToBase64(diagramConfig.file);
+        console.log("Diagram converted to base64:", {
+          fileName: diagramConfig.fileName,
+          fileType: diagramConfig.file.type,
+          fileSize: diagramConfig.file.size,
+          base64Length: diagramBase64.length,
+          base64SampleStart: diagramBase64.substring(0, 50) + "...",
+        });
         return {
           type: "diagram",
           data: diagramConfig.file,
           base64: diagramBase64,
+          mediaType: diagramConfig.file.type || "image/jpeg",
         };
 
       case "input-text":
@@ -193,44 +280,81 @@ export function usePipelineExecution() {
       case "analysis-stpa-sec":
         const analysisConfig = (node as any).config;
 
+        // Validate required system description
+        if (!analysisConfig.systemDescription || analysisConfig.systemDescription.trim() === '') {
+          console.error("System description validation failed:", {
+            systemDescription: analysisConfig.systemDescription,
+            nodeId: node.id,
+            nodeType: node.type,
+            config: analysisConfig
+          });
+          throw new Error("System description is required for analysis");
+        }
+        
+        // Validate model ID
+        if (!analysisConfig.modelId) {
+          console.error("Model ID is missing:", {
+            nodeId: node.id,
+            config: analysisConfig
+          });
+          throw new Error("Model ID is required for analysis");
+        }
+
         // Get the template
+        console.log("Loading template:", analysisConfig.promptTemplate);
         const template = TemplateStorage.getTemplate(
           analysisConfig.promptTemplate
         );
         if (!template) {
+          console.error("Template not found:", {
+            templateId: analysisConfig.promptTemplate,
+            availableTemplates: TemplateStorage.getTemplates().map(t => t.id)
+          });
           throw new Error(
             `Template ${analysisConfig.promptTemplate} not found`
           );
         }
+        console.log("Template loaded successfully:", template.id);
 
-        // Prepare inputs
-        let systemDescription = "";
+        // Start with the system description from the node config
+        let systemDescription = analysisConfig.systemDescription;
         let architectureComponents = "";
         let base64Image = "";
 
-        // Handle different input types
+        // Handle different input types to enhance the description
         if (inputs) {
           if (Array.isArray(inputs)) {
             inputs.forEach((input) => {
               if (input?.type === "text") {
-                systemDescription = `System Name: ${input.data.systemName}\nDescription: ${input.data.description}\nContext: ${input.data.context}`;
+                // Enhance system description with text input data
+                systemDescription += `\n\nAdditional Details:\nSystem Name: ${input.data.systemName}\nDescription: ${input.data.description}\nContext: ${input.data.context}`;
                 architectureComponents = input.data.description;
               }
               if (input?.type === "diagram") {
                 base64Image = input.base64;
-                architectureComponents += "\n[Architecture diagram provided]";
+                if (!architectureComponents || architectureComponents === "") {
+                  architectureComponents = "The architecture components and their relationships are shown in the provided diagram. Please analyze all visible components, connections, data flows, and trust boundaries.";
+                } else {
+                  architectureComponents += "\n\nAdditional components and relationships are shown in the provided architecture diagram.";
+                }
               }
             });
           } else {
             if (inputs.type === "text") {
-              systemDescription = `System Name: ${inputs.data.systemName}\nDescription: ${inputs.data.description}\nContext: ${inputs.data.context}`;
+              // Enhance system description with text input data
+              systemDescription += `\n\nAdditional Details:\nSystem Name: ${inputs.data.systemName}\nDescription: ${inputs.data.description}\nContext: ${inputs.data.context}`;
               architectureComponents = inputs.data.description;
             }
             if (inputs.type === "diagram") {
               base64Image = inputs.base64;
-              architectureComponents = "[Architecture diagram provided]";
+              architectureComponents = "The architecture components and their relationships are shown in the provided diagram. Please analyze all visible components, connections, data flows, and trust boundaries.";
             }
           }
+        }
+        
+        // If no architecture components were provided, use a default description
+        if (!architectureComponents) {
+          architectureComponents = "Please analyze the system architecture based on the provided description.";
         }
 
         if (!systemDescription && !base64Image) {
@@ -248,6 +372,16 @@ export function usePipelineExecution() {
           components: architectureComponents,
           dataFlows: "Data flows as shown in the architecture",
         };
+
+        console.log("Analysis node inputs:", {
+          nodeId: node.id,
+          nodeType: node.type,
+          hasInputs: !!inputs,
+          inputType: inputs?.type || (Array.isArray(inputs) ? 'array' : 'none'),
+          hasImage: !!base64Image,
+          systemDescription: systemDescription.substring(0, 100) + "...",
+          architectureComponents: architectureComponents.substring(0, 100) + "...",
+        });
 
         const processedPrompt = PromptProcessor.processTemplate(
           template,

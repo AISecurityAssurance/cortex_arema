@@ -48,9 +48,10 @@ export function usePipeline() {
           type: "analysis-stride",
           position,
           config: {
-            modelId: "us.anthropic.claude-opus-4-20250514-v1:0",
+            modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",  // Changed to Sonnet for better performance
             temperature: 0.7,
             promptTemplate: "stride-default",
+            systemDescription: "",
           },
           inputs: ["diagram_data"],
           outputs: ["findings_data"],
@@ -67,6 +68,7 @@ export function usePipeline() {
             modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",
             temperature: 0.7,
             promptTemplate: "stpa-sec-default",
+            systemDescription: "",
           },
           inputs: ["diagram_data"],
           outputs: ["findings_data"],
