@@ -80,7 +80,24 @@ export function ExecutionPanel({ isCollapsed, onToggle, executionState }: Execut
       </div>
       
       {!isCollapsed && (
-        <div className="execution-content">
+        <div 
+          className="execution-content"
+          onWheel={(e) => {
+            const element = e.currentTarget;
+            const { scrollTop, scrollHeight, clientHeight } = element;
+            const isAtTop = scrollTop === 0;
+            const isAtBottom = scrollHeight - scrollTop <= clientHeight;
+            
+            // Prevent scrolling past boundaries
+            if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+              e.preventDefault();
+              return;
+            }
+            
+            // Stop propagation to prevent page scroll
+            e.stopPropagation();
+          }}
+        >
           {executionLogs.length === 0 ? (
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>
               No execution logs yet. Run the pipeline to see logs.

@@ -549,7 +549,7 @@
 }
 
 .execution-panel {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -557,6 +557,8 @@
   border-top: 1px solid var(--panel-border);
   transition: transform 0.3s;
   z-index: 15;
+  max-height: 340px; /* Header (40px) + max content (300px) */
+  overflow: hidden;
 }
 
 .execution-panel.collapsed {
@@ -588,6 +590,7 @@
   padding: 1rem;
   max-height: 300px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .execution-log {
