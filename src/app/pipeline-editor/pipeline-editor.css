@@ -525,6 +525,12 @@
   font-size: 0.875rem;
 }
 
+.config-select option {
+  background: #000000;
+  color: white;
+  padding: 0.5rem;
+}
+
 .config-textarea {
   min-height: 100px;
   resize: vertical;
