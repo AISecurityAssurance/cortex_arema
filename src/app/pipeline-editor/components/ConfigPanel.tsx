@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { PipelineNode } from "../types/pipeline";
+import { ImageModal } from "./ImageModal";
 
 interface ConfigPanelProps {
   node: PipelineNode;
@@ -10,6 +11,20 @@ interface ConfigPanelProps {
 }
 
 export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps) {
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  useEffect(() => {
+    // Create preview URL when file is uploaded
+    if (node.type === 'input-diagram' && (node as any).config.file) {
+      const url = URL.createObjectURL((node as any).config.file);
+      setImagePreviewUrl(url);
+      
+      // Cleanup URL when component unmounts or file changes
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [(node as any).config?.file]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -49,7 +64,57 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                   Architecture diagram is required for analysis
                 </div>
               )}
+              
+              {/* Image Preview */}
+              {imagePreviewUrl && (
+                <div style={{ marginTop: '1rem' }}>
+                  <label className="config-label" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    Preview (click to enlarge)
+                  </label>
+                  <div
+                    onClick={() => setShowImageModal(true)}
+                    style={{
+                      cursor: 'pointer',
+                      border: '2px solid var(--panel-border)',
+                      borderRadius: '0.5rem',
+                      overflow: 'hidden',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      padding: '0.5rem',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#8b5cf6';
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--panel-border)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Architecture diagram preview"
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '200px',
+                        objectFit: 'contain',
+                        borderRadius: '0.25rem',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+            
+            {/* Image Modal */}
+            {showImageModal && imagePreviewUrl && (
+              <ImageModal
+                imageUrl={imagePreviewUrl}
+                fileName={(node as any).config.fileName}
+                onClose={() => setShowImageModal(false)}
+              />
+            )}
           </>
         );
 
