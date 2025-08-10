@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 interface ImageModalProps {
   imageUrl: string;
@@ -9,6 +9,20 @@ interface ImageModalProps {
 }
 
 export function ImageModal({ imageUrl, fileName, onClose }: ImageModalProps) {
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onClose]);
+
   return (
     <div 
       className="image-modal-overlay"
