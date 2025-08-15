@@ -22,6 +22,11 @@ import "./AnalysisView.css";
 const MODEL_IDS = {
   "Claude Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
   "Claude Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+  "Claude 3.5 Sonnet": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+  "Nova Pro": "us.amazon.nova-pro-v1:0",
+  "Nova Lite": "us.amazon.nova-lite-v1:0",
+  "Llama 3.2 11B": "us.meta.llama3-2-11b-instruct-v1:0",
+  "Pixtral Large": "us.mistral.pixtral-large-2502-v1:0",
 };
 
 const MODELS = Object.keys(MODEL_IDS);
@@ -67,7 +72,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   const [selectedTemplate, setSelectedTemplate] =
     useState<PromptTemplate | null>(null);
   const [modelA, setModelA] = useState(MODELS[0]);
-  const [modelB, setModelB] = useState(MODELS[1]);
+  const [modelB, setModelB] = useState(MODELS[1] || MODELS[0]);
   const [analysisType, setAnalysisType] = useState<
     "stride" | "stpa-sec" | "custom"
   >("stride");
@@ -475,17 +480,20 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 onChange={(e) => {
                   const newModelA = e.target.value;
                   setModelA(newModelA);
-                  // If only 2 models exist and we're selecting the same as modelB, swap them
-                  if (MODELS.length === 2 && newModelA === modelB) {
-                    setModelB(modelA);
-                    updateModels(newModelA, modelA);
+                  // If the new selection matches modelB, find another available model for modelB
+                  if (newModelA === modelB) {
+                    const availableModel = MODELS.find(m => m !== newModelA);
+                    if (availableModel) {
+                      setModelB(availableModel);
+                      updateModels(newModelA, availableModel);
+                    }
                   } else {
                     updateModels(newModelA, modelB);
                   }
                 }}
               >
                 {MODELS.map((m) => (
-                  <option key={m} value={m} disabled={m === modelB}>
+                  <option key={m} value={m}>
                     {m}
                   </option>
                 ))}
@@ -496,17 +504,20 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 onChange={(e) => {
                   const newModelB = e.target.value;
                   setModelB(newModelB);
-                  // If only 2 models exist and we're selecting the same as modelA, swap them
-                  if (MODELS.length === 2 && newModelB === modelA) {
-                    setModelA(modelB);
-                    updateModels(modelB, newModelB);
+                  // If the new selection matches modelA, find another available model for modelA
+                  if (newModelB === modelA) {
+                    const availableModel = MODELS.find(m => m !== newModelB);
+                    if (availableModel) {
+                      setModelA(availableModel);
+                      updateModels(availableModel, newModelB);
+                    }
                   } else {
                     updateModels(modelA, newModelB);
                   }
                 }}
               >
                 {MODELS.map((m) => (
-                  <option key={m} value={m} disabled={m === modelA}>
+                  <option key={m} value={m}>
                     {m}
                   </option>
                 ))}

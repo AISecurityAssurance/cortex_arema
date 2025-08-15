@@ -185,6 +185,11 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
               >
                 <option value="us.anthropic.claude-opus-4-20250514-v1:0">Claude Opus</option>
                 <option value="us.anthropic.claude-sonnet-4-20250514-v1:0">Claude Sonnet</option>
+                <option value="us.anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
+                <option value="us.amazon.nova-pro-v1:0">Nova Pro</option>
+                <option value="us.amazon.nova-lite-v1:0">Nova Lite</option>
+                <option value="us.meta.llama3-2-11b-instruct-v1:0">Llama 3.2 11B</option>
+                <option value="us.mistral.pixtral-large-2502-v1:0">Pixtral Large</option>
               </select>
             </div>
             <div className="config-section">
