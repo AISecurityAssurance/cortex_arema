@@ -1,9 +1,19 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { PipelineNode, Connection, Point } from "../types/pipeline";
+import { useHistory } from "./useHistory";
+
+interface PipelineState {
+  nodes: PipelineNode[];
+  connections: Connection[];
+}
 
 export function usePipeline() {
-  const [nodes, setNodes] = useState<PipelineNode[]>([]);
-  const [connections, setConnections] = useState<Connection[]>([]);
+  const { state, setState, undo, redo, canUndo, canRedo } = useHistory<PipelineState>({
+    nodes: [],
+    connections: [],
+  });
+  
+  const { nodes, connections } = state;
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
 
@@ -11,6 +21,27 @@ export function usePipeline() {
     `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const generateConnectionId = () =>
     `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  const setNodes = useCallback((updater: (prev: PipelineNode[]) => PipelineNode[]) => {
+    setState(prev => ({
+      ...prev,
+      nodes: updater(prev.nodes)
+    }));
+  }, [setState]);
+
+  const setConnections = useCallback((updater: (prev: Connection[]) => Connection[]) => {
+    setState(prev => ({
+      ...prev,
+      connections: updater(prev.connections)
+    }));
+  }, [setState]);
+
+  const setBoth = useCallback((nodeUpdater: (prev: PipelineNode[]) => PipelineNode[], connUpdater: (prev: Connection[]) => Connection[]) => {
+    setState(prev => ({
+      nodes: nodeUpdater(prev.nodes),
+      connections: connUpdater(prev.connections)
+    }));
+  }, [setState]);
 
   const addNode = useCallback((nodeType: string, position: Point) => {
     const nodeId = generateNodeId();
@@ -106,14 +137,14 @@ export function usePipeline() {
         )
       );
     },
-    []
+    [setNodes]
   );
 
   const deleteNode = useCallback(
     (nodeId: string) => {
-      setNodes((prev) => prev.filter((node) => node.id !== nodeId));
-      setConnections((prev) =>
-        prev.filter(
+      setBoth(
+        (prevNodes) => prevNodes.filter((node) => node.id !== nodeId),
+        (prevConns) => prevConns.filter(
           (conn) => conn.from.nodeId !== nodeId && conn.to.nodeId !== nodeId
         )
       );
@@ -123,19 +154,19 @@ export function usePipeline() {
         return newSet;
       });
     },
-    []
+    [setBoth]
   );
 
   const deleteSelectedNodes = useCallback(() => {
     const nodeIdsToDelete = Array.from(selectedNodeIds);
-    setNodes((prev) => prev.filter((node) => !nodeIdsToDelete.includes(node.id)));
-    setConnections((prev) =>
-      prev.filter(
+    setBoth(
+      (prevNodes) => prevNodes.filter((node) => !nodeIdsToDelete.includes(node.id)),
+      (prevConns) => prevConns.filter(
         (conn) => !nodeIdsToDelete.includes(conn.from.nodeId) && !nodeIdsToDelete.includes(conn.to.nodeId)
       )
     );
     setSelectedNodeIds(new Set());
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, setBoth]);
 
   const selectNode = useCallback((nodeId: string | null, multiSelect?: boolean) => {
     if (!nodeId) {
@@ -170,7 +201,7 @@ export function usePipeline() {
     setNodes((prev) =>
       prev.map((node) => (node.id === nodeId ? { ...node, position } : node))
     );
-  }, []);
+  }, [setNodes]);
 
   const updateMultipleNodePositions = useCallback((updates: Map<string, Point>) => {
     setNodes((prev) =>
@@ -179,7 +210,7 @@ export function usePipeline() {
         return newPosition ? { ...node, position: newPosition } : node;
       })
     );
-  }, []);
+  }, [setNodes]);
 
   const duplicateSelectedNodes = useCallback(() => {
     const nodesToDuplicate = nodes.filter(n => selectedNodeIds.has(n.id));
@@ -198,7 +229,7 @@ export function usePipeline() {
     
     setNodes(prev => [...prev, ...newNodes]);
     setSelectedNodeIds(new Set(newNodes.map(n => n.id)));
-  }, [nodes, selectedNodeIds]);
+  }, [nodes, selectedNodeIds, setNodes]);
 
   const addConnection = useCallback(
     (
@@ -225,13 +256,13 @@ export function usePipeline() {
         return [...prev, newConnection];
       });
     },
-    [nodes]
+    [nodes, setConnections]
   );
 
   const deleteConnection = useCallback((connectionId: string) => {
     setConnections((prev) => prev.filter((conn) => conn.id !== connectionId));
     setSelectedConnectionId(null);
-  }, []);
+  }, [setConnections]);
 
   const selectConnection = useCallback((connectionId: string | null) => {
     setSelectedConnectionId(connectionId);
@@ -244,6 +275,22 @@ export function usePipeline() {
     setSelectedNodeIds(new Set());
     setSelectedConnectionId(null);
   }, []);
+
+  // Handle keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        if (canRedo) redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, canUndo, canRedo]);
 
   return {
     nodes,
@@ -264,6 +311,10 @@ export function usePipeline() {
     updateNodePosition,
     updateMultipleNodePositions,
     clearSelection,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   };
 }
 

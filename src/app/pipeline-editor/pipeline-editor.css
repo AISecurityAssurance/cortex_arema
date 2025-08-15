@@ -94,6 +94,37 @@
   cursor: pointer;
 }
 
+.btn-undo,
+.btn-redo {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.25rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-undo:hover:not(:disabled),
+.btn-redo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--node-selected);
+}
+
+.btn-undo:disabled,
+.btn-redo:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.header-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--panel-border);
+  margin: 0 0.5rem;
+}
+
 .pipeline-body {
   display: flex;
   flex: 1;

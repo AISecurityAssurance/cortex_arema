@@ -31,6 +31,10 @@ export default function PipelineEditorPage() {
     updateNodePosition,
     updateMultipleNodePositions,
     clearSelection,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = usePipeline();
 
   const {
@@ -74,6 +78,23 @@ export default function PipelineEditorPage() {
           </span>
         </div>
         <div className="header-actions">
+          <button
+            className="btn-undo"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            ↶
+          </button>
+          <button
+            className="btn-redo"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            ↷
+          </button>
+          <div className="header-separator" />
           <button
             className="btn-run"
             onClick={handleRunPipeline}
@@ -137,6 +158,8 @@ export default function PipelineEditorPage() {
         <div><kbd>Delete</kbd>: Delete selected</div>
         <div><kbd>Ctrl</kbd> + <kbd>A</kbd>: Select all</div>
         <div><kbd>Ctrl</kbd> + <kbd>D</kbd>: Duplicate</div>
+        <div><kbd>Ctrl</kbd> + <kbd>Z</kbd>: Undo</div>
+        <div><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: Redo</div>
         <div><kbd>Esc</kbd>: Clear selection</div>
         <div><kbd>Alt</kbd> + Drag: Pan canvas</div>
       </div>
