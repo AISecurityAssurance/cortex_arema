@@ -125,6 +125,40 @@
   margin: 0 0.5rem;
 }
 
+.btn-auto-layout {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(139, 92, 246, 0.1);
+  color: white;
+  border: 1px solid var(--node-selected);
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-auto-layout:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--node-selected);
+  transform: translateY(-1px);
+}
+
+.btn-auto-layout:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-auto-layout:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-auto-layout svg {
+  width: 16px;
+  height: 16px;
+}
+
 .pipeline-body {
   display: flex;
   flex: 1;

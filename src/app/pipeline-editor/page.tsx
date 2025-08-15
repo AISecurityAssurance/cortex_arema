@@ -39,6 +39,7 @@ export default function PipelineEditorPage() {
     updateNodePosition,
     updateMultipleNodePositions,
     clearSelection,
+    autoLayout,
     undo,
     redo,
     canUndo,
@@ -101,6 +102,21 @@ export default function PipelineEditorPage() {
             title={`Redo (${modKey}+Shift+Z)`}
           >
             ↷
+          </button>
+          <div className="header-separator" />
+          <button
+            className="btn-auto-layout"
+            onClick={autoLayout}
+            disabled={nodes.length === 0}
+            title="Auto-arrange nodes"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <rect x="1" y="1" width="4" height="4" />
+              <rect x="11" y="1" width="4" height="4" />
+              <rect x="6" y="11" width="4" height="4" />
+              <path d="M3 5v2h2v2h2V7h2v2h2V7h2V5" stroke="currentColor" strokeWidth="1" fill="none" />
+            </svg>
+            Auto Layout
           </button>
           <div className="header-separator" />
           <button

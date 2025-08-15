@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { PipelineNode, Connection, Point } from "../types/pipeline";
 import { useHistory } from "./useHistory";
+import { autoLayoutNodes, suggestLayoutDirection } from "../utils/autoLayout";
 
 interface PipelineState {
   nodes: PipelineNode[];
@@ -276,6 +277,21 @@ export function usePipeline() {
     setSelectedConnectionId(null);
   }, []);
 
+  const autoLayout = useCallback(() => {
+    if (nodes.length === 0) return;
+    
+    // Determine best layout direction
+    const direction = suggestLayoutDirection(nodes);
+    
+    // Calculate new positions
+    const newPositions = autoLayoutNodes(nodes, connections, { direction });
+    
+    // Apply the new positions
+    if (newPositions.size > 0) {
+      updateMultipleNodePositions(newPositions);
+    }
+  }, [nodes, connections, updateMultipleNodePositions]);
+
   // Handle keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -323,6 +339,7 @@ export function usePipeline() {
     updateNodePosition,
     updateMultipleNodePositions,
     clearSelection,
+    autoLayout,
     undo,
     redo,
     canUndo,
