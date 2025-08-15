@@ -15,14 +15,21 @@ export default function PipelineEditorPage() {
   const {
     nodes,
     connections,
-    selectedNodeId,
+    selectedNodeIds,
+    selectedConnectionId,
     addNode,
     updateNode,
     deleteNode,
+    deleteSelectedNodes,
     selectNode,
+    selectMultipleNodes,
+    selectAllNodes,
+    duplicateSelectedNodes,
     addConnection,
     deleteConnection,
+    selectConnection,
     updateNodePosition,
+    updateMultipleNodePositions,
     clearSelection,
   } = usePipeline();
 
@@ -33,9 +40,13 @@ export default function PipelineEditorPage() {
     getNodeExecutionState,
   } = usePipelineExecution();
 
-  const selectedNode = selectedNodeId
-    ? nodes.find((n) => n.id === selectedNodeId)
+  const selectedNode = selectedNodeIds.size === 1
+    ? nodes.find((n) => selectedNodeIds.has(n.id))
     : null;
+    
+  const handleOpenConfig = (nodeId: string) => {
+    selectNode(nodeId);
+  };
 
   const handleNodeDrop = (
     nodeType: string,
@@ -86,13 +97,20 @@ export default function PipelineEditorPage() {
         <PipelineCanvas
           nodes={nodes}
           connections={connections}
-          selectedNodeId={selectedNodeId}
+          selectedNodeIds={selectedNodeIds}
+          selectedConnectionId={selectedConnectionId}
           executionStates={executionState.nodeStates}
           onNodeSelect={selectNode}
           onNodeMove={updateNodePosition}
+          onMultipleNodeMove={updateMultipleNodePositions}
           onNodeDelete={deleteNode}
+          onDeleteSelectedNodes={deleteSelectedNodes}
+          onSelectAllNodes={selectAllNodes}
+          onDuplicateSelectedNodes={duplicateSelectedNodes}
+          onSelectMultipleNodes={selectMultipleNodes}
           onConnectionCreate={addConnection}
           onConnectionDelete={deleteConnection}
+          onConnectionSelect={selectConnection}
           onCanvasClick={clearSelection}
         />
 
@@ -110,6 +128,18 @@ export default function PipelineEditorPage() {
         onToggle={() => setIsPanelCollapsed(!isPanelCollapsed)}
         executionState={executionState}
       />
+      
+      {/* Keyboard Shortcuts Help */}
+      <div className="shortcut-hint">
+        <div><kbd>Shift</kbd> + Drag: Box select</div>
+        <div><kbd>Ctrl</kbd> + Click: Multi-select</div>
+        <div><kbd>Double Click</kbd>: Open config</div>
+        <div><kbd>Delete</kbd>: Delete selected</div>
+        <div><kbd>Ctrl</kbd> + <kbd>A</kbd>: Select all</div>
+        <div><kbd>Ctrl</kbd> + <kbd>D</kbd>: Duplicate</div>
+        <div><kbd>Esc</kbd>: Clear selection</div>
+        <div><kbd>Alt</kbd> + Drag: Pan canvas</div>
+      </div>
     </div>
   );
 }

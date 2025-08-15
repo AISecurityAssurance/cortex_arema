@@ -10,35 +10,56 @@ import { ResultsModal } from "./ResultsModal";
 interface PipelineCanvasProps {
   nodes: PipelineNode[];
   connections: Connection[];
-  selectedNodeId: string | null;
+  selectedNodeIds: Set<string>;
+  selectedConnectionId: string | null;
   executionStates: Map<string, NodeExecutionState>;
-  onNodeSelect: (nodeId: string | null) => void;
+  onNodeSelect: (nodeId: string | null, multiSelect?: boolean) => void;
   onNodeMove: (nodeId: string, position: Point) => void;
+  onMultipleNodeMove: (updates: Map<string, Point>) => void;
   onNodeDelete: (nodeId: string) => void;
+  onDeleteSelectedNodes: () => void;
+  onSelectAllNodes: () => void;
+  onDuplicateSelectedNodes: () => void;
+  onSelectMultipleNodes: (nodeIds: string[]) => void;
   onConnectionCreate: (from: { nodeId: string; output: string }, to: { nodeId: string; input: string }) => void;
   onConnectionDelete: (connectionId: string) => void;
+  onConnectionSelect: (connectionId: string | null) => void;
   onCanvasClick: () => void;
+}
+
+interface SelectionBox {
+  start: Point;
+  end: Point;
 }
 
 export function PipelineCanvas({
   nodes,
   connections,
-  selectedNodeId,
+  selectedNodeIds,
+  selectedConnectionId,
   executionStates,
   onNodeSelect,
   onNodeMove,
+  onMultipleNodeMove,
   onNodeDelete,
+  onDeleteSelectedNodes,
+  onSelectAllNodes,
+  onDuplicateSelectedNodes,
+  onSelectMultipleNodes,
   onConnectionCreate,
   onConnectionDelete,
+  onConnectionSelect,
   onCanvasClick,
 }: PipelineCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [viewportTransform, setViewportTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isDraggingNode, setIsDraggingNode] = useState(false);
-  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [draggedNodeIds, setDraggedNodeIds] = useState<Set<string>>(new Set());
+  const [dragOffsets, setDragOffsets] = useState<Map<string, Point>>(new Map());
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isBoxSelecting, setIsBoxSelecting] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
   
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{ nodeId: string; output: string; position: Point } | null>(null);
@@ -48,25 +69,62 @@ export function PipelineCanvas({
 
   const handleNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return;
-
+    
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    setIsDraggingNode(true);
-    setDraggedNodeId(nodeId);
-    setDragOffset({
-      x: (e.clientX - rect.left) / viewportTransform.scale - viewportTransform.x - node.position.x,
-      y: (e.clientY - rect.top) / viewportTransform.scale - viewportTransform.y - node.position.y
+    const isMultiSelect = e.ctrlKey || e.metaKey;
+    const isNodeSelected = selectedNodeIds.has(nodeId);
+    
+    if (isMultiSelect) {
+      onNodeSelect(nodeId, true);
+    } else if (!isNodeSelected) {
+      onNodeSelect(nodeId, false);
+    }
+    
+    // Set up dragging for all selected nodes
+    const nodesToDrag = isNodeSelected ? selectedNodeIds : new Set([nodeId]);
+    const offsets = new Map<string, Point>();
+    
+    nodesToDrag.forEach(id => {
+      const node = nodes.find(n => n.id === id);
+      if (node) {
+        offsets.set(id, {
+          x: (e.clientX - rect.left) / viewportTransform.scale - viewportTransform.x - node.position.x,
+          y: (e.clientY - rect.top) / viewportTransform.scale - viewportTransform.y - node.position.y
+        });
+      }
     });
-    onNodeSelect(nodeId);
-  }, [nodes, viewportTransform, onNodeSelect]);
+    
+    setIsDraggingNode(true);
+    setDraggedNodeIds(nodesToDrag);
+    setDragOffsets(offsets);
+  }, [nodes, viewportTransform, selectedNodeIds, onNodeSelect]);
+
+  const handleNodeDoubleClick = useCallback((e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    // Double-click opens config panel - handled by parent through selection
+    onNodeSelect(nodeId, false);
+  }, [onNodeSelect]);
 
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - viewportTransform.x, y: e.clientY - viewportTransform.y });
+      e.preventDefault();
+    } else if (e.button === 0 && e.shiftKey) {
+      // Start box selection
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const canvasX = (e.clientX - rect.left) / viewportTransform.scale - viewportTransform.x;
+      const canvasY = (e.clientY - rect.top) / viewportTransform.scale - viewportTransform.y;
+      
+      setIsBoxSelecting(true);
+      setSelectionBox({
+        start: { x: canvasX, y: canvasY },
+        end: { x: canvasX, y: canvasY }
+      });
       e.preventDefault();
     } else if (e.button === 0) {
       onCanvasClick();
@@ -81,23 +139,58 @@ export function PipelineCanvas({
     const canvasY = (e.clientY - rect.top) / viewportTransform.scale - viewportTransform.y;
     setMousePosition({ x: canvasX, y: canvasY });
 
-    if (isDraggingNode && draggedNodeId) {
-      const newX = Math.round((canvasX - dragOffset.x) / 20) * 20;
-      const newY = Math.round((canvasY - dragOffset.y) / 20) * 20;
-      onNodeMove(draggedNodeId, { x: newX, y: newY });
+    if (isDraggingNode && draggedNodeIds.size > 0) {
+      const updates = new Map<string, Point>();
+      
+      draggedNodeIds.forEach(nodeId => {
+        const offset = dragOffsets.get(nodeId);
+        if (offset) {
+          const newX = Math.round((canvasX - offset.x) / 20) * 20;
+          const newY = Math.round((canvasY - offset.y) / 20) * 20;
+          updates.set(nodeId, { x: newX, y: newY });
+        }
+      });
+      
+      if (updates.size > 0) {
+        onMultipleNodeMove(updates);
+      }
     } else if (isPanning) {
       setViewportTransform(prev => ({
         ...prev,
         x: e.clientX - panStart.x,
         y: e.clientY - panStart.y
       }));
+    } else if (isBoxSelecting && selectionBox) {
+      setSelectionBox({
+        ...selectionBox,
+        end: { x: canvasX, y: canvasY }
+      });
+      
+      // Find nodes within selection box
+      const minX = Math.min(selectionBox.start.x, canvasX);
+      const maxX = Math.max(selectionBox.start.x, canvasX);
+      const minY = Math.min(selectionBox.start.y, canvasY);
+      const maxY = Math.max(selectionBox.start.y, canvasY);
+      
+      const nodesInBox = nodes.filter(node => {
+        const nodeRight = node.position.x + 200; // Approximate node width
+        const nodeBottom = node.position.y + 100; // Approximate node height
+        
+        return node.position.x < maxX && nodeRight > minX &&
+               node.position.y < maxY && nodeBottom > minY;
+      });
+      
+      onSelectMultipleNodes(nodesInBox.map(n => n.id));
     }
-  }, [isDraggingNode, draggedNodeId, dragOffset, isPanning, panStart, viewportTransform, onNodeMove]);
+  }, [isDraggingNode, draggedNodeIds, dragOffsets, isPanning, panStart, isBoxSelecting, selectionBox, viewportTransform, nodes, onNodeMove, onMultipleNodeMove, onSelectMultipleNodes]);
 
   const handleMouseUp = useCallback(() => {
     setIsDraggingNode(false);
-    setDraggedNodeId(null);
+    setDraggedNodeIds(new Set());
+    setDragOffsets(new Map());
     setIsPanning(false);
+    setIsBoxSelecting(false);
+    setSelectionBox(null);
     if (isConnecting) {
       setIsConnecting(false);
       setConnectionStart(null);
@@ -165,10 +258,29 @@ export function PipelineCanvas({
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Delete' && selectedNodeId) {
-      onNodeDelete(selectedNodeId);
+    // Prevent shortcuts when typing in inputs
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return;
     }
-  }, [selectedNodeId, onNodeDelete]);
+    
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (selectedConnectionId) {
+        onConnectionDelete(selectedConnectionId);
+      } else if (selectedNodeIds.size > 0) {
+        onDeleteSelectedNodes();
+      }
+    } else if (e.key === 'Escape') {
+      onCanvasClick();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+      e.preventDefault();
+      onSelectAllNodes();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+      e.preventDefault();
+      if (selectedNodeIds.size > 0) {
+        onDuplicateSelectedNodes();
+      }
+    }
+  }, [selectedNodeIds, selectedConnectionId, onDeleteSelectedNodes, onConnectionDelete, onCanvasClick, onSelectAllNodes, onDuplicateSelectedNodes]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -196,13 +308,20 @@ export function PipelineCanvas({
             const toNode = nodes.find(n => n.id === connection.to.nodeId);
             if (!fromNode || !toNode) return null;
 
+            // Check if either connected node is running
+            const isAnimated = 
+              executionStates.get(connection.from.nodeId)?.status === 'running' ||
+              executionStates.get(connection.to.nodeId)?.status === 'running';
+            
             return (
               <ConnectionLine
                 key={connection.id}
                 from={{ x: fromNode.position.x + 200, y: fromNode.position.y + 50 }}
                 to={{ x: toNode.position.x, y: toNode.position.y + 50 }}
                 isValid={connection.isValid}
-                onClick={() => onConnectionDelete(connection.id)}
+                isSelected={connection.id === selectedConnectionId}
+                isAnimated={isAnimated}
+                onClick={() => onConnectionSelect(connection.id)}
               />
             );
           })}
@@ -222,12 +341,13 @@ export function PipelineCanvas({
             <BaseNode
               key={node.id}
               node={node}
-              isSelected={node.id === selectedNodeId}
+              isSelected={selectedNodeIds.has(node.id)}
               executionState={executionStates.get(node.id)}
               isConnecting={isConnecting}
               connectionStart={connectionStart}
               hoveredPort={hoveredPort}
               onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+              onDoubleClick={(e) => handleNodeDoubleClick(e, node.id)}
               onPortMouseDown={handlePortMouseDown}
               onPortMouseUp={handlePortMouseUp}
               onPortMouseEnter={handlePortMouseEnter}
@@ -237,6 +357,19 @@ export function PipelineCanvas({
             />
           ))}
         </div>
+        
+        {/* Selection Box */}
+        {isBoxSelecting && selectionBox && (
+          <div
+            className="selection-box"
+            style={{
+              left: Math.min(selectionBox.start.x, selectionBox.end.x),
+              top: Math.min(selectionBox.start.y, selectionBox.end.y),
+              width: Math.abs(selectionBox.end.x - selectionBox.start.x),
+              height: Math.abs(selectionBox.end.y - selectionBox.start.y),
+            }}
+          />
+        )}
       </div>
       
       {resultsModalNode && (

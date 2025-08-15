@@ -16,6 +16,7 @@ interface BaseNodeProps {
     portName: string;
   } | null;
   onMouseDown: (e: React.MouseEvent) => void;
+  onDoubleClick?: (e: React.MouseEvent) => void;
   onPortMouseDown: (
     e: React.MouseEvent,
     nodeId: string,
@@ -38,6 +39,18 @@ interface BaseNodeProps {
   onViewResults?: () => void;
 }
 
+// Helper function to check if connection is valid
+function isValidConnection(output: string, input: string): boolean {
+  // Define valid connection types
+  const validConnections: Record<string, string[]> = {
+    'diagram_data': ['diagram_data'],
+    'text_data': ['text_data', 'diagram_data'], // Text can connect to either
+    'findings_data': ['findings_data'],
+  };
+  
+  return validConnections[output]?.includes(input) || false;
+}
+
 export function BaseNode({
   node,
   isSelected,
@@ -46,6 +59,7 @@ export function BaseNode({
   connectionStart,
   hoveredPort,
   onMouseDown,
+  onDoubleClick,
   onPortMouseDown,
   onPortMouseUp,
   onPortMouseEnter,
@@ -130,12 +144,16 @@ export function BaseNode({
         top: node.position.y,
       }}
       onMouseDown={onMouseDown}
+      onDoubleClick={onDoubleClick}
     >
       <div className={`node-header ${nodeTypeClass}`}>
         <span className="node-title">{getNodeTitle()}</span>
         <button
           className="node-config-btn"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDoubleClick?.(e);
+          }}
         >
           ⚙
         </button>
@@ -260,8 +278,11 @@ export function BaseNode({
             className={`port input ${
               isConnecting &&
               connectionStart &&
-              connectionStart.nodeId !== node.id
-                ? "connectable"
+              connectionStart.nodeId !== node.id &&
+              isValidConnection(connectionStart.output, (node as any).inputs[0])
+                ? "valid-target"
+                : isConnecting && connectionStart && connectionStart.nodeId !== node.id
+                ? "invalid-target"
                 : ""
             } ${
               hoveredPort?.nodeId === node.id &&

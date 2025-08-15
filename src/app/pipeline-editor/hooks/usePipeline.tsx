@@ -4,7 +4,8 @@ import { PipelineNode, Connection, Point } from "../types/pipeline";
 export function usePipeline() {
   const [nodes, setNodes] = useState<PipelineNode[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
 
   const generateNodeId = () =>
     `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -94,7 +95,7 @@ export function usePipeline() {
     }
 
     setNodes((prev) => [...prev, newNode]);
-    setSelectedNodeId(nodeId);
+    setSelectedNodeIds(new Set([nodeId]));
   }, []);
 
   const updateNode = useCallback(
@@ -116,22 +117,88 @@ export function usePipeline() {
           (conn) => conn.from.nodeId !== nodeId && conn.to.nodeId !== nodeId
         )
       );
-      if (selectedNodeId === nodeId) {
-        setSelectedNodeId(null);
-      }
+      setSelectedNodeIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(nodeId);
+        return newSet;
+      });
     },
-    [selectedNodeId]
+    []
   );
 
-  const selectNode = useCallback((nodeId: string | null) => {
-    setSelectedNodeId(nodeId);
+  const deleteSelectedNodes = useCallback(() => {
+    const nodeIdsToDelete = Array.from(selectedNodeIds);
+    setNodes((prev) => prev.filter((node) => !nodeIdsToDelete.includes(node.id)));
+    setConnections((prev) =>
+      prev.filter(
+        (conn) => !nodeIdsToDelete.includes(conn.from.nodeId) && !nodeIdsToDelete.includes(conn.to.nodeId)
+      )
+    );
+    setSelectedNodeIds(new Set());
+  }, [selectedNodeIds]);
+
+  const selectNode = useCallback((nodeId: string | null, multiSelect?: boolean) => {
+    if (!nodeId) {
+      setSelectedNodeIds(new Set());
+      return;
+    }
+    
+    if (multiSelect) {
+      setSelectedNodeIds((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(nodeId)) {
+          newSet.delete(nodeId);
+        } else {
+          newSet.add(nodeId);
+        }
+        return newSet;
+      });
+    } else {
+      setSelectedNodeIds(new Set([nodeId]));
+    }
   }, []);
+
+  const selectMultipleNodes = useCallback((nodeIds: string[]) => {
+    setSelectedNodeIds(new Set(nodeIds));
+  }, []);
+
+  const selectAllNodes = useCallback(() => {
+    setSelectedNodeIds(new Set(nodes.map(n => n.id)));
+  }, [nodes]);
 
   const updateNodePosition = useCallback((nodeId: string, position: Point) => {
     setNodes((prev) =>
       prev.map((node) => (node.id === nodeId ? { ...node, position } : node))
     );
   }, []);
+
+  const updateMultipleNodePositions = useCallback((updates: Map<string, Point>) => {
+    setNodes((prev) =>
+      prev.map((node) => {
+        const newPosition = updates.get(node.id);
+        return newPosition ? { ...node, position: newPosition } : node;
+      })
+    );
+  }, []);
+
+  const duplicateSelectedNodes = useCallback(() => {
+    const nodesToDuplicate = nodes.filter(n => selectedNodeIds.has(n.id));
+    const newNodes: PipelineNode[] = [];
+    const idMap = new Map<string, string>();
+    
+    nodesToDuplicate.forEach(node => {
+      const newId = generateNodeId();
+      idMap.set(node.id, newId);
+      newNodes.push({
+        ...node,
+        id: newId,
+        position: { x: node.position.x + 50, y: node.position.y + 50 }
+      });
+    });
+    
+    setNodes(prev => [...prev, ...newNodes]);
+    setSelectedNodeIds(new Set(newNodes.map(n => n.id)));
+  }, [nodes, selectedNodeIds]);
 
   const addConnection = useCallback(
     (
@@ -163,23 +230,39 @@ export function usePipeline() {
 
   const deleteConnection = useCallback((connectionId: string) => {
     setConnections((prev) => prev.filter((conn) => conn.id !== connectionId));
+    setSelectedConnectionId(null);
+  }, []);
+
+  const selectConnection = useCallback((connectionId: string | null) => {
+    setSelectedConnectionId(connectionId);
+    if (connectionId) {
+      setSelectedNodeIds(new Set());
+    }
   }, []);
 
   const clearSelection = useCallback(() => {
-    setSelectedNodeId(null);
+    setSelectedNodeIds(new Set());
+    setSelectedConnectionId(null);
   }, []);
 
   return {
     nodes,
     connections,
-    selectedNodeId,
+    selectedNodeIds,
+    selectedConnectionId,
     addNode,
     updateNode,
     deleteNode,
+    deleteSelectedNodes,
     selectNode,
+    selectMultipleNodes,
+    selectAllNodes,
+    duplicateSelectedNodes,
     addConnection,
     deleteConnection,
+    selectConnection,
     updateNodePosition,
+    updateMultipleNodePositions,
     clearSelection,
   };
 }
