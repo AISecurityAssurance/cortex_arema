@@ -11,6 +11,14 @@ import "./pipeline-editor.css";
 
 export default function PipelineEditorPage() {
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+  
+  // Detect platform
+  React.useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+  }, []);
+  
+  const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   const {
     nodes,
@@ -82,7 +90,7 @@ export default function PipelineEditorPage() {
             className="btn-undo"
             onClick={undo}
             disabled={!canUndo}
-            title="Undo (Ctrl+Z)"
+            title={`Undo (${modKey}+Z)`}
           >
             ↶
           </button>
@@ -90,7 +98,7 @@ export default function PipelineEditorPage() {
             className="btn-redo"
             onClick={redo}
             disabled={!canRedo}
-            title="Redo (Ctrl+Shift+Z)"
+            title={`Redo (${modKey}+Shift+Z)`}
           >
             ↷
           </button>
@@ -153,15 +161,15 @@ export default function PipelineEditorPage() {
       {/* Keyboard Shortcuts Help */}
       <div className="shortcut-hint">
         <div><kbd>Shift</kbd> + Drag: Box select</div>
-        <div><kbd>Ctrl</kbd> + Click: Multi-select</div>
+        <div><kbd>{modKey}</kbd> + Click: Multi-select</div>
         <div><kbd>Double Click</kbd>: Open config</div>
         <div><kbd>Delete</kbd>: Delete selected</div>
-        <div><kbd>Ctrl</kbd> + <kbd>A</kbd>: Select all</div>
-        <div><kbd>Ctrl</kbd> + <kbd>D</kbd>: Duplicate</div>
-        <div><kbd>Ctrl</kbd> + <kbd>Z</kbd>: Undo</div>
-        <div><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: Redo</div>
+        <div><kbd>{modKey}</kbd> + <kbd>A</kbd>: Select all</div>
+        <div><kbd>{modKey}</kbd> + <kbd>D</kbd>: Duplicate</div>
+        <div><kbd>{modKey}</kbd> + <kbd>Z</kbd>: Undo</div>
+        <div><kbd>{modKey}</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: Redo</div>
         <div><kbd>Esc</kbd>: Clear selection</div>
-        <div><kbd>Alt</kbd> + Drag: Pan canvas</div>
+        <div><kbd>{isMac ? 'Option' : 'Alt'}</kbd> + Drag: Pan canvas</div>
       </div>
     </div>
   );

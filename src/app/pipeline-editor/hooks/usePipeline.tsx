@@ -279,6 +279,18 @@ export function usePipeline() {
   // Handle keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input field
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement ||
+          (e.target as HTMLElement).contentEditable === 'true') {
+        return;
+      }
+      
+      // Only handle undo/redo if we're focused on the canvas area
+      const isInPipelineEditor = (e.target as HTMLElement).closest('.pipeline-editor');
+      if (!isInPipelineEditor) return;
+      
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         if (canUndo) undo();

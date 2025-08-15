@@ -258,9 +258,21 @@ export function PipelineCanvas({
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Prevent shortcuts when typing in inputs
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    // Prevent shortcuts when typing in inputs or other editable elements
+    if (e.target instanceof HTMLInputElement || 
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement ||
+        (e.target as HTMLElement).contentEditable === 'true') {
       return;
+    }
+    
+    // Only handle shortcuts if we're focused on the canvas area
+    const isInCanvas = (e.target as HTMLElement).closest('.pipeline-canvas');
+    if (!isInCanvas && !document.activeElement?.closest('.pipeline-canvas')) {
+      // Allow Delete and Escape to work even when not directly on canvas
+      if (e.key !== 'Delete' && e.key !== 'Backspace' && e.key !== 'Escape') {
+        return;
+      }
     }
     
     if (e.key === 'Delete' || e.key === 'Backspace') {
