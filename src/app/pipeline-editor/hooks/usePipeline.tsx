@@ -280,8 +280,8 @@ export function usePipeline() {
   const autoLayout = useCallback(() => {
     if (nodes.length === 0) return;
     
-    // Determine best layout direction
-    const direction = suggestLayoutDirection(nodes);
+    // Determine best layout direction based on nodes and connections
+    const direction = suggestLayoutDirection(nodes, connections);
     
     // Calculate new positions
     const newPositions = autoLayoutNodes(nodes, connections, { direction });

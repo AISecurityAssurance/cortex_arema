@@ -12,8 +12,8 @@ export interface LayoutOptions {
 const DEFAULT_OPTIONS: Required<LayoutOptions> = {
   nodeWidth: 200,
   nodeHeight: 120,
-  nodeSpacingX: 100,
-  nodeSpacingY: 80,
+  nodeSpacingX: 120,  // Increased horizontal spacing for better visual flow
+  nodeSpacingY: 100,  // Increased vertical spacing
   direction: 'LR', // Left to Right for pipeline flow
 };
 
@@ -84,14 +84,25 @@ export function categorizeNodes(nodes: PipelineNode[]) {
   return { inputNodes, analysisNodes, outputNodes };
 }
 
-export function suggestLayoutDirection(nodes: PipelineNode[]): 'LR' | 'TB' {
-  const { inputNodes, outputNodes } = categorizeNodes(nodes);
+export function suggestLayoutDirection(nodes: PipelineNode[], connections: Connection[]): 'LR' | 'TB' {
+  const { inputNodes, analysisNodes, outputNodes } = categorizeNodes(nodes);
   
-  // If we have clear input -> output flow, use left-to-right
-  if (inputNodes.length > 0 && outputNodes.length > 0) {
+  // For small node counts (2-5), prefer horizontal layout
+  if (nodes.length <= 5) {
     return 'LR';
   }
   
-  // For other cases, use top-to-bottom
-  return 'TB';
+  // If we have a clear pipeline flow (input -> analysis -> output), use left-to-right
+  if (inputNodes.length > 0 || analysisNodes.length > 0 || outputNodes.length > 0) {
+    return 'LR';
+  }
+  
+  // Check if connections suggest a directional flow
+  // If most connections flow in one direction, use horizontal
+  if (connections.length > 0) {
+    return 'LR';
+  }
+  
+  // For large graphs without clear structure, use top-to-bottom
+  return nodes.length > 10 ? 'TB' : 'LR';
 }
