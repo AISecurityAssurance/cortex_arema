@@ -174,18 +174,9 @@ export default function PipelineEditorPage() {
         executionState={executionState}
       />
       
-      {/* Keyboard Shortcuts Help */}
-      <div className="shortcut-hint">
-        <div><kbd>Shift</kbd> + Drag: Box select</div>
-        <div><kbd>{modKey}</kbd> + Click: Multi-select</div>
-        <div><kbd>Double Click</kbd>: Open config</div>
-        <div><kbd>Delete</kbd>: Delete selected</div>
-        <div><kbd>{modKey}</kbd> + <kbd>A</kbd>: Select all</div>
-        <div><kbd>{modKey}</kbd> + <kbd>D</kbd>: Duplicate</div>
-        <div><kbd>{modKey}</kbd> + <kbd>Z</kbd>: Undo</div>
-        <div><kbd>{modKey}</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: Redo</div>
-        <div><kbd>Esc</kbd>: Clear selection</div>
-        <div><kbd>{isMac ? 'Option' : 'Alt'}</kbd> + Drag: Pan canvas</div>
+      {/* Keyboard Shortcuts Help Hint */}
+      <div className="shortcut-help-hint">
+        Hold <kbd>H</kbd> or <kbd>?</kbd> for keyboard shortcuts
       </div>
     </div>
   );

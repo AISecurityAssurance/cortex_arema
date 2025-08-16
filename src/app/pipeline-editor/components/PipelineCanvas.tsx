@@ -6,6 +6,7 @@ import { NodeExecutionState } from "../types/execution";
 import { BaseNode } from "./nodes/BaseNode";
 import { ConnectionLine } from "./ConnectionLine";
 import { ResultsModal } from "./ResultsModal";
+import { KeyboardShortcutsPopup } from "./KeyboardShortcutsPopup";
 
 interface PipelineCanvasProps {
   nodes: PipelineNode[];
@@ -66,6 +67,8 @@ export function PipelineCanvas({
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [hoveredPort, setHoveredPort] = useState<{ nodeId: string; portType: 'input' | 'output'; portName: string } | null>(null);
   const [resultsModalNode, setResultsModalNode] = useState<{ nodeId: string; nodeType: string } | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const keyPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
@@ -258,6 +261,27 @@ export function PipelineCanvas({
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Show keyboard shortcuts popup when holding '?' or 'h'
+    // Check this first before input field check
+    if ((e.key === '?' || e.key.toLowerCase() === 'h') && !e.repeat) {
+      // Don't show if typing in input fields
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement ||
+          (e.target as HTMLElement).contentEditable === 'true') {
+        return;
+      }
+      
+      // Clear any existing timeout
+      if (keyPressTimeoutRef.current) {
+        clearTimeout(keyPressTimeoutRef.current);
+        keyPressTimeoutRef.current = null;
+      }
+      setShowKeyboardShortcuts(true);
+      e.preventDefault();
+      return;
+    }
+    
     // Prevent shortcuts when typing in inputs or other editable elements
     if (e.target instanceof HTMLInputElement || 
         e.target instanceof HTMLTextAreaElement ||
@@ -294,10 +318,27 @@ export function PipelineCanvas({
     }
   }, [selectedNodeIds, selectedConnectionId, onDeleteSelectedNodes, onConnectionDelete, onCanvasClick, onSelectAllNodes, onDuplicateSelectedNodes]);
 
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    // Hide keyboard shortcuts popup when releasing '?' or 'h'
+    if (e.key === '?' || e.key.toLowerCase() === 'h') {
+      // Add a small delay to prevent flickering
+      keyPressTimeoutRef.current = setTimeout(() => {
+        setShowKeyboardShortcuts(false);
+      }, 100);
+    }
+  }, []);
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      if (keyPressTimeoutRef.current) {
+        clearTimeout(keyPressTimeoutRef.current);
+      }
+    };
+  }, [handleKeyDown, handleKeyUp]);
 
   return (
     <div 
@@ -392,6 +433,8 @@ export function PipelineCanvas({
           onClose={() => setResultsModalNode(null)}
         />
       )}
+      
+      {showKeyboardShortcuts && <KeyboardShortcutsPopup />}
     </div>
   );
 }

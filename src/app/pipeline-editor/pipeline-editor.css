@@ -743,27 +743,54 @@
   }
 }
 
-/* Keyboard shortcut hints */
-.shortcut-hint {
+/* Keyboard shortcut help hint */
+.shortcut-help-hint {
   position: fixed;
-  bottom: 60px;
+  bottom: 20px;
   right: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
   pointer-events: none;
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeInHint 0.5s ease-out;
 }
 
-.shortcut-hint kbd {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.125rem;
-  font-family: monospace;
+@keyframes fadeInHint {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shortcut-help-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  margin: 0 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
