@@ -183,13 +183,21 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                 onChange={(e) => onUpdateConfig({ ...(node as any).config, modelId: e.target.value })}
                 className="config-select"
               >
-                <option value="us.anthropic.claude-opus-4-20250514-v1:0">Claude Opus</option>
-                <option value="us.anthropic.claude-sonnet-4-20250514-v1:0">Claude Sonnet</option>
-                <option value="us.anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
-                <option value="us.amazon.nova-pro-v1:0">Nova Pro</option>
-                <option value="us.amazon.nova-lite-v1:0">Nova Lite</option>
-                <option value="us.meta.llama3-2-11b-instruct-v1:0">Llama 3.2 11B</option>
-                <option value="us.mistral.pixtral-large-2502-v1:0">Pixtral Large</option>
+                <optgroup label="Bedrock Models">
+                  <option value="us.anthropic.claude-opus-4-20250514-v1:0">Claude Opus</option>
+                  <option value="us.anthropic.claude-sonnet-4-20250514-v1:0">Claude Sonnet</option>
+                  <option value="us.anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
+                  <option value="us.amazon.nova-pro-v1:0">Nova Pro</option>
+                  <option value="us.amazon.nova-lite-v1:0">Nova Lite</option>
+                  <option value="us.meta.llama3-2-11b-instruct-v1:0">Llama 3.2 11B</option>
+                  <option value="us.mistral.pixtral-large-2502-v1:0">Pixtral Large</option>
+                </optgroup>
+                <optgroup label="Ollama Models">
+                  <option value="ollama:llava">Ollama Llava (Vision)</option>
+                  <option value="ollama:llama3.2">Ollama Llama 3.2</option>
+                  <option value="ollama:llama3.2-vision">Ollama Llama 3.2 Vision</option>
+                  <option value="ollama:qwen2.5">Ollama Qwen 2.5</option>
+                </optgroup>
               </select>
             </div>
             <div className="config-section">

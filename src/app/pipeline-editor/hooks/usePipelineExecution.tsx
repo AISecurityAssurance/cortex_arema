@@ -196,12 +196,26 @@ export function usePipelineExecution() {
       imageBase64Length: base64Image ? base64Image.length : 0,
     });
 
-    const requestBody = {
+    const requestBody: Record<string, unknown> = {
       model_id: modelId,
       prompt,
       images: base64Image ? [base64Image] : [],
       system_instructions: systemPrompt,
     };
+
+    // Add Ollama config if using an Ollama model
+    // Load from localStorage if available
+    if (modelId.startsWith('ollama:')) {
+      const savedConfig = localStorage.getItem('ollama_config');
+      if (savedConfig) {
+        try {
+          const ollamaConfig = JSON.parse(savedConfig);
+          requestBody.ollama_config = ollamaConfig;
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
     
     console.log("Request body size:", JSON.stringify(requestBody).length, "bytes");
 

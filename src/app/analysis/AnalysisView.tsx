@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnalysisLayout, SlidingPanel } from "@/components/layout";
 import { ModelComparisonView } from "@/components/analysis";
 import { ValidationControls } from "@/components/validation";
+import { OllamaSettings } from "@/components/settings/OllamaSettings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
 import { useToast } from "@/contexts/ToastContext";
@@ -27,6 +28,10 @@ const MODEL_IDS = {
   "Nova Lite": "us.amazon.nova-lite-v1:0",
   "Llama 3.2 11B": "us.meta.llama3-2-11b-instruct-v1:0",
   "Pixtral Large": "us.mistral.pixtral-large-2502-v1:0",
+  "Ollama Llava": "ollama:llava",
+  "Ollama Llama 3.2": "ollama:llama3.2",
+  "Ollama Llama 3.2 Vision": "ollama:llama3.2-vision",
+  "Ollama Qwen 2.5": "ollama:qwen2.5",
 };
 
 const MODELS = Object.keys(MODEL_IDS);
@@ -76,6 +81,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   const [analysisType, setAnalysisType] = useState<
     "stride" | "stpa-sec" | "custom"
   >("stride");
+  const [ollamaConfig, setOllamaConfig] = useState<{
+    mode: 'local' | 'remote';
+    remoteIp?: string;
+    privateKeyPath?: string;
+  } | null>(null);
 
   // Initialize session if needed
   useEffect(() => {
@@ -267,15 +277,23 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     systemPrompt: string,
     base64Image?: string
   ): Promise<string> => {
+    // Build request body
+    const requestBody: Record<string, unknown> = {
+      model_id: modelId,
+      prompt,
+      images: base64Image ? [base64Image] : [],
+      system_instructions: systemPrompt,
+    };
+
+    // Add Ollama config if using an Ollama model
+    if (modelId.startsWith('ollama:') && ollamaConfig) {
+      requestBody.ollama_config = ollamaConfig;
+    }
+
     const response = await fetch("http://localhost:8000/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model_id: modelId,
-        prompt,
-        images: base64Image ? [base64Image] : [],
-        system_instructions: systemPrompt,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -471,6 +489,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
+          </div>
+
+          <div className="control-group">
+            <OllamaSettings onConfigChange={setOllamaConfig} />
           </div>
 
           <div className="control-group">
