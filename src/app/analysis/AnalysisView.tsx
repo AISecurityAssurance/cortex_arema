@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnalysisLayout, SlidingPanel } from "@/components/layout";
 import { ModelComparisonView } from "@/components/analysis";
 import { ValidationControls } from "@/components/validation";
-import { OllamaSettings } from "@/components/settings/OllamaSettings";
+import { ModelSettings } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
 import { useToast } from "@/contexts/ToastContext";
@@ -21,6 +21,7 @@ import {
 import "./AnalysisView.css";
 
 const MODEL_IDS = {
+  // Bedrock Models
   "Claude Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
   "Claude Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
   "Claude 3.5 Sonnet": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
@@ -28,10 +29,19 @@ const MODEL_IDS = {
   "Nova Lite": "us.amazon.nova-lite-v1:0",
   "Llama 3.2 11B": "us.meta.llama3-2-11b-instruct-v1:0",
   "Pixtral Large": "us.mistral.pixtral-large-2502-v1:0",
+  // Ollama Models
   "Ollama Llava": "ollama:llava",
   "Ollama Llama 3.2": "ollama:llama3.2",
   "Ollama Llama 3.2 Vision": "ollama:llama3.2-vision",
   "Ollama Qwen 2.5": "ollama:qwen2.5",
+  // Azure OpenAI Models
+  "GPT-4o": "gpt-4o",
+  "GPT-4o Mini": "gpt-4o-mini",
+  "GPT-4 Vision": "gpt-4-vision-preview",
+  "GPT-4 Turbo": "gpt-4-turbo",
+  "GPT-3.5 Turbo": "gpt-3.5-turbo",
+  "O1 Preview": "o1-preview",
+  "O1 Mini": "o1-mini",
 };
 
 const MODELS = Object.keys(MODEL_IDS);
@@ -85,6 +95,12 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     mode: 'local' | 'remote';
     remoteIp?: string;
     privateKeyPath?: string;
+  } | null>(null);
+  const [azureConfig, setAzureConfig] = useState<{
+    endpoint?: string;
+    apiKey?: string;
+    deployment?: string;
+    apiVersion?: string;
   } | null>(null);
 
   // Initialize session if needed
@@ -290,6 +306,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       requestBody.ollama_config = ollamaConfig;
     }
 
+    // Add Azure config if using an Azure OpenAI model
+    if ((modelId.startsWith('gpt-') || modelId.startsWith('o1-')) && azureConfig) {
+      requestBody.azure_config = azureConfig;
+    }
+
     const response = await fetch("http://localhost:8000/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -492,7 +513,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           </div>
 
           <div className="control-group">
-            <OllamaSettings onConfigChange={setOllamaConfig} />
+            <ModelSettings 
+              onOllamaConfigChange={setOllamaConfig}
+              onAzureConfigChange={setAzureConfig}
+            />
           </div>
 
           <div className="control-group">

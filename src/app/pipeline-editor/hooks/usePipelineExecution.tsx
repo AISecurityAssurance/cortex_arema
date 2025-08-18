@@ -185,7 +185,8 @@ export function usePipelineExecution() {
     modelId: string,
     prompt: string,
     systemPrompt: string,
-    base64Image?: string
+    base64Image?: string,
+    nodeOllamaConfig?: any
   ): Promise<string> => {
     console.log("Calling model API with:", {
       modelId,
@@ -204,13 +205,32 @@ export function usePipelineExecution() {
     };
 
     // Add Ollama config if using an Ollama model
-    // Load from localStorage if available
+    // Priority: node config > localStorage
     if (modelId.startsWith('ollama:')) {
-      const savedConfig = localStorage.getItem('ollama_config');
+      if (nodeOllamaConfig) {
+        // Use config from node if available
+        requestBody.ollama_config = nodeOllamaConfig;
+      } else {
+        // Fall back to localStorage
+        const savedConfig = localStorage.getItem('ollama_config');
+        if (savedConfig) {
+          try {
+            const ollamaConfig = JSON.parse(savedConfig);
+            requestBody.ollama_config = ollamaConfig;
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+
+    // Add Azure config if using an Azure OpenAI model
+    if (modelId.startsWith('gpt-') || modelId.startsWith('o1-')) {
+      const savedConfig = localStorage.getItem('azure_openai_config');
       if (savedConfig) {
         try {
-          const ollamaConfig = JSON.parse(savedConfig);
-          requestBody.ollama_config = ollamaConfig;
+          const azureConfig = JSON.parse(savedConfig);
+          requestBody.azure_config = azureConfig;
         } catch {
           // Ignore parse errors
         }
@@ -427,7 +447,8 @@ export function usePipelineExecution() {
             analysisConfig.modelId,
             finalPrompt,
             systemPrompt,
-            base64Image
+            base64Image,
+            analysisConfig.ollamaConfig
           );
 
           console.log("Model response received, extracting findings...");

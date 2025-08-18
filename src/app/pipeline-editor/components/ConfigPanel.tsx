@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { PipelineNode } from "../types/pipeline";
 import { ImageModal } from "./ImageModal";
+import { OllamaSettings } from "@/components/settings/OllamaSettings";
 
 interface ConfigPanelProps {
   node: PipelineNode;
@@ -198,6 +199,15 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                   <option value="ollama:llama3.2-vision">Ollama Llama 3.2 Vision</option>
                   <option value="ollama:qwen2.5">Ollama Qwen 2.5</option>
                 </optgroup>
+                <optgroup label="Azure OpenAI Models">
+                  <option value="gpt-4o">GPT-4o (Vision)</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini (Vision)</option>
+                  <option value="gpt-4-vision-preview">GPT-4 Vision</option>
+                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                  <option value="o1-preview">O1 Preview (Reasoning)</option>
+                  <option value="o1-mini">O1 Mini (Reasoning)</option>
+                </optgroup>
               </select>
             </div>
             <div className="config-section">
@@ -233,6 +243,20 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                 )}
               </select>
             </div>
+            
+            {/* Show Ollama settings when an Ollama model is selected */}
+            {(node as any).config.modelId?.startsWith('ollama:') && (
+              <div className="config-section">
+                <OllamaSettings 
+                  onConfigChange={(ollamaConfig) => {
+                    onUpdateConfig({ 
+                      ...(node as any).config, 
+                      ollamaConfig 
+                    });
+                  }}
+                />
+              </div>
+            )}
           </>
         );
 
