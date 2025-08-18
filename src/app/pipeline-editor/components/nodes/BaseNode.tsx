@@ -39,6 +39,37 @@ interface BaseNodeProps {
   onViewResults?: () => void;
 }
 
+// Model display name mapping
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+  // Bedrock Models
+  "us.anthropic.claude-opus-4-20250514-v1:0": "Claude Opus",
+  "us.anthropic.claude-sonnet-4-20250514-v1:0": "Claude Sonnet",
+  "us.anthropic.claude-3-5-sonnet-20241022-v2:0": "Claude 3.5 Sonnet",
+  "us.amazon.nova-pro-v1:0": "Nova Pro",
+  "us.amazon.nova-lite-v1:0": "Nova Lite",
+  "us.meta.llama3-2-11b-instruct-v1:0": "Llama 3.2 11B",
+  "us.mistral.pixtral-large-2502-v1:0": "Pixtral Large",
+  // Ollama Models
+  "ollama:llava": "Llava",
+  "ollama:llama3.2": "Llama 3.2",
+  "ollama:llama3.2-vision": "Llama 3.2 Vision",
+  "ollama:qwen2.5": "Qwen 2.5",
+  // Azure OpenAI Models
+  "gpt-4o": "GPT-4o",
+  "gpt-4o-mini": "GPT-4o Mini",
+  "gpt-4-vision-preview": "GPT-4 Vision",
+  "gpt-4-turbo": "GPT-4 Turbo",
+  "gpt-3.5-turbo": "GPT-3.5 Turbo",
+  "o1-preview": "O1 Preview",
+  "o1-mini": "O1 Mini",
+};
+
+// Helper function to get model display name
+function getModelDisplayName(modelId: string | undefined): string {
+  if (!modelId) return "Not selected";
+  return MODEL_DISPLAY_NAMES[modelId] || modelId;
+}
+
 // Helper function to check if connection is valid
 function isValidConnection(output: string, input: string): boolean {
   // Define valid connection types
@@ -113,7 +144,8 @@ export function BaseNode({
         return (node as any).config.systemName || "No system name";
       case "analysis-stride":
       case "analysis-stpa-sec":
-        const modelName = (node as any).config.modelId?.split(".")[2] || "Not selected";
+        const modelId = (node as any).config.modelId;
+        const modelName = getModelDisplayName(modelId);
         const hasSystemDesc = (node as any).config.systemDescription && 
                               (node as any).config.systemDescription.trim() !== '';
         return (
