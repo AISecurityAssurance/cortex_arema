@@ -253,10 +253,11 @@ export function usePipelineExecution() {
       }
 
       const json = await response.json();
-      console.log("Model API response received, parsing...");
+      console.log("Model API response received");
       
-      const parsed = JSON.parse(json.response);
-      return parsed.content?.[0]?.text ?? "No response from model.";
+      // The backend returns a standardized format for all providers
+      // with the actual response text in the 'response' field
+      return json.response || "No response from model.";
     } catch (error) {
       console.error("Error calling model API:", error);
       throw error;
@@ -342,7 +343,7 @@ export function usePipelineExecution() {
         if (!template) {
           console.error("Template not found:", {
             templateId: analysisConfig.promptTemplate,
-            availableTemplates: TemplateStorage.getTemplates().map(t => t.id)
+            availableTemplates: TemplateStorage.getAllTemplates().map(t => t.id)
           });
           throw new Error(
             `Template ${analysisConfig.promptTemplate} not found`

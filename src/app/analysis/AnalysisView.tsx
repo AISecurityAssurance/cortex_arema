@@ -322,8 +322,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     }
 
     const json = await response.json();
-    const parsed = JSON.parse(json.response);
-    return parsed.content?.[0]?.text ?? "No response from model.";
+    // The backend returns a standardized format for all providers
+    // with the actual response text in the 'response' field
+    return json.response || "No response from model.";
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
