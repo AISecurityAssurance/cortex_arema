@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SecurityFinding, ValidationStatus } from '@/types';
 import './FindingCard.css';
@@ -8,121 +8,139 @@ import './FindingCard.css';
 interface FindingCardProps {
   finding: SecurityFinding;
   validationStatus: ValidationStatus;
-  severity: 'high' | 'medium' | 'low';
   isSelected: boolean;
   onClick: () => void;
-  modelLabel?: string;
+  compact?: boolean;
 }
 
 export const FindingCard: React.FC<FindingCardProps> = ({
   finding,
   validationStatus,
-  severity,
   isSelected,
   onClick,
-  modelLabel
+  compact = false
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleClick = () => {
+    if (!compact) {
+      setIsExpanded(!isExpanded);
+    }
+    onClick();
+  };
+
+  const getSeverityColor = () => {
+    switch (finding.severity) {
+      case 'high': return '#ef4444';
+      case 'medium': return '#f59e0b';
+      case 'low': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
   const getStatusIcon = () => {
     switch (validationStatus) {
-      case 'confirmed':
-        return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1ZM6.5 11.5L3 8L4.06 6.94L6.5 9.38L11.44 4.44L12.5 5.5L6.5 11.5Z"/>
-          </svg>
-        );
-      case 'false-positive':
-        return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1ZM11 10L10 11L8 9L6 11L5 10L7 8L5 6L6 5L8 7L10 5L11 6L9 8L11 10Z"/>
-          </svg>
-        );
-      case 'needs-review':
-        return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1ZM8 13C7.45 13 7 12.55 7 12C7 11.45 7.45 11 8 11C8.55 11 9 11.45 9 12C9 12.55 8.55 13 8 13ZM9 9H7V4H9V9Z"/>
-          </svg>
-        );
-      default:
-        return null;
+      case 'confirmed': return '✓';
+      case 'false-positive': return '✗';
+      case 'needs-review': return '?';
+      default: return null;
     }
   };
 
-  const getStatusClass = () => {
-    switch (validationStatus) {
-      case 'confirmed': return 'status-confirmed';
-      case 'false-positive': return 'status-false-positive';
-      case 'needs-review': return 'status-needs-review';
-      default: return 'status-pending';
-    }
-  };
+  if (compact) {
+    return (
+      <div 
+        className={`finding-card-minimal ${isSelected ? 'selected' : ''}`}
+        onClick={handleClick}
+      >
+        <div 
+          className="severity-bar"
+          style={{ backgroundColor: getSeverityColor() }}
+        />
+        <div className="finding-content">
+          <div className="finding-header-minimal">
+            <h4 className="finding-title-minimal">{finding.title}</h4>
+            {validationStatus !== 'pending' && (
+              <span className={`status-icon ${validationStatus}`}>
+                {getStatusIcon()}
+              </span>
+            )}
+          </div>
+          <p className="finding-description-minimal">
+            {finding.description.substring(0, 120)}...
+          </p>
+          <div className="finding-meta-minimal">
+            <span className="meta-item">{finding.category}</span>
+            {finding.confidence && (
+              <span className="meta-item">{finding.confidence}% confidence</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <article 
-      className={`finding-card ${isSelected ? 'selected' : ''} ${getStatusClass()}`}
-      onClick={onClick}
+    <div 
+      className={`finding-card-full ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}`}
+      onClick={handleClick}
     >
-      <div className="finding-header">
-        <div className="finding-meta">
-          <span className={`severity-badge severity-${severity}`}>
-            {severity.toUpperCase()}
-          </span>
-          <span className="finding-category">{finding.category}</span>
-          {finding.cweId && (
-            <span className="finding-cwe">CWE-{finding.cweId}</span>
-          )}
+      <div className="finding-header-full">
+        <div 
+          className="severity-indicator"
+          style={{ backgroundColor: getSeverityColor() }}
+        >
+          {finding.severity[0].toUpperCase()}
         </div>
-        <div className="finding-status">
-          {validationStatus !== 'pending' && (
-            <span className={`status-icon ${getStatusClass()}`}>
-              {getStatusIcon()}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <h4 className="finding-title">{finding.title}</h4>
-      
-      <div className="finding-description">
-        <ReactMarkdown>{finding.description}</ReactMarkdown>
-      </div>
-
-      {finding.confidence && (
-        <div className="finding-confidence">
-          <span className="confidence-label">Confidence:</span>
-          <div className="confidence-bar">
-            <div 
-              className="confidence-fill"
-              style={{ width: `${finding.confidence}%` }}
-            />
-          </div>
-          <span className="confidence-value">{finding.confidence}%</span>
-        </div>
-      )}
-
-      {finding.mitigations && finding.mitigations.length > 0 && (
-        <div className="finding-mitigations">
-          <span className="mitigations-label">Mitigations:</span>
-          <ul className="mitigations-list">
-            {finding.mitigations.slice(0, 2).map((mitigation, index) => (
-              <li key={index} className="mitigation-item">
-                <ReactMarkdown>{mitigation}</ReactMarkdown>
-              </li>
-            ))}
-            {finding.mitigations.length > 2 && (
-              <li className="mitigation-more">
-                +{finding.mitigations.length - 2} more
-              </li>
+        <div className="finding-main-content">
+          <div className="finding-title-row">
+            <h3 className="finding-title-full">{finding.title}</h3>
+            {validationStatus !== 'pending' && (
+              <span className={`validation-badge ${validationStatus}`}>
+                {getStatusIcon()} {validationStatus.replace('-', ' ')}
+              </span>
             )}
-          </ul>
+          </div>
+          <div className="finding-meta-full">
+            <span>{finding.category}</span>
+            {finding.cweId && <span>CWE-{finding.cweId}</span>}
+            {finding.confidence && <span>{finding.confidence}%</span>}
+          </div>
+        </div>
+      </div>
+
+      {!isExpanded ? (
+        <div className="finding-preview-full">
+          <p>{finding.description.substring(0, 200)}...</p>
+        </div>
+      ) : (
+        <div className="finding-expanded-content">
+          <div className="section">
+            <h4>Description</h4>
+            <ReactMarkdown>{finding.description}</ReactMarkdown>
+          </div>
+
+          {finding.impact && (
+            <div className="section">
+              <h4>Impact</h4>
+              <ReactMarkdown>{finding.impact}</ReactMarkdown>
+            </div>
+          )}
+
+          {finding.mitigations && finding.mitigations.length > 0 && (
+            <div className="section">
+              <h4>Mitigations</h4>
+              <ul className="mitigation-list">
+                {finding.mitigations.map((mitigation, index) => (
+                  <li key={index}>
+                    <ReactMarkdown>{mitigation}</ReactMarkdown>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
-
-      <div className="finding-footer">
-        <span className="finding-source">
-          {modelLabel || finding.modelSource}
-        </span>
-        <span className="finding-id">#{finding.id.slice(0, 8)}</span>
-      </div>
-    </article>
+    </div>
   );
 };
