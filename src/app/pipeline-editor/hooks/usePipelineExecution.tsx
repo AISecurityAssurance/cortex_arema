@@ -563,8 +563,11 @@ export function usePipelineExecution() {
         startTime: Date.now(),
       });
 
+      let currentIndex = 0; // Track the current index outside the loop for error handling
+      
       try {
         for (let i = 0; i < executionOrder.length; i++) {
+          currentIndex = i; // Update the current index
           const nodeId = executionOrder[i];
           const node = nodes.find((n) => n.id === nodeId);
           if (!node) continue;
@@ -601,12 +604,22 @@ export function usePipelineExecution() {
               results: result,
             });
           } catch (error) {
+            // Set the failed node to error state
             nodeStates.set(nodeId, {
               nodeId,
               status: "error",
               error: error instanceof Error ? error.message : "Unknown error",
               duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0),
             });
+            
+            // Update the execution state immediately to show the error in UI
+            setExecutionState((prev) => ({
+              ...prev,
+              nodeStates: new Map(nodeStates),
+              totalProgress: ((i + 1) / executionOrder.length) * 100,
+            }));
+            
+            // Rethrow to trigger the outer catch block
             throw error;
           }
 
@@ -624,9 +637,22 @@ export function usePipelineExecution() {
           totalProgress: 100,
         }));
       } catch (error) {
+        // Mark any remaining nodes that were waiting or idle as cancelled
+        for (let j = currentIndex + 1; j < executionOrder.length; j++) {
+          const remainingNodeId = executionOrder[j];
+          const currentState = nodeStates.get(remainingNodeId);
+          if (currentState && (currentState.status === "waiting" || currentState.status === "idle")) {
+            nodeStates.set(remainingNodeId, {
+              nodeId: remainingNodeId,
+              status: "idle", // Reset to idle instead of leaving in waiting state
+            });
+          }
+        }
+        
         setExecutionState((prev) => ({
           ...prev,
           status: "error",
+          nodeStates: new Map(nodeStates),
           error:
             error instanceof Error
               ? error.message
