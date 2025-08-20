@@ -1,3 +1,5 @@
+import { Finding } from './results';
+
 export interface Point {
   x: number;
   y: number;
@@ -65,7 +67,7 @@ export interface ResultsViewNode extends BaseNode {
     autoOpenValidation: boolean;
   };
   inputs: ["findings_data"];
-  results?: any[];
+  results?: Finding[];
 }
 
 export type PipelineNode =

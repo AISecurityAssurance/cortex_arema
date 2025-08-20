@@ -1,10 +1,20 @@
 import { useState, useCallback } from "react";
-import { PipelineNode, Connection } from "../types/pipeline";
+import { 
+  PipelineNode, 
+  Connection,
+  ArchitectureDiagramNode,
+  TextInputNode,
+  StrideAnalysisNode,
+  StpaSecAnalysisNode,
+  ResultsViewNode
+} from "../types/pipeline";
 import {
   PipelineExecutionState,
   NodeExecutionState,
   ValidationResult,
 } from "../types/execution";
+import { NodeResult, DiagramResult, TextResult, FindingsResult } from "../types/results";
+import { OllamaConfig } from "../types/config";
 import { TemplateStorage } from "@/lib/storage/templateStorage";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
@@ -45,7 +55,7 @@ export function usePipelineExecution() {
     // Validate input nodes have required data
     inputNodes.forEach((node) => {
       if (node.type === "input-diagram") {
-        const config = (node as any).config;
+        const config = (node as ArchitectureDiagramNode).config;
         if (!config.file && !config.fileName) {
           errors.push({
             nodeId: node.id,
@@ -55,7 +65,7 @@ export function usePipelineExecution() {
         }
       }
       if (node.type === "input-text") {
-        const config = (node as any).config;
+        const config = (node as TextInputNode).config;
         if (!config.systemName || config.systemName.trim() === '') {
           warnings.push({
             nodeId: node.id,
@@ -84,7 +94,7 @@ export function usePipelineExecution() {
       }
       
       // Validate system description for STRIDE and STPA-SEC nodes
-      const nodeConfig = (node as any).config;
+      const nodeConfig = (node as StrideAnalysisNode | StpaSecAnalysisNode).config;
       if (!nodeConfig.systemDescription || nodeConfig.systemDescription.trim() === '') {
         errors.push({
           nodeId: node.id,
@@ -186,7 +196,7 @@ export function usePipelineExecution() {
     prompt: string,
     systemPrompt: string,
     base64Image?: string,
-    nodeOllamaConfig?: any
+    nodeOllamaConfig?: OllamaConfig
   ): Promise<string> => {
     console.log("Calling model API with:", {
       modelId,
@@ -264,10 +274,10 @@ export function usePipelineExecution() {
     }
   };
 
-  const executeNode = async (node: PipelineNode, inputs: any): Promise<any> => {
+  const executeNode = async (node: PipelineNode, inputs: NodeResult | NodeResult[]): Promise<NodeResult> => {
     switch (node.type) {
       case "input-diagram":
-        const diagramConfig = (node as any).config;
+        const diagramConfig = (node as ArchitectureDiagramNode).config;
         if (!diagramConfig.file) {
           console.error("Diagram node validation failed:", {
             nodeId: node.id,
@@ -290,19 +300,22 @@ export function usePipelineExecution() {
           base64Length: diagramBase64.length,
           base64SampleStart: diagramBase64.substring(0, 50) + "...",
         });
-        return {
+        const diagramResult: DiagramResult = {
           type: "diagram",
-          data: diagramConfig.file,
-          base64: diagramBase64,
-          mediaType: diagramConfig.file.type || "image/jpeg",
+          data: {
+            base64Image: diagramBase64,
+            fileName: diagramConfig.fileName,
+            mimeType: diagramConfig.file.type || "image/jpeg",
+          },
         };
+        return diagramResult;
 
       case "input-text":
-        const textConfig = (node as any).config;
+        const textConfig = (node as TextInputNode).config;
         if (!textConfig.systemName) {
           throw new Error("System name is required");
         }
-        return {
+        const textResult: TextResult = {
           type: "text",
           data: {
             systemName: textConfig.systemName,
@@ -310,10 +323,11 @@ export function usePipelineExecution() {
             context: textConfig.context,
           },
         };
+        return textResult;
 
       case "analysis-stride":
       case "analysis-stpa-sec":
-        const analysisConfig = (node as any).config;
+        const analysisConfig = (node as StrideAnalysisNode | StpaSecAnalysisNode).config;
 
         // Validate required system description
         if (!analysisConfig.systemDescription || analysisConfig.systemDescription.trim() === '') {
@@ -366,7 +380,7 @@ export function usePipelineExecution() {
                 architectureComponents = input.data.description;
               }
               if (input?.type === "diagram") {
-                base64Image = input.base64;
+                base64Image = input.data.base64Image;
                 if (!architectureComponents || architectureComponents === "") {
                   architectureComponents = "The architecture components and their relationships are shown in the provided diagram. Please analyze all visible components, connections, data flows, and trust boundaries.";
                 } else {
@@ -381,7 +395,7 @@ export function usePipelineExecution() {
               architectureComponents = inputs.data.description;
             }
             if (inputs.type === "diagram") {
-              base64Image = inputs.base64;
+              base64Image = inputs.data.base64Image;
               architectureComponents = "The architecture components and their relationships are shown in the provided diagram. Please analyze all visible components, connections, data flows, and trust boundaries.";
             }
           }
@@ -482,11 +496,14 @@ export function usePipelineExecution() {
             });
           }
 
-          return {
+          const findingsResult: FindingsResult = {
             type: "findings",
             data: findings,
             rawResponse: modelResponse,
+            modelId: analysisConfig.modelId,
+            timestamp: new Date().toISOString(),
           };
+          return findingsResult;
         } catch (error) {
           console.error("Error calling model API:", error);
 

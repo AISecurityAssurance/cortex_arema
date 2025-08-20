@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PipelineNode } from "../types/pipeline";
+import { PipelineNode, ArchitectureDiagramNode } from "../types/pipeline";
+import { NodeConfig } from "../types/nodeConfigs";
 import { ImageModal } from "./ImageModal";
 import { OllamaSettings } from "@/components/settings/OllamaSettings";
 
 interface ConfigPanelProps {
   node: PipelineNode;
-  onUpdateConfig: (config: any) => void;
+  onUpdateConfig: (config: NodeConfig) => void;
   onClose: () => void;
 }
 
@@ -17,14 +18,17 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
 
   useEffect(() => {
     // Create preview URL when file is uploaded
-    if (node.type === 'input-diagram' && (node as any).config.file) {
-      const url = URL.createObjectURL((node as any).config.file);
-      setImagePreviewUrl(url);
-      
-      // Cleanup URL when component unmounts or file changes
-      return () => URL.revokeObjectURL(url);
+    if (node.type === 'input-diagram') {
+      const file = (node as ArchitectureDiagramNode).config.file;
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setImagePreviewUrl(url);
+        
+        // Cleanup URL when component unmounts or file changes
+        return () => URL.revokeObjectURL(url);
+      }
     }
-  }, [(node as any).config?.file]);
+  }, [node.type === 'input-diagram' ? (node as ArchitectureDiagramNode).config?.file : null]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

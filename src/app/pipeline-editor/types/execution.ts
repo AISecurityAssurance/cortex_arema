@@ -1,3 +1,5 @@
+import { NodeResult } from './results';
+
 export interface NodeExecutionState {
   nodeId: string;
   status: "idle" | "waiting" | "running" | "complete" | "error";
@@ -5,7 +7,7 @@ export interface NodeExecutionState {
   startTime?: number;
   duration?: number;
   error?: string;
-  results?: any;
+  results?: NodeResult;
 }
 
 export interface PipelineExecutionState {
@@ -45,7 +47,7 @@ export interface ValidationWarning {
 export interface ExecutionResult {
   nodeId: string;
   success: boolean;
-  data?: any;
+  data?: NodeResult;
   error?: string;
   duration: number;
 }

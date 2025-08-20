@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { NodeExecutionState } from "../types/execution";
+import { DiagramResult, TextResult, FindingsResult } from "../types/results";
 import "./ResultsModal.css";
 
 interface ResultsModalProps {
@@ -58,36 +59,39 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
   const renderResults = () => {
     const { results } = executionState;
 
-    if (nodeType === 'input-diagram') {
+    if (nodeType === 'input-diagram' && results?.type === 'diagram') {
+      const diagramResults = results as DiagramResult;
       return (
         <div>
           <h4>Uploaded Diagram</h4>
-          <p>File: {results.data?.name || 'Unknown'}</p>
-          <p>Type: {results.type}</p>
-          <p>Size: {results.data?.size ? `${(results.data.size / 1024).toFixed(2)} KB` : 'Unknown'}</p>
+          <p>File: {diagramResults.data.fileName || 'Unknown'}</p>
+          <p>Type: {diagramResults.data.mimeType || 'image'}</p>
+          <p>Analysis: {diagramResults.data.analysis || 'No analysis available'}</p>
         </div>
       );
     }
 
-    if (nodeType === 'input-text') {
+    if (nodeType === 'input-text' && results?.type === 'text') {
+      const textResults = results as TextResult;
       return (
         <div>
           <h4>Text Input Data</h4>
           <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '0.25rem', marginTop: '0.5rem' }}>
-            <p><strong>System Name:</strong> {results.data?.systemName}</p>
-            <p><strong>Description:</strong> {results.data?.description}</p>
-            <p><strong>Context:</strong> {results.data?.context}</p>
+            <p><strong>System Name:</strong> {textResults.data.systemName}</p>
+            <p><strong>Description:</strong> {textResults.data.description}</p>
+            <p><strong>Context:</strong> {textResults.data.context}</p>
           </div>
         </div>
       );
     }
 
-    if (nodeType === 'analysis-stride' || nodeType === 'analysis-stpa-sec') {
+    if ((nodeType === 'analysis-stride' || nodeType === 'analysis-stpa-sec') && results?.type === 'findings') {
+      const findingsResults = results as FindingsResult;
       return (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4>Security Findings ({results.data?.length || 0} found)</h4>
-            {results.rawResponse && (
+            <h4>Security Findings ({findingsResults.data.length} found)</h4>
+            {findingsResults.rawResponse && (
               <button
                 onClick={() => setShowRawResponse(!showRawResponse)}
                 style={{
@@ -105,7 +109,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
             )}
           </div>
           
-          {showRawResponse && results.rawResponse ? (
+          {showRawResponse && findingsResults.rawResponse ? (
             <div style={{
               background: 'rgba(0,0,0,0.3)',
               padding: '1rem',
@@ -119,13 +123,13 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
                 color: 'rgba(255,255,255,0.9)',
                 lineHeight: '1.6'
               }}>
-                <ReactMarkdown>{results.rawResponse}</ReactMarkdown>
+                <ReactMarkdown>{findingsResults.rawResponse}</ReactMarkdown>
               </div>
             </div>
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
-              {results.data?.length > 0 ? (
-                results.data.map((finding: any, index: number) => (
+              {findingsResults.data.length > 0 ? (
+                findingsResults.data.map((finding, index) => (
                   <div key={finding.id || index} style={{
                     background: 'rgba(0,0,0,0.3)',
                     padding: '1rem',
