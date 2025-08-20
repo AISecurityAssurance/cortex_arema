@@ -172,6 +172,11 @@ export default function PipelineEditorPage() {
         isCollapsed={isPanelCollapsed}
         onToggle={() => setIsPanelCollapsed(!isPanelCollapsed)}
         executionState={executionState}
+        onNodeClick={(nodeId) => {
+          // Select the node and scroll it into view
+          selectNode(nodeId);
+          // Could also add canvas pan/zoom to center on the node
+        }}
       />
       
       {/* Keyboard Shortcuts Help Hint */}

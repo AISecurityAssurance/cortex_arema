@@ -490,12 +490,12 @@ export function usePipelineExecution() {
         } catch (error) {
           console.error("Error calling model API:", error);
 
-          // If API fails, throw error to be caught by execution engine
-          throw new Error(
-            `Analysis failed: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`
-          );
+          // If API fails, pass through the full error message
+          if (error instanceof Error) {
+            throw error; // Pass through the original error with full details
+          } else {
+            throw new Error(`Analysis failed: ${String(error)}`);
+          }
         }
 
       case "output-results":
@@ -604,11 +604,20 @@ export function usePipelineExecution() {
               results: result,
             });
           } catch (error) {
-            // Set the failed node to error state
+            // Set the failed node to error state with full error message
+            let errorMessage = "Unknown error";
+            if (error instanceof Error) {
+              errorMessage = error.message;
+            } else if (typeof error === 'string') {
+              errorMessage = error;
+            } else {
+              errorMessage = String(error);
+            }
+            
             nodeStates.set(nodeId, {
               nodeId,
               status: "error",
-              error: error instanceof Error ? error.message : "Unknown error",
+              error: errorMessage,
               duration: Date.now() - (nodeStates.get(nodeId)?.startTime || 0),
             });
             
