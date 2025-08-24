@@ -324,7 +324,14 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     const json = await response.json();
     // The backend returns a standardized format for all providers
     // with the actual response text in the 'response' field
-    return json.response || "No response from model.";
+    const result = json.response || "No response from model.";
+    
+    // Ensure we always return a string
+    if (typeof result !== 'string') {
+      return String(result);
+    }
+    
+    return result;
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -361,10 +368,16 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
         base64Image
       );
 
-      const isValid = response.trim().toUpperCase().includes("YES");
+      // Ensure response is a string before processing
+      const responseText = typeof response === 'string' 
+        ? response 
+        : String(response);
+      
+      const isValid = responseText.trim().toUpperCase().includes("YES");
       return isValid;
     } catch (error) {
       console.error("Error validating image:", error);
+      showToast("Failed to validate image. Please try again.", "error");
       return false;
     }
   };
