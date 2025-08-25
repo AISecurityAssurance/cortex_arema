@@ -14,9 +14,16 @@ export class FindingExtractor {
     // Try to parse structured response first
     const structuredFindings = this.parseStructuredResponse(response);
     if (structuredFindings.length > 0) {
-      return structuredFindings.map(f => ({
-        ...f,
+      return structuredFindings.map((f, index) => ({
+        id: `finding_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+        title: f.title || 'Untitled Finding',
+        description: f.description || 'No description provided',
+        severity: f.severity || 'medium',
+        category: f.category || 'General',
         modelSource,
+        confidence: f.confidence,
+        cweId: f.cweId,
+        mitigations: f.mitigations,
         createdAt: new Date().toISOString()
       }));
     }
@@ -66,25 +73,77 @@ export class FindingExtractor {
   private static splitIntoSections(response: string): string[] {
     const sections: string[] = [];
     
-    // Split by numbered items (1., 2., etc.)
-    const numberedSections = response.split(/\n\d+\.\s+/);
-    if (numberedSections.length > 1) {
-      return numberedSections.slice(1); // Skip first empty element
+    // Look for numbered headers with bold text pattern: ### 1. **Title**
+    const numberedHeaderPattern = /(?:^|\n)###\s*\d+\.\s*\*\*/gm;
+    const numberedHeaderMatches = response.match(numberedHeaderPattern);
+    if (numberedHeaderMatches && numberedHeaderMatches.length > 0) {
+      const parts = response.split(numberedHeaderPattern);
+      // Keep only non-empty sections with substantial content
+      const validSections = parts.filter(s => s.trim().length > 50);
+      if (validSections.length > 0) {
+        return validSections;
+      }
+    }
+    
+    // Look for the specific pattern we see in the response: ### number. **title**
+    const specificPattern = /(?:^|\n)###\s*\d+\.\s*/gm;
+    const specificMatches = response.match(specificPattern);
+    if (specificMatches && specificMatches.length > 0) {
+      const parts = response.split(specificPattern);
+      const validSections = parts.filter(s => s.trim().length > 50);
+      if (validSections.length > 0) {
+        return validSections;
+      }
+    }
+    
+    // First, check for STRIDE-specific section headers
+    if (response.includes('## SPOOFING') || response.includes('## TAMPERING')) {
+      // Split by ## CATEGORY THREATS pattern
+      const categoryPattern = /(?:^|\n)##\s*[A-Z\s]+THREATS?\s*\n/gm;
+      const categoryMatches = response.match(categoryPattern);
+      if (categoryMatches && categoryMatches.length > 0) {
+        // For each category section, extract individual findings
+        const categorySections = response.split(categoryPattern);
+        const allFindings: string[] = [];
+        
+        for (const section of categorySections) {
+          if (section.trim().length < 50) continue;
+          
+          // Within each category, split by ### numbered items
+          const findingPattern = /(?:^|\n)###\s*\d+\./gm;
+          const findingParts = section.split(findingPattern);
+          allFindings.push(...findingParts.filter(s => s.trim().length > 50));
+        }
+        
+        if (allFindings.length > 0) {
+          return allFindings;
+        }
+      }
+    }
+    
+    // Split by numbered items with headers (###)
+    const numberedWithHeaderPattern = /(?:^|\n)###?\s*\d+[\.\)]\s+/gm;
+    const numberedWithHeaderMatches = response.match(numberedWithHeaderPattern);
+    if (numberedWithHeaderMatches && numberedWithHeaderMatches.length > 2) {
+      const numberedSections = response.split(numberedWithHeaderPattern);
+      return numberedSections.filter(s => s.trim().length > 50);
     }
     
     // Split by headers (##, ###, etc.)
-    const headerSections = response.split(/\n#{2,}\s+/);
-    if (headerSections.length > 1) {
-      return headerSections.slice(1);
+    const headerPattern = /(?:^|\n)#{2,}\s+/gm;
+    const headerMatches = response.match(headerPattern);
+    if (headerMatches && headerMatches.length > 2) {
+      const headerSections = response.split(headerPattern);
+      return headerSections.filter(s => s.trim().length > 50);
     }
     
-    // Split by bullet points
-    const bulletSections = response.split(/\n[\*\-]\s+/);
-    if (bulletSections.length > 1) {
-      return bulletSections.slice(1);
+    // If no clear sections found, try to split by double newlines
+    const paragraphs = response.split(/\n\n+/).filter(p => p.trim().length > 50);
+    if (paragraphs.length > 1) {
+      return paragraphs;
     }
     
-    // Return as single section
+    // Return as single section if nothing else works
     return [response];
   }
 
@@ -97,15 +156,53 @@ export class FindingExtractor {
     modelSource: string
   ): SecurityFinding | null {
     const lines = section.split('\n').filter(l => l.trim());
-    if (lines.length === 0) return null;
+    if (lines.length === 0 || section.trim().length < 20) return null;
     
-    // Extract title (first line or bold text)
-    const titleMatch = lines[0].match(/\*\*(.*?)\*\*/);
-    const title = titleMatch ? titleMatch[1] : lines[0].replace(/^#+\s*/, '');
+    // Extract title - be more flexible
+    let title = '';
     
-    // Extract severity
-    const severityMatch = section.match(/severity[:\s]*(high|medium|low)/i);
-    const severity = (severityMatch?.[1]?.toLowerCase() || 'medium') as 'high' | 'medium' | 'low';
+    // Try to find a title in various formats
+    const titlePatterns = [
+      /\*\*(.*?)\*\*/,                    // **Bold text**
+      /^#+\s*(.+)$/m,                      // # Header
+      /^(?:Threat|Finding|Issue|Risk):\s*(.+)$/mi,  // Threat: Title
+      /^(?:\d+[\.\)]\s*)?(.+?)(?:\n|$)/   // First line (with optional number)
+    ];
+    
+    for (const pattern of titlePatterns) {
+      const match = section.match(pattern);
+      if (match && match[1]) {
+        title = match[1].trim();
+        break;
+      }
+    }
+    
+    // If still no title, use first meaningful line
+    if (!title) {
+      title = lines.find(l => l.length > 10 && !l.match(/^[\s\-\*#]+$/)) || 'Security Finding';
+    }
+    
+    // Clean up title
+    title = title.replace(/^[\d\.\)\-\*#\s]+/, '').trim();
+    
+    // Extract severity with more patterns
+    const severityPatterns = [
+      /severity[:\s]*(high|critical|medium|moderate|low|minimal)/i,
+      /\b(high|critical|medium|moderate|low|minimal)\s+(?:severity|risk|priority)/i,
+      /(?:risk|threat)\s+level[:\s]*(high|critical|medium|moderate|low|minimal)/i
+    ];
+    
+    let severity: 'high' | 'medium' | 'low' = 'medium';
+    for (const pattern of severityPatterns) {
+      const match = section.match(pattern);
+      if (match) {
+        const level = match[1].toLowerCase();
+        if (level === 'critical' || level === 'high') severity = 'high';
+        else if (level === 'moderate' || level === 'medium') severity = 'medium';
+        else if (level === 'minimal' || level === 'low') severity = 'low';
+        break;
+      }
+    }
     
     // Extract category based on analysis type
     const category = this.extractCategory(section, analysisType);
@@ -122,11 +219,17 @@ export class FindingExtractor {
     const mitigations = this.extractMitigations(section);
     
     // Build description from remaining content
-    const description = this.extractDescription(section, title);
+    const description = this.extractDescription(section, title) || section.substring(0, 500);
+    
+    // Don't create finding if title and description are too similar or too short
+    if (title.length < 3 || description.length < 10) {
+      console.log('Skipping finding - title or description too short');
+      return null;
+    }
     
     return {
       id: '', // Will be set by caller
-      title: title.trim(),
+      title: title.substring(0, 200), // Limit title length
       description: description.trim(),
       severity,
       category,
