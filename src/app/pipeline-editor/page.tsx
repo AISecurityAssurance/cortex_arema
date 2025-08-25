@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { PipelineCanvas } from "./components/PipelineCanvas";
 import { NodeLibrary } from "./components/NodeLibrary";
 import { ConfigPanel } from "./components/ConfigPanel";
 import { ExecutionPanel } from "./components/ExecutionPanel";
+import { SaveReportDialog } from "./components/SaveReportDialog";
 import { usePipeline } from "./hooks/usePipeline";
 import { usePipelineExecution } from "./hooks/usePipelineExecution";
+import { ReportGenerator } from "./utils/reportGenerator";
+import domtoimage from "dom-to-image-more";
+import { Download } from "lucide-react";
 import "./pipeline-editor.css";
 
 export default function PipelineEditorPage() {
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
   
   // Detect platform
   React.useEffect(() => {
@@ -72,6 +78,71 @@ export default function PipelineEditorPage() {
     runPipeline({ nodes, connections });
   };
 
+  const handleSaveReport = async (metadata: {
+    name: string;
+    description?: string;
+    tags?: string[];
+    analyst?: string;
+  }) => {
+    // Validate that we have execution results to save
+    if (!executionState || executionState.status !== "complete") {
+      console.error("No completed execution to save");
+      return;
+    }
+    
+    try {
+      // Capture the pipeline canvas as an image
+      let canvasImage = "";
+      const canvasElement = document.querySelector(".pipeline-canvas") as HTMLElement;
+      if (canvasElement) {
+        try {
+          const dataUrl = await domtoimage.toPng(canvasElement, {
+            bgcolor: "#ffffff",
+            quality: 0.95,
+            width: canvasElement.scrollWidth,
+            height: canvasElement.scrollHeight,
+          });
+          canvasImage = dataUrl;
+        } catch (error) {
+          console.error("Failed to capture canvas:", error);
+        }
+      }
+
+      // Generate the report
+      const reportData = {
+        metadata: {
+          ...metadata,
+          generatedAt: new Date().toISOString(),
+        },
+        pipeline: {
+          id: `pipeline_${Date.now()}`,
+          name: metadata.name,
+          nodes,
+          connections,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        executionState,
+        canvasImage,
+      };
+
+      const htmlContent = ReportGenerator.generateHTML(reportData);
+
+      // Download the report
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${metadata.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${Date.now()}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to save report:", error);
+    }
+  };
+
   return (
     <div className="pipeline-editor">
       <header className="pipeline-header">
@@ -128,6 +199,16 @@ export default function PipelineEditorPage() {
               ? "Running..."
               : "Run Pipeline"}
           </button>
+          {executionState.status === "complete" && (
+            <button
+              className="btn-save"
+              onClick={() => setShowSaveDialog(true)}
+              title="Save execution report"
+            >
+              <Download size={16} />
+              Save Report
+            </button>
+          )}
           {executionState.status === "running" && (
             <button className="btn-cancel" onClick={cancelExecution}>
               Cancel
@@ -183,6 +264,13 @@ export default function PipelineEditorPage() {
       <div className="shortcut-help-hint">
         Hold <kbd>H</kbd> or <kbd>?</kbd> for keyboard shortcuts
       </div>
+
+      {/* Save Report Dialog */}
+      <SaveReportDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleSaveReport}
+      />
     </div>
   );
 }

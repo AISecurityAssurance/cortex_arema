@@ -30,6 +30,8 @@ export interface Finding {
   mitigations?: string[];
   references?: string[];
   cweId?: string;
+  modelSource?: string;
+  createdAt?: string;
 }
 
 export interface FindingsResult {

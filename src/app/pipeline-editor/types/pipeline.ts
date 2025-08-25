@@ -1,4 +1,5 @@
 import { Finding } from './results';
+import { OllamaConfig } from './config';
 
 export interface Point {
   x: number;
@@ -39,6 +40,7 @@ export interface StrideAnalysisNode extends BaseNode {
     temperature: number;
     promptTemplate: string;
     systemDescription: string;
+    ollamaConfig?: OllamaConfig;
   };
   inputs: ["diagram_data" | "text_data"];
   outputs: ["findings_data"];
@@ -53,6 +55,7 @@ export interface StpaSecAnalysisNode extends BaseNode {
     temperature: number;
     promptTemplate: string;
     systemDescription: string;
+    ollamaConfig?: OllamaConfig;
   };
   inputs: ["diagram_data" | "text_data"];
   outputs: ["findings_data"];
