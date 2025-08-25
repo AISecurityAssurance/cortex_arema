@@ -165,27 +165,16 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   };
 
   const performAnalysis = async () => {
-    console.log("performAnalysis called with state:", {
-      selectedTemplate: selectedTemplate,
-      selectedTemplateName: selectedTemplate?.name,
-      selectedTemplateId: selectedTemplate?.id,
-      prompt: prompt.substring(0, 50),
-      image: image?.name,
-      isImageValidated,
-    });
-
     // Clear any previous errors
     setError(null);
 
     if (!session) {
-      console.log("Blocking: No session");
       setError("No active session");
       showToast("Please create or select a session", "error");
       return;
     }
 
     if (!selectedTemplate) {
-      console.log("Blocking: No template selected");
       setError("Please select a template first");
       showToast("Please select an analysis template", "error");
       return;
@@ -199,7 +188,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
     // Check if image is being validated
     if (isValidatingImage) {
-      console.log("Image validation in progress");
       setError("Please wait for image validation to complete");
       showToast("Image validation in progress", "warning");
       return;
@@ -207,7 +195,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
     // Check if there's an image that hasn't been validated
     if (image && !isImageValidated) {
-      console.log("Blocking analysis due to invalid image");
       setError("Invalid image uploaded");
       showToast(
         "The uploaded image is not a valid architecture diagram",
@@ -216,11 +203,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       return;
     }
 
-    console.log("All validations passed, starting analysis");
-    console.log(
-      "Using validated image:",
-      image && isImageValidated ? image.name : "none"
-    );
     setAnalysisInProgress(true);
 
     try {
@@ -383,10 +365,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   };
 
   const handleImageUpload = async (file: File | null) => {
-    console.log("handleImageUpload called with:", file);
-
     if (!file) {
-      console.log("No file, clearing image state");
       setImage(null);
       setIsImageValidated(false);
       setIsValidatingImage(false);
@@ -403,14 +382,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       showToast("Validating image...", "info");
 
       const isValid = await validateArchitectureImage(file);
-      console.log("Image validation result:", isValid);
 
       if (isValid) {
-        console.log("Image is valid, keeping file");
         setIsImageValidated(true);
         showToast("Architecture diagram uploaded successfully", "success");
       } else {
-        console.log("Image is invalid, removing file");
         setImage(null);
         setIsImageValidated(false);
         showToast(
@@ -498,7 +474,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 onChange={(e) => {
                   if (analysisInProgress || isValidatingImage) return;
                   const file = e.target.files?.[0] || null;
-                  console.log("File input changed:", file);
                   handleImageUpload(file);
                 }}
                 style={{ display: "none" }}
