@@ -71,7 +71,7 @@ export function NodeLibrary({ onNodeDrop }: NodeLibraryProps) {
           <li><strong>Click & drag</strong> from an <span style={{ color: '#f59e0b' }}>output port</span> (right side)</li>
           <li>Release on an <span style={{ color: '#4ade80' }}>input port</span> (left side)</li>
         </ol>
-        <div style={{ marginTop: '0.5rem', color: 'rgba(255,255,255,0.6)' }}>
+        <div style={{ marginTop: '0.5rem', color: 'var(--color-text-secondary)' }}>
           Ports will glow when hovering!
         </div>
       </div>
