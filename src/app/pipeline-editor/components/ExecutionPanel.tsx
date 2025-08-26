@@ -175,7 +175,6 @@ export function ExecutionPanel({
     if (nodeId.includes('stpa')) return 'STPA-SEC Analysis';
     if (nodeId.includes('diagram')) return 'Architecture Diagram';
     if (nodeId.includes('text')) return 'Text Input';
-    if (nodeId.includes('results')) return 'Results View';
     return nodeId;
   }
 

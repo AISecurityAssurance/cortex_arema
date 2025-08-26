@@ -263,34 +263,6 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
           </>
         );
 
-      case 'output-results':
-        return (
-          <>
-            <div className="config-section">
-              <label className="config-label">Display Mode</label>
-              <select
-                value={(node as any).config.displayMode}
-                onChange={(e) => onUpdateConfig({ ...(node as any).config, displayMode: e.target.value })}
-                className="config-select"
-              >
-                <option value="summary">Summary</option>
-                <option value="detailed">Detailed</option>
-              </select>
-            </div>
-            <div className="config-section">
-              <label className="config-label">
-                <input
-                  type="checkbox"
-                  checked={(node as any).config.autoOpenValidation}
-                  onChange={(e) => onUpdateConfig({ ...(node as any).config, autoOpenValidation: e.target.checked })}
-                  style={{ marginRight: '0.5rem' }}
-                />
-                Auto-open validation panel
-              </label>
-            </div>
-          </>
-        );
-
       default:
         return <div>No configuration available</div>;
     }
@@ -302,7 +274,6 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
       'input-text': 'Text Input',
       'analysis-stride': 'STRIDE Analysis',
       'analysis-stpa-sec': 'STPA-SEC Analysis',
-      'output-results': 'Results View',
     };
     return titles[node.type] || node.type;
   };

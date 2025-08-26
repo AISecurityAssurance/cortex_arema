@@ -111,7 +111,6 @@ export function BaseNode({
       "input-text": "Text Input",
       "analysis-stride": "STRIDE Analysis",
       "analysis-stpa-sec": "STPA-SEC Analysis",
-      "output-results": "Results View",
     };
     return titles[node.type] || node.type;
   };
@@ -158,8 +157,6 @@ export function BaseNode({
             )}
           </>
         );
-      case "output-results":
-        return `Mode: ${(node as any).config.displayMode}`;
       default:
         return "";
     }

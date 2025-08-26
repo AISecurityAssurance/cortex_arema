@@ -800,8 +800,7 @@ export class ReportGenerator {
     executionState: PipelineExecutionState
   ): string {
     const analysisNodes = pipeline.nodes.filter(
-      (node) =>
-        node.type.startsWith("analysis-") || node.type === "output-results"
+      (node) => node.type.startsWith("analysis-")
     );
 
     const sections = analysisNodes

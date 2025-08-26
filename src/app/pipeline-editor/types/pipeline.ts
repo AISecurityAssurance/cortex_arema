@@ -63,22 +63,11 @@ export interface StpaSecAnalysisNode extends BaseNode {
   executionTime?: number;
 }
 
-export interface ResultsViewNode extends BaseNode {
-  type: "output-results";
-  config: {
-    displayMode: "summary" | "detailed";
-    autoOpenValidation: boolean;
-  };
-  inputs: ["findings_data"];
-  results?: Finding[];
-}
-
 export type PipelineNode =
   | ArchitectureDiagramNode
   | TextInputNode
   | StrideAnalysisNode
-  | StpaSecAnalysisNode
-  | ResultsViewNode;
+  | StpaSecAnalysisNode;
 
 export interface Connection {
   id: string;
@@ -149,18 +138,6 @@ export const NODE_CATEGORIES: NodeCategory[] = [
         name: "STPA-SEC Analysis",
         description: "System-theoretic analysis",
         icon: "⚡",
-      },
-    ],
-  },
-  {
-    name: "Outputs",
-    icon: "📊",
-    nodes: [
-      {
-        type: "output-results",
-        name: "Results View",
-        description: "Display analysis results",
-        icon: "📊",
       },
     ],
   },

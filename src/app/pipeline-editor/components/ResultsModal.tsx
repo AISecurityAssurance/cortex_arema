@@ -192,39 +192,6 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
       );
     }
 
-    if (nodeType === 'output-results') {
-      return (
-        <div>
-          <h4>Final Results</h4>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '0.25rem' }}>
-            <p>Results processed and ready for validation.</p>
-            {results.data && (
-              <div style={{ marginTop: '1rem' }}>
-                <button
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#3b82f6',
-                    border: 'none',
-                    borderRadius: '0.25rem',
-                    color: 'white',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    // Navigate to analysis view with results
-                    const sessionId = `pipeline_${Date.now()}`;
-                    localStorage.setItem(`pipeline_results_${sessionId}`, JSON.stringify(results.data));
-                    window.open(`/analysis?session=${sessionId}&source=pipeline`, '_blank');
-                  }}
-                >
-                  Open in Validation View
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
     // Default JSON view for unknown types
     return (
       <div>

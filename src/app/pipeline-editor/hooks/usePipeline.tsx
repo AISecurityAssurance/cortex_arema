@@ -109,19 +109,6 @@ export function usePipeline() {
         } as any;
         break;
 
-      case "output-results":
-        newNode = {
-          id: nodeId,
-          type: "output-results",
-          position,
-          config: {
-            displayMode: "detailed",
-            autoOpenValidation: true,
-          },
-          inputs: ["findings_data"],
-        } as any;
-        break;
-
       default:
         return;
     }

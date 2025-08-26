@@ -515,9 +515,6 @@ export function usePipelineExecution() {
           }
         }
 
-      case "output-results":
-        return inputs;
-
       default:
         throw new Error(
           `Unknown node type: ${(node as { type: string }).type}`
