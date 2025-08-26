@@ -1,6 +1,6 @@
-import { PipelineNode, Connection } from '../types/pipeline';
-import { PipelineExecutionState, NodeExecutionState } from '../types/execution';
-import { NodeResult, Finding } from '../types/results';
+import { PipelineNode, Connection } from "../types/pipeline";
+import { PipelineExecutionState, NodeExecutionState } from "../types/execution";
+import { Finding } from "../types/results";
 
 interface Pipeline {
   id: string;
@@ -29,10 +29,10 @@ interface ReportData {
 export class ReportGenerator {
   static generateHTML(data: ReportData): string {
     const { metadata, pipeline, executionState, canvasImage } = data;
-    
+
     // Calculate summary statistics
     const stats = this.calculateStatistics(executionState);
-    
+
     // Generate the HTML report
     return `<!DOCTYPE html>
 <html lang="en">
@@ -48,7 +48,8 @@ export class ReportGenerator {
     <div class="container">
         ${this.generateHeader(metadata)}
         ${this.generateSummary(stats, executionState)}
-        ${canvasImage ? this.generatePipelineVisualization(canvasImage) : ''}
+        ${canvasImage ? this.generatePipelineVisualization(canvasImage) : ""}
+        ${this.generateInputsSection(pipeline, executionState)}
         ${this.generateExecutionDetails(pipeline, executionState)}
         ${this.generateFindingsByNode(pipeline, executionState)}
         ${this.generateRawData(pipeline, executionState)}
@@ -473,57 +474,72 @@ export class ReportGenerator {
   }
 
   private static generateHeader(metadata: ReportMetadata): string {
-    const tags = metadata.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') || '';
-    
+    const tags =
+      metadata.tags?.map((tag) => `<span class="tag">${tag}</span>`).join("") ||
+      "";
+
     return `
       <div class="header">
         <h1>${metadata.name}</h1>
-        ${metadata.description ? `<p style="color: #6c757d; margin-bottom: 20px;">${metadata.description}</p>` : ''}
-        ${tags ? `<div style="margin-bottom: 20px;">${tags}</div>` : ''}
+        ${
+          metadata.description
+            ? `<p style="color: #6c757d; margin-bottom: 20px;">${metadata.description}</p>`
+            : ""
+        }
+        ${tags ? `<div style="margin-bottom: 20px;">${tags}</div>` : ""}
         <div class="metadata">
           <div class="metadata-item">
             <div class="metadata-label">Generated At</div>
-            <div class="metadata-value">${new Date(metadata.generatedAt).toLocaleString()}</div>
+            <div class="metadata-value">${new Date(
+              metadata.generatedAt
+            ).toLocaleString()}</div>
           </div>
-          ${metadata.analyst ? `
+          ${
+            metadata.analyst
+              ? `
           <div class="metadata-item">
             <div class="metadata-label">Analyst</div>
             <div class="metadata-value">${metadata.analyst}</div>
-          </div>` : ''}
+          </div>`
+              : ""
+          }
         </div>
       </div>
     `;
   }
 
-  private static calculateStatistics(executionState: PipelineExecutionState): any {
+  private static calculateStatistics(
+    executionState: PipelineExecutionState
+  ): any {
     let totalFindings = 0;
     let highSeverity = 0;
     let mediumSeverity = 0;
     let lowSeverity = 0;
     let successfulNodes = 0;
     let failedNodes = 0;
-    
+
     executionState.nodeStates.forEach((nodeState) => {
-      if (nodeState.status === 'complete') {
+      if (nodeState.status === "complete") {
         successfulNodes++;
-        if (nodeState.results && nodeState.results.type === 'findings') {
+        if (nodeState.results && nodeState.results.type === "findings") {
           const findings = nodeState.results.data;
           totalFindings += findings.length;
           findings.forEach((finding: Finding) => {
-            if (finding.severity === 'high') highSeverity++;
-            else if (finding.severity === 'medium') mediumSeverity++;
-            else if (finding.severity === 'low') lowSeverity++;
+            if (finding.severity === "high") highSeverity++;
+            else if (finding.severity === "medium") mediumSeverity++;
+            else if (finding.severity === "low") lowSeverity++;
           });
         }
-      } else if (nodeState.status === 'error') {
+      } else if (nodeState.status === "error") {
         failedNodes++;
       }
     });
-    
-    const duration = executionState.endTime && executionState.startTime 
-      ? (executionState.endTime - executionState.startTime) / 1000 
-      : 0;
-    
+
+    const duration =
+      executionState.endTime && executionState.startTime
+        ? (executionState.endTime - executionState.startTime) / 1000
+        : 0;
+
     return {
       totalFindings,
       highSeverity,
@@ -532,18 +548,17 @@ export class ReportGenerator {
       successfulNodes,
       failedNodes,
       totalNodes: executionState.nodeStates.size,
-      duration
+      duration,
     };
   }
 
-  private static generateSummary(stats: any, executionState: PipelineExecutionState): string {
+  private static generateSummary(
+    stats: any,
+    executionState: PipelineExecutionState
+  ): string {
     return `
       <h2>Executive Summary</h2>
       <div class="summary-grid">
-        <div class="summary-card ${executionState.status === 'complete' ? 'success' : executionState.status === 'error' ? 'error' : ''}">
-          <div class="summary-value">${executionState.status === 'complete' ? '✓' : executionState.status === 'error' ? '✗' : '⟳'}</div>
-          <div class="summary-label">Pipeline Status</div>
-        </div>
         <div class="summary-card">
           <div class="summary-value">${stats.totalFindings}</div>
           <div class="summary-label">Total Findings</div>
@@ -577,22 +592,201 @@ export class ReportGenerator {
     `;
   }
 
-  private static generateExecutionDetails(pipeline: Pipeline, executionState: PipelineExecutionState): string {
-    const nodes = pipeline.nodes.map(node => {
-      const nodeState = executionState.nodeStates.get(node.id);
-      return `
+  private static generateInputsSection(
+    pipeline: Pipeline,
+    executionState: PipelineExecutionState
+  ): string {
+    const sections: string[] = [];
+
+    // Find architecture diagram input
+    const diagramNode = pipeline.nodes.find(
+      (node) => node.type === "input-diagram"
+    );
+    if (diagramNode) {
+      const nodeState = executionState.nodeStates.get(diagramNode.id);
+      if (nodeState?.results && nodeState.results.type === "diagram") {
+        const diagramData = nodeState.results.data;
+        sections.push(`
+          <div style="margin-bottom: 30px;">
+            <h3>Architecture Diagram Input</h3>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
+              ${
+                diagramData.fileName
+                  ? `<p style="color: #6c757d; margin-bottom: 15px;">File: ${diagramData.fileName}</p>`
+                  : ""
+              }
+              <img src="data:${diagramData.mimeType || "image/png"};base64,${
+          diagramData.base64Image
+        }" 
+                   alt="Architecture Diagram" 
+                   style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+              ${
+                diagramData.analysis
+                  ? `<p style="color: #6c757d; margin-top: 15px; font-style: italic;">${diagramData.analysis}</p>`
+                  : ""
+              }
+            </div>
+          </div>
+        `);
+      }
+    }
+
+    // Find system descriptions and prompts from analysis nodes
+    const analysisNodes = pipeline.nodes.filter((node) =>
+      node.type.startsWith("analysis-")
+    );
+
+    analysisNodes.forEach((node) => {
+      const nodeConfig = (node as any).config;
+      if (nodeConfig) {
+        const promptSections: string[] = [];
+
+        if (nodeConfig.systemDescription) {
+          promptSections.push(`
+            <div style="margin-bottom: 20px;">
+              <h4 style="color: #495057; margin-bottom: 10px;">${
+                node.id
+              } - System Description</h4>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 3px solid #3498db;">
+                <pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; color: #495057;">${this.escapeHtml(
+                  nodeConfig.systemDescription
+                )}</pre>
+              </div>
+            </div>
+          `);
+        }
+
+        if (nodeConfig.promptTemplate) {
+          // Load the template from correct storage key
+          const templateStorage =
+            typeof window !== "undefined"
+              ? localStorage.getItem("cortex_security_templates")
+              : null;
+          if (templateStorage) {
+            try {
+              const templates = JSON.parse(templateStorage);
+              const template = templates.find(
+                (t: any) => t.id === nodeConfig.promptTemplate
+              );
+              if (template && template.template) {
+                promptSections.push(`
+                  <div style="margin-bottom: 20px;">
+                    <h4 style="color: #495057; margin-bottom: 10px;">${
+                      node.id
+                    } - Prompt Template: ${template.name}</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 3px solid #9b59b6;">
+                      <pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: 'Courier New', monospace; font-size: 13px; color: #495057;">${this.escapeHtml(
+                        template.template
+                      )}</pre>
+                    </div>
+                  </div>
+                `);
+              } else {
+                // If template not found, show the template ID
+                promptSections.push(`
+                  <div style="margin-bottom: 20px;">
+                    <h4 style="color: #495057; margin-bottom: 10px;">${node.id} - Prompt Template</h4>
+                    <p style="color: #dc3545;">Template "${nodeConfig.promptTemplate}" not found in storage</p>
+                  </div>
+                `);
+              }
+            } catch (e) {
+              console.error("Failed to parse templates:", e);
+              promptSections.push(`
+                <div style="margin-bottom: 20px;">
+                  <h4 style="color: #495057; margin-bottom: 10px;">${node.id} - Prompt Template</h4>
+                  <p style="color: #dc3545;">Error loading template: ${e}</p>
+                </div>
+              `);
+            }
+          } else {
+            promptSections.push(`
+              <div style="margin-bottom: 20px;">
+                <h4 style="color: #495057; margin-bottom: 10px;">${node.id} - Prompt Template</h4>
+                <p style="color: #6c757d;">Template ID: ${nodeConfig.promptTemplate} (storage not available)</p>
+              </div>
+            `);
+          }
+        }
+
+        if (nodeConfig.modelId) {
+          promptSections.push(`
+            <div style="margin-bottom: 20px;">
+              <p style="color: #6c757d;"><strong>Model:</strong> ${nodeConfig.modelId}</p>
+            </div>
+          `);
+        }
+
+        if (promptSections.length > 0) {
+          sections.push(promptSections.join(""));
+        }
+      }
+    });
+
+    // Find text input
+    const textNode = pipeline.nodes.find((node) => node.type === "input-text");
+    if (textNode) {
+      const nodeState = executionState.nodeStates.get(textNode.id);
+      if (nodeState?.results && nodeState.results.type === "text") {
+        const textData = nodeState.results.data;
+        sections.push(`
+          <div style="margin-bottom: 30px;">
+            <h3>Text Input Data</h3>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+              ${
+                textData.systemName
+                  ? `<p><strong>System Name:</strong> ${textData.systemName}</p>`
+                  : ""
+              }
+              ${
+                textData.description
+                  ? `<p><strong>Description:</strong> ${textData.description}</p>`
+                  : ""
+              }
+              ${
+                textData.context
+                  ? `<p><strong>Context:</strong> ${textData.context}</p>`
+                  : ""
+              }
+            </div>
+          </div>
+        `);
+      }
+    }
+
+    return sections.length > 0
+      ? `
+      <h2>Analysis Inputs & Configuration</h2>
+      ${sections.join("")}
+    `
+      : "";
+  }
+
+  private static generateExecutionDetails(
+    pipeline: Pipeline,
+    executionState: PipelineExecutionState
+  ): string {
+    const nodes = pipeline.nodes
+      .map((node) => {
+        const nodeState = executionState.nodeStates.get(node.id);
+        return `
         <div class="timeline-item">
           <strong>${node.id}</strong> (${node.type})
           <br />
           <span style="color: #6c757d; font-size: 14px;">
-            Status: ${nodeState?.status || 'pending'}
-            ${nodeState?.duration ? ` • Duration: ${(nodeState.duration / 1000).toFixed(2)}s` : ''}
-            ${nodeState?.error ? ` • Error: ${nodeState.error}` : ''}
+            Status: ${nodeState?.status || "pending"}
+            ${
+              nodeState?.duration
+                ? ` • Duration: ${(nodeState.duration / 1000).toFixed(2)}s`
+                : ""
+            }
+            ${nodeState?.error ? ` • Error: ${nodeState.error}` : ""}
           </span>
         </div>
       `;
-    }).join('');
-    
+      })
+      .join("");
+
     return `
       <h2>Execution Details</h2>
       <div class="execution-timeline">
@@ -601,48 +795,79 @@ export class ReportGenerator {
     `;
   }
 
-  private static generateFindingsByNode(pipeline: Pipeline, executionState: PipelineExecutionState): string {
-    const analysisNodes = pipeline.nodes.filter(node => 
-      node.type.startsWith('analysis-') || node.type === 'output-results'
+  private static generateFindingsByNode(
+    pipeline: Pipeline,
+    executionState: PipelineExecutionState
+  ): string {
+    const analysisNodes = pipeline.nodes.filter(
+      (node) =>
+        node.type.startsWith("analysis-") || node.type === "output-results"
     );
-    
-    const sections = analysisNodes.map(node => {
-      const nodeState = executionState.nodeStates.get(node.id);
-      if (!nodeState || !nodeState.results) return '';
-      
-      if (nodeState.results.type !== 'findings') return '';
-      
-      const findings = nodeState.results.data;
-      if (findings.length === 0) return '';
-      
-      const findingsHTML = findings.map((finding: Finding) => `
+
+    const sections = analysisNodes
+      .map((node) => {
+        const nodeState = executionState.nodeStates.get(node.id);
+        if (!nodeState || !nodeState.results) return "";
+
+        if (nodeState.results.type !== "findings") return "";
+
+        const findings = nodeState.results.data;
+        if (findings.length === 0) return "";
+
+        const findingsHTML = findings
+          .map(
+            (finding: Finding) => `
         <div class="finding ${finding.severity}">
           <div class="finding-header">
             <div>
               <div class="finding-title">${finding.title}</div>
-              ${finding.category ? `<span style="color: #6c757d; font-size: 12px;">${finding.category}</span>` : ''}
+              ${
+                finding.category
+                  ? `<span style="color: #6c757d; font-size: 12px;">${finding.category}</span>`
+                  : ""
+              }
             </div>
-            <span class="severity-badge severity-${finding.severity}">${finding.severity}</span>
+            <span class="severity-badge severity-${finding.severity}">${
+              finding.severity
+            }</span>
           </div>
           <div class="finding-description">${finding.description}</div>
-          ${finding.impact ? `<div style="margin-top: 10px;"><strong>Impact:</strong> ${finding.impact}</div>` : ''}
-          ${finding.mitigations && finding.mitigations.length > 0 ? `
+          ${
+            finding.impact
+              ? `<div style="margin-top: 10px;"><strong>Impact:</strong> ${finding.impact}</div>`
+              : ""
+          }
+          ${
+            finding.mitigations && finding.mitigations.length > 0
+              ? `
             <div style="margin-top: 10px;">
               <strong>Mitigations:</strong>
               <ul style="margin-top: 5px; margin-left: 20px;">
-                ${finding.mitigations.map(m => `<li>${m}</li>`).join('')}
+                ${finding.mitigations.map((m) => `<li>${m}</li>`).join("")}
               </ul>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           <div class="finding-metadata">
-            ${finding.confidence ? `<span>Confidence: ${finding.confidence}%</span>` : ''}
-            ${finding.cweId ? `<span>CWE: ${finding.cweId}</span>` : ''}
-            ${nodeState.results.modelId ? `<span>Model: ${nodeState.results.modelId}</span>` : ''}
+            ${
+              finding.confidence
+                ? `<span>Confidence: ${finding.confidence}%</span>`
+                : ""
+            }
+            ${finding.cweId ? `<span>CWE: ${finding.cweId}</span>` : ""}
+            ${
+              nodeState.results.modelId
+                ? `<span>Model: ${nodeState.results.modelId}</span>`
+                : ""
+            }
           </div>
         </div>
-      `).join('');
-      
-      return `
+      `
+          )
+          .join("");
+
+        return `
         <div class="node-section">
           <div class="node-header">
             <div class="node-title">
@@ -659,23 +884,33 @@ export class ReportGenerator {
           </div>
         </div>
       `;
-    }).filter(section => section !== '').join('');
-    
-    return sections ? `
+      })
+      .filter((section) => section !== "")
+      .join("");
+
+    return sections
+      ? `
       <h2>Security Findings by Analysis Node</h2>
       ${sections}
-    ` : '';
+    `
+      : "";
   }
 
-  private static generateRawData(pipeline: Pipeline, executionState: PipelineExecutionState): string {
+  private static generateRawData(
+    pipeline: Pipeline,
+    executionState: PipelineExecutionState
+  ): string {
     const sections: string[] = [];
-    
-    pipeline.nodes.forEach(node => {
+
+    pipeline.nodes.forEach((node) => {
       const nodeState = executionState.nodeStates.get(node.id);
       if (!nodeState || !nodeState.results) return;
-      
+
       // Add raw model response if available
-      if (nodeState.results.type === 'findings' && nodeState.results.rawResponse) {
+      if (
+        nodeState.results.type === "findings" &&
+        nodeState.results.rawResponse
+      ) {
         sections.push(`
           <div class="collapsible">
             <div class="collapsible-header">
@@ -683,14 +918,16 @@ export class ReportGenerator {
               <span class="chevron">▶</span>
             </div>
             <div class="collapsible-content">
-              <div class="code-block">${this.escapeHtml(nodeState.results.rawResponse)}</div>
+              <div class="code-block">${this.escapeHtml(
+                nodeState.results.rawResponse
+              )}</div>
             </div>
           </div>
         `);
       }
-      
+
       // Add input data if available
-      if (nodeState.results.type === 'text') {
+      if (nodeState.results.type === "text") {
         sections.push(`
           <div class="collapsible">
             <div class="collapsible-header">
@@ -698,19 +935,23 @@ export class ReportGenerator {
               <span class="chevron">▶</span>
             </div>
             <div class="collapsible-content">
-              <div class="code-block">${JSON.stringify(nodeState.results.data, null, 2)}</div>
+              <div class="code-block">${JSON.stringify(
+                nodeState.results.data,
+                null,
+                2
+              )}</div>
             </div>
           </div>
         `);
       }
-      
+
       // Add node configuration
-      if ('config' in node) {
+      if ("config" in node) {
         const config = { ...node.config };
         // Remove sensitive or large data
-        if ('file' in config) delete config.file;
-        if ('ollamaConfig' in config) delete config.ollamaConfig;
-        
+        if ("file" in config) delete config.file;
+        if ("ollamaConfig" in config) delete config.ollamaConfig;
+
         sections.push(`
           <div class="collapsible">
             <div class="collapsible-header">
@@ -724,7 +965,7 @@ export class ReportGenerator {
         `);
       }
     });
-    
+
     // Add pipeline metadata
     sections.push(`
       <div class="collapsible">
@@ -733,32 +974,38 @@ export class ReportGenerator {
           <span class="chevron">▶</span>
         </div>
         <div class="collapsible-content">
-          <div class="code-block">${JSON.stringify({
-            id: pipeline.id,
-            name: pipeline.name,
-            createdAt: pipeline.createdAt,
-            updatedAt: pipeline.updatedAt,
-            totalNodes: pipeline.nodes.length,
-            totalConnections: pipeline.connections.length
-          }, null, 2)}</div>
+          <div class="code-block">${JSON.stringify(
+            {
+              id: pipeline.id,
+              name: pipeline.name,
+              createdAt: pipeline.createdAt,
+              updatedAt: pipeline.updatedAt,
+              totalNodes: pipeline.nodes.length,
+              totalConnections: pipeline.connections.length,
+            },
+            null,
+            2
+          )}</div>
         </div>
       </div>
     `);
-    
-    return sections.length > 0 ? `
+
+    return sections.length > 0
+      ? `
       <h2>Raw Data & Configuration</h2>
-      ${sections.join('')}
-    ` : '';
+      ${sections.join("")}
+    `
+      : "";
   }
 
   private static escapeHtml(text: string): string {
     const map: { [key: string]: string } = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return text.replace(/[&<>"']/g, (m) => map[m]);
   }
 }
