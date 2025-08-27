@@ -17,6 +17,9 @@
   --connection-default: #9ca3af;
   --connection-active: #3b82f6;
   --connection-invalid: #ef4444;
+  --connection-hover: #8b5cf6;
+  
+  --danger: #ef4444;
   
   --panel-bg: var(--color-surface, #ffffff);
   --panel-border: var(--color-border, #e5e7eb);
@@ -40,6 +43,9 @@
   --connection-default: #6b7280;
   --connection-active: #3b82f6;
   --connection-invalid: #ef4444;
+  --connection-hover: #a78bfa;
+  
+  --danger: #ef4444;
   
   --panel-bg: var(--color-surface, #1a1a1a);
   --panel-border: var(--color-border, #333333);
@@ -303,7 +309,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 1;
 }
 
@@ -313,7 +319,12 @@
   left: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none;
   z-index: 2;
+}
+
+.nodes-layer > * {
+  pointer-events: auto;
 }
 
 .pipeline-node {

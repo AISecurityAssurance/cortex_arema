@@ -66,6 +66,7 @@ export function PipelineCanvas({
   const [connectionStart, setConnectionStart] = useState<{ nodeId: string; output: string; position: Point } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [hoveredPort, setHoveredPort] = useState<{ nodeId: string; portType: 'input' | 'output'; portName: string } | null>(null);
+  const [hoveredConnectionId, setHoveredConnectionId] = useState<string | null>(null);
   const [resultsModalNode, setResultsModalNode] = useState<{ nodeId: string; nodeType: string } | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const keyPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -374,7 +375,10 @@ export function PipelineCanvas({
                 isValid={connection.isValid}
                 isSelected={connection.id === selectedConnectionId}
                 isAnimated={isAnimated}
+                isHovered={connection.id === hoveredConnectionId}
                 onClick={() => onConnectionSelect(connection.id)}
+                onMouseEnter={() => setHoveredConnectionId(connection.id)}
+                onMouseLeave={() => setHoveredConnectionId(null)}
               />
             );
           })}

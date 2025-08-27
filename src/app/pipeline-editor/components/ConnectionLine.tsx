@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Point } from "../types/pipeline";
 
 interface ConnectionLineProps {
@@ -10,10 +9,13 @@ interface ConnectionLineProps {
   isTemporary?: boolean;
   isSelected?: boolean;
   isAnimated?: boolean;
+  isHovered?: boolean;
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export function ConnectionLine({ from, to, isValid = true, isTemporary = false, isSelected = false, isAnimated = false, onClick }: ConnectionLineProps) {
+export function ConnectionLine({ from, to, isValid = true, isTemporary = false, isSelected = false, isAnimated = false, isHovered = false, onClick, onMouseEnter, onMouseLeave }: ConnectionLineProps) {
   // Calculate control points for smoother bezier curves
   const deltaX = to.x - from.x;
   const deltaY = to.y - from.y;
@@ -59,15 +61,17 @@ export function ConnectionLine({ from, to, isValid = true, isTemporary = false, 
       <path
         d={pathData}
         fill="none"
-        stroke={isSelected ? "var(--connection-active)" : (isValid ? "var(--connection-default)" : "var(--connection-invalid)")}
-        strokeWidth={isSelected ? "3" : "2"}
+        stroke={isSelected ? "var(--connection-active)" : (isHovered ? "var(--connection-hover)" : (isValid ? "var(--connection-default)" : "var(--connection-invalid)"))}
+        strokeWidth={isSelected ? "3" : (isHovered ? "3" : "2")}
         strokeDasharray={isTemporary ? "5,5" : undefined}
         style={{ 
           cursor: onClick ? 'pointer' : 'default',
-          filter: isSelected ? 'drop-shadow(0 0 4px var(--connection-active))' : undefined,
+          filter: isSelected ? 'drop-shadow(0 0 4px var(--connection-active))' : (isHovered ? 'drop-shadow(0 0 3px var(--connection-hover))' : undefined),
           transition: 'all 0.2s ease'
         }}
         onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       />
       
       {/* Animated flow overlay */}
@@ -88,10 +92,39 @@ export function ConnectionLine({ from, to, isValid = true, isTemporary = false, 
           d={pathData}
           fill="none"
           stroke="transparent"
-          strokeWidth="10"
+          strokeWidth="15"
           style={{ cursor: onClick ? 'pointer' : 'default' }}
           onClick={onClick}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         />
+      )}
+      
+      {/* Tooltip when hovered */}
+      {isHovered && !isTemporary && (
+        <g transform={`translate(${(from.x + to.x) / 2}, ${(from.y + to.y) / 2})`}>
+          <rect
+            x="-135"
+            y="-10"
+            width="270"
+            height="20"
+            rx="4"
+            fill="rgba(0, 0, 0, 0.8)"
+            style={{ pointerEvents: 'none' }}
+          />
+          <text
+            x="0"
+            y="3"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="white"
+            fontSize="12"
+            fontWeight="500"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            Select the connection and press the Delete key to delete
+          </text>
+        </g>
       )}
     </g>
   );
