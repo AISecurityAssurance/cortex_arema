@@ -231,14 +231,28 @@ export function PipelineCanvas({
       const node = nodes.find(n => n.id === nodeId);
       if (!node) return;
 
+      // Get the actual port element position from the event
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      // Get the port element
+      const portElement = e.currentTarget as HTMLElement;
+      const portRect = portElement.getBoundingClientRect();
+      
+      // Calculate port center position relative to canvas
+      const portPosition = {
+        x: (portRect.left + portRect.width / 2 - rect.left) / viewportTransform.scale - viewportTransform.x,
+        y: (portRect.top + portRect.height / 2 - rect.top) / viewportTransform.scale - viewportTransform.y
+      };
+
       setIsConnecting(true);
       setConnectionStart({
         nodeId,
         output: portName,
-        position: node.position
+        position: portPosition
       });
     }
-  }, [nodes]);
+  }, [nodes, viewportTransform]);
 
   const handlePortMouseUp = useCallback((e: React.MouseEvent, nodeId: string, portType: 'input' | 'output', portName: string) => {
     e.stopPropagation();
@@ -370,8 +384,8 @@ export function PipelineCanvas({
             return (
               <ConnectionLine
                 key={connection.id}
-                from={{ x: fromNode.position.x + 200, y: fromNode.position.y + 50 }}
-                to={{ x: toNode.position.x, y: toNode.position.y + 50 }}
+                from={{ x: fromNode.position.x + 200, y: fromNode.position.y + 100 }}
+                to={{ x: toNode.position.x, y: toNode.position.y + 100 }}
                 isValid={connection.isValid}
                 isSelected={connection.id === selectedConnectionId}
                 isAnimated={isAnimated}
@@ -385,7 +399,7 @@ export function PipelineCanvas({
           
           {isConnecting && connectionStart && (
             <ConnectionLine
-              from={{ x: connectionStart.position.x + 200, y: connectionStart.position.y + 50 }}
+              from={connectionStart.position}
               to={mousePosition}
               isValid={false}
               isTemporary
