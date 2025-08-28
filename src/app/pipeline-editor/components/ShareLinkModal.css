@@ -1,0 +1,148 @@
+.share-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.report-info {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.report-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.expiration-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.expiration-info strong {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.share-link-container {
+  margin-bottom: 20px;
+}
+
+.share-link-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.share-link-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: monospace;
+  background: #f9fafb;
+  color: #111827;
+  cursor: text;
+}
+
+.share-link-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+}
+
+.copy-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background: #2563eb;
+}
+
+.copy-button:active {
+  transform: scale(0.98);
+}
+
+.test-mode-warning {
+  background: #fef3c7;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f59e0b;
+  margin-bottom: 20px;
+}
+
+.test-mode-warning p {
+  font-size: 14px;
+  color: #92400e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.button-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.button-danger:hover {
+  background: #dc2626;
+}
+
+.button-danger:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .share-modal-content {
+  background: var(--background-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .report-info {
+  background: var(--background-primary);
+}
+
+[data-theme="dark"] .report-name {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .share-link-input {
+  background: var(--background-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .test-mode-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
