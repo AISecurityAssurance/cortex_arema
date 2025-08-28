@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Download, Tag } from "lucide-react";
+import { X, Download, Tag, Share2 } from "lucide-react";
 import "./SaveReportDialog.css";
 
 interface SaveReportDialogProps {
@@ -12,7 +12,7 @@ interface SaveReportDialogProps {
     description?: string;
     tags?: string[];
     analyst?: string;
-  }) => void;
+  }, action: 'download' | 'share') => void;
 }
 
 export function SaveReportDialog({ isOpen, onClose, onSave }: SaveReportDialogProps) {
@@ -23,7 +23,7 @@ export function SaveReportDialog({ isOpen, onClose, onSave }: SaveReportDialogPr
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = (action: 'download' | 'share') => {
     const tagArray = tags
       .split(",")
       .map(tag => tag.trim())
@@ -34,7 +34,7 @@ export function SaveReportDialog({ isOpen, onClose, onSave }: SaveReportDialogPr
       description: description || undefined,
       tags: tagArray.length > 0 ? tagArray : undefined,
       analyst: analyst || undefined,
-    });
+    }, action);
 
     // Reset form
     setName(`Pipeline Report - ${new Date().toLocaleString()}`);
@@ -109,6 +109,12 @@ export function SaveReportDialog({ isOpen, onClose, onSave }: SaveReportDialogPr
               className="form-input"
             />
           </div>
+          
+          <div className="warning-box">
+            <p className="warning-text">
+              ⚠️ <strong>Testing Mode:</strong> Shared links expire after 10 minutes
+            </p>
+          </div>
         </div>
 
         <div className="modal-footer">
@@ -116,12 +122,21 @@ export function SaveReportDialog({ isOpen, onClose, onSave }: SaveReportDialogPr
             Cancel
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => handleSave('download')}
             disabled={!name.trim()}
             className="button button-primary"
           >
             <Download size={16} />
             Download Report
+          </button>
+          <button
+            onClick={() => handleSave('share')}
+            disabled={!name.trim()}
+            className="button button-primary"
+            style={{ backgroundColor: '#10b981' }}
+          >
+            <Share2 size={16} />
+            Share Link (10 min)
           </button>
         </div>
       </div>
