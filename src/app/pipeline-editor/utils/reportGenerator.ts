@@ -27,7 +27,7 @@ interface ReportData {
 }
 
 export class ReportGenerator {
-  static generateHTML(data: ReportData): string {
+  static generateHTML(data: ReportData, isShared: boolean = false): string {
     const { metadata, pipeline, executionState, canvasImage } = data;
 
     // Calculate summary statistics
@@ -40,11 +40,19 @@ export class ReportGenerator {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${metadata.name} - Pipeline Execution Report</title>
+    
+    <!-- Open Graph tags for better link previews -->
+    <meta property="og:title" content="${metadata.name}" />
+    <meta property="og:description" content="${metadata.description || 'Security analysis pipeline execution report'}" />
+    <meta property="og:type" content="article" />
+    <meta name="description" content="${metadata.description || 'Security analysis pipeline execution report'}" />
+    
     <style>
         ${this.getStyles()}
     </style>
 </head>
 <body>
+    ${isShared ? this.generateExpirationBanner() : ''}
     <div class="container">
         ${this.generateHeader(metadata)}
         ${this.generateSummary(stats, executionState)}
@@ -60,6 +68,17 @@ export class ReportGenerator {
 </body>
 </html>`;
   }
+  
+  private static generateExpirationBanner(): string {
+    return `
+      <div class="expiration-banner">
+        <div class="expiration-content">
+          <strong>⏱️ Temporary Report:</strong> This report is temporarily hosted and will expire soon. 
+          For permanent access, please download a copy.
+        </div>
+      </div>
+    `;
+  }
 
   private static getStyles(): string {
     return `
@@ -74,6 +93,24 @@ export class ReportGenerator {
         line-height: 1.6;
         color: #333;
         background: #f5f5f5;
+      }
+      
+      .expiration-banner {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #7c2d12;
+        padding: 12px 0;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+      
+      .expiration-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        font-size: 14px;
       }
       
       .container {
