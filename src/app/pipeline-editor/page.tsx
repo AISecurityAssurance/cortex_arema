@@ -6,9 +6,11 @@ import { NodeLibrary } from "./components/NodeLibrary";
 import { ConfigPanel } from "./components/ConfigPanel";
 import { ExecutionPanel } from "./components/ExecutionPanel";
 import { SaveReportDialog } from "./components/SaveReportDialog";
+import { ShareLinkModal } from "./components/ShareLinkModal";
 import { usePipeline } from "./hooks/usePipeline";
 import { usePipelineExecution } from "./hooks/usePipelineExecution";
 import { ReportGenerator } from "./utils/reportGenerator";
+import { reportService } from "@/lib/api/reportService";
 import domtoimage from "dom-to-image-more";
 import { Download } from "lucide-react";
 import "./pipeline-editor.css";
@@ -17,6 +19,13 @@ export default function PipelineEditorPage() {
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState<{
+    shareUrl: string;
+    reportId: string;
+    expiresAt: string;
+    reportName: string;
+  } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   
   // Detect platform
@@ -78,12 +87,15 @@ export default function PipelineEditorPage() {
     runPipeline({ nodes, connections });
   };
 
-  const handleSaveReport = async (metadata: {
-    name: string;
-    description?: string;
-    tags?: string[];
-    analyst?: string;
-  }) => {
+  const handleSaveReport = async (
+    metadata: {
+      name: string;
+      description?: string;
+      tags?: string[];
+      analyst?: string;
+    },
+    action: 'download' | 'share'
+  ) => {
     // Validate that we have execution results to save
     if (!executionState || executionState.status !== "complete") {
       console.error("No completed execution to save");
@@ -126,18 +138,36 @@ export default function PipelineEditorPage() {
         canvasImage,
       };
 
-      const htmlContent = ReportGenerator.generateHTML(reportData);
+      const isShared = action === 'share';
+      const htmlContent = ReportGenerator.generateHTML(reportData, isShared);
 
-      // Download the report
-      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${metadata.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${Date.now()}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (action === 'download') {
+        // Download the report
+        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${metadata.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${Date.now()}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        // Share the report via link
+        try {
+          const response = await reportService.uploadReport(htmlContent, metadata);
+          setShareData({
+            shareUrl: response.share_url,
+            reportId: response.report_id,
+            expiresAt: response.expires_at,
+            reportName: metadata.name
+          });
+          setShowShareModal(true);
+        } catch (error) {
+          console.error("Failed to share report:", error);
+          alert("Failed to create share link. Please try downloading instead.");
+        }
+      }
     } catch (error) {
       console.error("Failed to save report:", error);
     }
@@ -271,6 +301,21 @@ export default function PipelineEditorPage() {
         onClose={() => setShowSaveDialog(false)}
         onSave={handleSaveReport}
       />
+      
+      {/* Share Link Modal */}
+      {showShareModal && shareData && (
+        <ShareLinkModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareData(null);
+          }}
+          shareUrl={shareData.shareUrl}
+          reportId={shareData.reportId}
+          expiresAt={shareData.expiresAt}
+          reportName={shareData.reportName}
+        />
+      )}
     </div>
   );
 }
