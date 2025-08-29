@@ -11,6 +11,7 @@ import { usePipeline } from "./hooks/usePipeline";
 import { usePipelineExecution } from "./hooks/usePipelineExecution";
 import { ReportGenerator } from "./utils/reportGenerator";
 import { reportService } from "@/lib/api/reportService";
+import { PipelineNode } from "./types/pipeline";
 import domtoimage from "dom-to-image-more";
 import { Download } from "lucide-react";
 import "./pipeline-editor.css";
@@ -273,7 +274,7 @@ export default function PipelineEditorPage() {
         {selectedNode && (
           <ConfigPanel
             node={selectedNode}
-            onUpdateConfig={(config) => updateNode(selectedNode.id, { config })}
+            onUpdateConfig={(config) => updateNode(selectedNode.id, { config } as Partial<PipelineNode>)}
             onClose={() => selectNode(null)}
           />
         )}

@@ -5,13 +5,14 @@ import {
   ArchitectureDiagramNode,
   TextInputNode,
   StrideAnalysisNode,
-  StpaSecAnalysisNode,
-  ResultsViewNode
+  StpaSecAnalysisNode
 } from "../types/pipeline";
 import {
   PipelineExecutionState,
   NodeExecutionState,
   ValidationResult,
+  ValidationError,
+  ValidationWarning,
 } from "../types/execution";
 import { NodeResult, DiagramResult, TextResult, FindingsResult } from "../types/results";
 import { OllamaConfig } from "../types/config";
@@ -31,8 +32,8 @@ export function usePipelineExecution() {
     nodes: PipelineNode[],
     connections: Connection[]
   ): ValidationResult => {
-    const errors = [];
-    const warnings = [];
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     if (nodes.length === 0) {
       errors.push({
@@ -426,7 +427,7 @@ export function usePipelineExecution() {
           nodeId: node.id,
           nodeType: node.type,
           hasInputs: !!inputs,
-          inputType: inputs?.type || (Array.isArray(inputs) ? 'array' : 'none'),
+          inputType: Array.isArray(inputs) ? 'array' : (inputs as NodeResult)?.type || 'none',
           hasImage: !!base64Image,
           systemDescription: systemDescription.substring(0, 100) + "...",
           architectureComponents: architectureComponents.substring(0, 100) + "...",
