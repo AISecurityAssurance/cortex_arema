@@ -1,5 +1,5 @@
 import React from 'react';
-import './Badge.css';
+import { Badge as CloudscapeBadge } from '@cloudscape-design/components';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -9,6 +9,16 @@ interface BadgeProps {
   className?: string;
 }
 
+// Map our variants to Cloudscape colors
+const variantMap = {
+  default: 'grey' as const,
+  primary: 'blue' as const,
+  success: 'green' as const,
+  warning: 'severity-medium' as const, // Use severity color for warning
+  error: 'red' as const,
+  info: 'blue' as const
+};
+
 export const Badge: React.FC<BadgeProps> = ({
   children,
   variant = 'default',
@@ -17,10 +27,11 @@ export const Badge: React.FC<BadgeProps> = ({
   className = ''
 }) => {
   return (
-    <span 
-      className={`badge badge-${variant} badge-${size} ${rounded ? 'badge-rounded' : ''} ${className}`}
+    <CloudscapeBadge 
+      color={variantMap[variant]}
+      className={className}
     >
       {children}
-    </span>
+    </CloudscapeBadge>
   );
 };
