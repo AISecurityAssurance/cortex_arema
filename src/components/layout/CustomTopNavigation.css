@@ -1,0 +1,258 @@
+/* Custom Top Navigation Styles - Cloudscape Design Compatible */
+
+.custom-top-navigation {
+  position: sticky;
+  top: 0;
+  z-index: 1002;
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Roboto, Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Light Theme */
+.custom-top-navigation.light {
+  background-color: #ffffff;
+  border-bottom: 1px solid #d5dbdb;
+  color: #16191f;
+}
+
+/* Dark Theme */
+.custom-top-navigation.dark {
+  background-color: #0f1b2a;
+  border-bottom: 1px solid #414d5c;
+  color: #d1d5db;
+}
+
+/* Container */
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+  max-width: 100%;
+}
+
+/* Brand Section */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-top-navigation.light .brand-link:hover {
+  background-color: rgba(0, 115, 187, 0.05);
+}
+
+.custom-top-navigation.dark .brand-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-logo {
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  white-space: nowrap;
+}
+
+/* Navigation Items */
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  margin-left: 32px;
+}
+
+/* Plain text navigation links */
+.nav-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.custom-top-navigation.light .nav-link {
+  color: #16191f;
+}
+
+.custom-top-navigation.light .nav-link:hover {
+  color: #0073bb;
+}
+
+.custom-top-navigation.dark .nav-link {
+  color: #d1d5db;
+}
+
+.custom-top-navigation.dark .nav-link:hover {
+  color: #ffffff;
+}
+
+/* Optional: Add underline on hover */
+.nav-link:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.2;
+}
+
+/* Utilities Section */
+.nav-utilities {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Utility Buttons - Clean, minimal style */
+.utility-button {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 14px;
+  position: relative;
+}
+
+.custom-top-navigation.light .utility-button {
+  color: #16191f;
+}
+
+.custom-top-navigation.light .utility-button:hover {
+  background-color: rgba(0, 115, 187, 0.05);
+}
+
+.custom-top-navigation.dark .utility-button {
+  color: #d1d5db;
+}
+
+.custom-top-navigation.dark .utility-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Theme Toggle specific */
+.theme-toggle {
+  font-size: 18px;
+  padding: 2px 6px;
+}
+
+/* Notification Button specific */
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 10px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  padding: 0 3px !important;
+  line-height: 14px !important;
+}
+
+/* User Menu - Use icon variant for cleaner look */
+.user-menu button.awsui-button-dropdown-trigger {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.custom-top-navigation.light .user-menu button {
+  color: #16191f !important;
+}
+
+.custom-top-navigation.light .user-menu button:hover {
+  background-color: rgba(0, 115, 187, 0.05) !important;
+}
+
+.custom-top-navigation.dark .user-menu button {
+  color: #d1d5db !important;
+}
+
+.custom-top-navigation.dark .user-menu button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.user-menu-text {
+  font-weight: 400;
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-items {
+    display: none;
+  }
+  
+  .nav-container {
+    padding: 0 12px;
+  }
+  
+  .brand-text {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-menu-text {
+    display: none;
+  }
+}
+
+/* Ensure proper layering */
+.custom-top-navigation * {
+  box-sizing: border-box;
+}
+
+/* Focus styles */
+.custom-top-navigation button:focus {
+  outline: 2px solid #0073bb;
+  outline-offset: 1px;
+}
+
+.custom-top-navigation.dark button:focus {
+  outline-color: #539fe5;
+}
