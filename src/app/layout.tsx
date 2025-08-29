@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import "@cloudscape-design/global-styles/index.css";
 import "./globals.css";
-import { ProfessionalHeader } from "@/components/header";
+import "@/styles/cloudscape-overrides.css";
+import { CloudscapeLayout } from "@/components/layout/CloudscapeLayout";
 import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,12 +22,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Providers>
-          <div className="app-layout">
-            <ProfessionalHeader />
-            <main className="main-content">
-              {children}
-            </main>
-          </div>
+          <CloudscapeLayout>
+            {children}
+          </CloudscapeLayout>
         </Providers>
       </body>
     </html>
