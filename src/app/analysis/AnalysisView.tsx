@@ -357,7 +357,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
 
       const response = await callModel(
-        MODEL_IDS["Claude Opus"],
+        MODEL_IDS["Claude Sonnet"],
         validationPrompt,
         "You are an image analysis assistant. Analyze images to determine their type and content.",
         base64Image
