@@ -228,13 +228,18 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
         variables
       );
       const systemPrompt = PromptProcessor.buildSystemPrompt(
-        selectedTemplate.analysisType
+        selectedTemplate.analysisType,
+        selectedTemplate.expectedOutputFormat
       );
 
       let finalPrompt = processed.resolvedPrompt;
       const image = uploadedFiles[0];
       if (image && isImageValidated) {
-        finalPrompt = PromptProcessor.addImageContext(finalPrompt, true);
+        finalPrompt = PromptProcessor.addImageContext(
+          finalPrompt, 
+          true,
+          selectedTemplate.expectedOutputFormat
+        );
       }
 
       // Prepare image if provided and validated

@@ -7,14 +7,7 @@ const DEFAULT_TEMPLATES: PromptTemplate[] = [
     id: 'stride-default',
     name: 'STRIDE Analysis',
     description: 'Analyze security threats using the STRIDE methodology',
-    template: `Analyze the following system architecture for security vulnerabilities using the STRIDE methodology:
-
-- Spoofing: Can an attacker pretend to be someone/something else?
-- Tampering: Can an attacker modify data or code?
-- Repudiation: Can an attacker deny their actions?
-- Information Disclosure: Can an attacker access unauthorized information?
-- Denial of Service: Can an attacker prevent legitimate use?
-- Elevation of Privilege: Can an attacker gain unauthorized permissions?
+    template: `Analyze the following system architecture for security vulnerabilities using the STRIDE methodology.
 
 System Description:
 {{systemDescription}}
@@ -22,12 +15,72 @@ System Description:
 Architecture Components:
 {{architectureComponents}}
 
-Please provide:
-1. Specific vulnerabilities for each STRIDE category
-2. Risk severity (High/Medium/Low)
-3. Concrete attack scenarios
-4. Recommended mitigations
-5. CWE IDs where applicable`,
+Respond ONLY with a valid JSON object in the following structure (no markdown, no additional text):
+
+{
+  "spoofing": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ],
+  "tampering": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ],
+  "repudiation": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ],
+  "information_disclosure": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ],
+  "denial_of_service": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ],
+  "elevation_of_privilege": [
+    {
+      "vulnerability": "Specific vulnerability description",
+      "severity": "High|Medium|Low",
+      "attack_scenario": "Detailed attack scenario",
+      "affected_components": ["component1", "component2"],
+      "mitigation": "Recommended mitigation steps",
+      "cwe_id": "CWE-XXX"
+    }
+  ]
+}
+
+Ensure each STRIDE category has at least one finding. If no vulnerability exists for a category, include an entry explaining why that category doesn't apply. Make sure to follow the JSON format exactly as specified in the template with no text before or after.`,
     variables: ['systemDescription', 'architectureComponents'],
     analysisType: 'stride',
     expectedOutputFormat: 'structured',

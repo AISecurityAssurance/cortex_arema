@@ -17,9 +17,12 @@ export class PromptProcessor {
       resolvedPrompt = resolvedPrompt.replace(regex, value);
     });
     
-    // Add output format instructions if structured
+    // Add output format instructions based on format type
     if (template.expectedOutputFormat === 'structured') {
       resolvedPrompt += this.getStructuredOutputInstructions(template.analysisType);
+    } else if (template.expectedOutputFormat === 'json') {
+      // JSON format is already specified in the template itself, don't append anything
+      // that would contradict the JSON instructions
     }
     
     // Estimate expected findings based on template type
@@ -72,12 +75,19 @@ Format each finding clearly with these sections labeled.`;
   /**
    * Build system prompt for security analysis
    */
-  static buildSystemPrompt(analysisType: string): string {
-    const basePrompt = `You are an expert security analyst specializing in ${
+  static buildSystemPrompt(analysisType: string, outputFormat?: string): string {
+    const specialization = 
       analysisType === 'stride' ? 'STRIDE threat modeling' :
       analysisType === 'stpa-sec' ? 'STPA-SEC system analysis' :
-      'comprehensive security assessment'
-    }.
+      'comprehensive security assessment';
+    
+    // For JSON format, keep system prompt minimal to avoid confusion
+    if (outputFormat === 'json') {
+      return `You are an expert security analyst specializing in ${specialization}. Follow the JSON output format exactly as specified in the prompt.`;
+    }
+    
+    // For other formats, use the detailed prompt
+    const basePrompt = `You are an expert security analyst specializing in ${specialization}.
 
 Your analysis should be:
 - Specific and actionable
@@ -145,9 +155,18 @@ Consider both technical and business impact.`;
   /**
    * Combine prompt with image context
    */
-  static addImageContext(prompt: string, hasImage: boolean): string {
+  static addImageContext(prompt: string, hasImage: boolean, outputFormat?: string): string {
     if (!hasImage) return prompt;
     
+    // For JSON format, keep the instruction minimal and within the JSON context
+    if (outputFormat === 'json') {
+      return prompt.replace(
+        'Architecture Components:',
+        'Architecture Components (also analyze the provided diagram image):'
+      );
+    }
+    
+    // For other formats, add detailed instructions
     return `${prompt}
 
 Additionally, please analyze the provided architecture diagram image and incorporate any security concerns visible in the diagram into your analysis. Pay special attention to:
