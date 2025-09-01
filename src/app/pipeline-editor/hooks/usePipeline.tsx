@@ -121,7 +121,7 @@ export function usePipeline() {
     (nodeId: string, updates: Partial<PipelineNode>) => {
       setNodes((prev) =>
         prev.map((node) =>
-          node.id === nodeId ? { ...node, ...updates } : node
+          node.id === nodeId ? { ...node, ...updates } as PipelineNode : node
         )
       );
     },

@@ -1,0 +1,276 @@
+/* Cloudscape Component Overrides - Maintain Original UI/UX */
+
+/* Cloudscape Component Overrides - Custom TopNavigation is now used instead */
+
+/* Reset Cloudscape default backgrounds to match our theme */
+.awsui-button:not(.awsui-button-variant-primary):not(.awsui-button-variant-link) {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+
+.awsui-button:not(.awsui-button-variant-primary):not(.awsui-button-variant-link):hover {
+  background: var(--color-surface-hover) !important;
+  border-color: var(--color-border-hover) !important;
+}
+
+/* Ensure inputs and selects use our surface color */
+.awsui-input,
+.awsui-select-trigger,
+.awsui-textarea {
+  background: var(--color-surface) !important;
+}
+
+/* Fix for select dropdown background */
+.awsui-select-dropdown {
+  background: var(--color-surface) !important;
+}
+
+.awsui-select-option:hover {
+  background: var(--color-surface-hover) !important;
+}
+
+/* Fix SpaceBetween component backgrounds */
+.awsui-space-between {
+  background: transparent !important;
+}
+
+/* Button overrides to match original styles */
+.new-session-btn button.awsui-button,
+.create-first-btn button.awsui-button,
+.new-template-btn button.awsui-button,
+.analyze-button button.awsui-button,
+.hero-btn.primary button.awsui-button,
+.cta-btn button.awsui-button {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1-5) var(--space-3);
+  height: auto;
+}
+
+.new-session-btn button.awsui-button:hover,
+.create-first-btn button.awsui-button:hover,
+.new-template-btn button.awsui-button:hover,
+.analyze-button button.awsui-button:hover,
+.hero-btn.primary button.awsui-button:hover,
+.cta-btn button.awsui-button:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+/* Large button variant */
+.cta-btn button.awsui-button {
+  font-size: var(--font-size-lg);
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Normal variant buttons - ensure proper styling */
+button.awsui-button-variant-normal {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+button.awsui-button-variant-normal:hover {
+  background: var(--color-surface-hover) !important;
+  border-color: var(--color-border-hover) !important;
+}
+
+/* Link variant buttons */
+button.awsui-button-variant-link {
+  background: transparent !important;
+  border: none !important;
+  color: var(--color-primary) !important;
+  padding: 0 !important;
+}
+
+button.awsui-button-variant-link:hover {
+  color: var(--color-primary-hover) !important;
+  text-decoration: underline !important;
+}
+
+/* Input overrides */
+.search-input .awsui-input,
+.session-name-input .awsui-input,
+.prompt-input .awsui-input,
+.form-group .awsui-input {
+  font-size: var(--font-size-sm);
+  padding: var(--space-1-5) var(--space-2);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.search-input .awsui-input:focus,
+.session-name-input .awsui-input:focus,
+.prompt-input .awsui-input:focus,
+.form-group .awsui-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Select overrides */
+.sort-select .awsui-select-trigger,
+.template-select .awsui-select-trigger,
+.model-selectors .awsui-select-trigger,
+.form-group .awsui-select-trigger {
+  font-size: var(--font-size-sm);
+  padding: var(--space-1-5) var(--space-2);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  min-width: 150px;
+}
+
+.sort-select .awsui-select-trigger:hover,
+.template-select .awsui-select-trigger:hover,
+.model-selectors .awsui-select-trigger:hover,
+.form-group .awsui-select-trigger:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Textarea overrides */
+.form-group .awsui-textarea {
+  font-size: var(--font-size-sm);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.form-group .awsui-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Filter buttons styling */
+.filter-btn button.awsui-button {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.filter-btn button.awsui-button:not(.awsui-button-variant-primary) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.filter-btn button.awsui-button:not(.awsui-button-variant-primary):hover {
+  background: var(--color-surface-hover) !important;
+  border-color: transparent !important;
+}
+
+/* Keep original button styles for action buttons */
+.action-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: var(--space-1);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.action-btn.delete:hover {
+  background: var(--color-danger-light);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* Modal/Dialog overrides */
+.awsui-modal {
+  max-width: 90vw;
+}
+
+.awsui-modal-header {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Form field overrides */
+.awsui-form-field-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Badge overrides */
+.awsui-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Progress bar overrides */
+.awsui-progress-bar {
+  height: 8px;
+}
+
+.awsui-progress-bar-percentage {
+  background: var(--color-primary);
+}
+
+/* Cards overrides */
+.awsui-cards-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.awsui-cards-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* Maintain dark mode compatibility */
+[data-theme="dark"] .awsui-button:not(.awsui-button-variant-primary):not(.awsui-button-variant-link),
+[data-theme="dark"] .awsui-input,
+[data-theme="dark"] .awsui-select-trigger,
+[data-theme="dark"] .awsui-textarea,
+[data-theme="dark"] .awsui-select-dropdown,
+[data-theme="dark"] .awsui-cards-card {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .awsui-button:not(.awsui-button-variant-primary):not(.awsui-button-variant-link):hover,
+[data-theme="dark"] .awsui-input:hover,
+[data-theme="dark"] .awsui-select-trigger:hover,
+[data-theme="dark"] .awsui-textarea:hover,
+[data-theme="dark"] .awsui-select-option:hover {
+  background: var(--color-surface-hover) !important;
+  border-color: var(--color-border-hover) !important;
+}
+
+/* Dark mode select dropdown items */
+[data-theme="dark"] .awsui-select-option {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .awsui-select-option-selected {
+  background: var(--color-surface-hover) !important;
+}
+
+/* Ensure Cloudscape components respect our spacing */
+.awsui-space-between > * {
+  margin: 0 !important;
+}
+
+/* Keep original link styles */
+a.awsui-button-as-link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a.awsui-button-as-link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}

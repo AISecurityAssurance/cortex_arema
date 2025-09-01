@@ -82,6 +82,7 @@
   margin-bottom: var(--space-3);
 }
 
+/* Now handled by Cloudscape component + overrides
 .search-input {
   flex: 1;
   padding: var(--space-1-5) var(--space-2);
@@ -98,7 +99,13 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
 }
+*/
 
+.search-input {
+  flex: 1;
+}
+
+/* Now handled by Cloudscape component + overrides
 .sort-select {
   padding: var(--space-1-5) var(--space-2);
   background: var(--color-surface);
@@ -116,6 +123,7 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
 }
+*/
 
 /* Empty State */
 .empty-state {
@@ -133,6 +141,7 @@
   margin: var(--space-3) 0;
 }
 
+/* Now handled by Cloudscape component + overrides
 .create-first-btn {
   padding: var(--space-2) var(--space-4);
   background: var(--color-primary);
@@ -149,6 +158,11 @@
 .create-first-btn:hover {
   background: var(--color-primary-hover);
   box-shadow: var(--shadow-sm);
+}
+*/
+
+.create-first-btn {
+  margin-top: var(--space-3);
 }
 
 /* Sessions Grid - Compact Table-like Layout */

@@ -63,11 +63,22 @@ export interface StpaSecAnalysisNode extends BaseNode {
   executionTime?: number;
 }
 
+export interface ResultsViewNode extends BaseNode {
+  type: "results-view";
+  config: {
+    displayMode: "summary" | "detailed";
+    autoOpenValidation: boolean;
+  };
+  inputs: ["findings_data"];
+  outputs: [];
+}
+
 export type PipelineNode =
   | ArchitectureDiagramNode
   | TextInputNode
   | StrideAnalysisNode
-  | StpaSecAnalysisNode;
+  | StpaSecAnalysisNode
+  | ResultsViewNode;
 
 export interface Connection {
   id: string;

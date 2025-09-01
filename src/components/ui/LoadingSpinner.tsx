@@ -1,5 +1,5 @@
 import React from 'react';
-import './LoadingSpinner.css';
+import { Spinner } from '@cloudscape-design/components';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large';
@@ -7,14 +7,22 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
+// Map our sizes to Cloudscape sizes
+const sizeMap = {
+  small: 'normal' as const,
+  medium: 'normal' as const,
+  large: 'large' as const
+};
+
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'medium',
   color = 'primary',
   className = ''
 }) => {
   return (
-    <div className={`loading-spinner loading-spinner-${size} loading-spinner-${color} ${className}`}>
-      <div className="spinner-ring"></div>
-    </div>
+    <Spinner 
+      size={sizeMap[size]}
+      className={className}
+    />
   );
 };

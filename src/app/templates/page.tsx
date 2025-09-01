@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { 
+  Button, 
+  Input, 
+  Select, 
+  Textarea, 
+  SpaceBetween
+} from '@cloudscape-design/components';
 import { TemplateStorage } from '@/lib/storage/templateStorage';
 import { PromptTemplate } from '@/types';
 import './page.css';
@@ -123,12 +130,11 @@ export default function TemplatesPage() {
     <div className="templates-page">
       <div className="templates-header">
         <h1>Security Analysis Templates</h1>
-        <button className="new-template-btn" onClick={handleCreateNew}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 5C10.55 5 11 5.45 11 6V9H14C14.55 9 15 9.45 15 10C15 10.55 14.55 11 14 11H11V14C11 14.55 10.55 15 10 15C9.45 15 9 14.55 9 14V11H6C5.45 11 5 10.55 5 10C5 9.45 5.45 9 6 9H9V6C9 5.45 9.45 5 10 5Z"/>
-          </svg>
-          New Template
-        </button>
+        <div className="new-template-btn">
+          <Button onClick={handleCreateNew} variant="primary" iconName="add-plus">
+            New Template
+          </Button>
+        </div>
       </div>
 
       <div className="templates-container">
@@ -136,30 +142,40 @@ export default function TemplatesPage() {
           <div className="filter-section">
             <h3>Analysis Type</h3>
             <div className="filter-buttons">
-              <button 
-                className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterType('all')}
-              >
-                All Templates
-              </button>
-              <button 
-                className={`filter-btn ${filterType === 'stride' ? 'active' : ''}`}
-                onClick={() => setFilterType('stride')}
-              >
-                STRIDE
-              </button>
-              <button 
-                className={`filter-btn ${filterType === 'stpa-sec' ? 'active' : ''}`}
-                onClick={() => setFilterType('stpa-sec')}
-              >
-                STPA-SEC
-              </button>
-              <button 
-                className={`filter-btn ${filterType === 'custom' ? 'active' : ''}`}
-                onClick={() => setFilterType('custom')}
-              >
-                Custom
-              </button>
+              <SpaceBetween direction="vertical" size="xs">
+                <Button 
+                  className="filter-btn"
+                  variant={filterType === 'all' ? 'primary' : 'normal'}
+                  onClick={() => setFilterType('all')}
+                  fullWidth
+                >
+                  All Templates
+                </Button>
+                <Button 
+                  className="filter-btn"
+                  variant={filterType === 'stride' ? 'primary' : 'normal'}
+                  onClick={() => setFilterType('stride')}
+                  fullWidth
+                >
+                  STRIDE
+                </Button>
+                <Button 
+                  className="filter-btn"
+                  variant={filterType === 'stpa-sec' ? 'primary' : 'normal'}
+                  onClick={() => setFilterType('stpa-sec')}
+                  fullWidth
+                >
+                  STPA-SEC
+                </Button>
+                <Button 
+                  className="filter-btn"
+                  variant={filterType === 'custom' ? 'primary' : 'normal'}
+                  onClick={() => setFilterType('custom')}
+                  fullWidth
+                >
+                  Custom
+                </Button>
+              </SpaceBetween>
             </div>
           </div>
 
@@ -182,71 +198,67 @@ export default function TemplatesPage() {
               <div className="editor-header">
                 <h2>{isCreating ? 'Create New Template' : 'Edit Template'}</h2>
                 <div className="editor-actions">
-                  <button className="save-btn" onClick={handleSave}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M13 2H3C2.45 2 2 2.45 2 3V13C2 13.55 2.45 14 3 14H13C13.55 14 14 13.55 14 13V3C14 2.45 13.55 2 13 2ZM12 12H4V4H12V12ZM6 10H10V11H6V10ZM6 8H10V9H6V8ZM6 6H10V7H6V6Z"/>
-                    </svg>
-                    Save Template
-                  </button>
-                  <button 
-                    className="cancel-btn" 
-                    onClick={() => {
-                      setIsCreating(false);
-                      setIsEditing(false);
-                    }}
-                  >
-                    Cancel
-                  </button>
+                  <SpaceBetween direction="horizontal" size="xs">
+                    <Button onClick={handleSave} variant="primary" iconName="check">
+                      Save Template
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setIsCreating(false);
+                        setIsEditing(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </SpaceBetween>
                 </div>
               </div>
 
               <div className="editor-form">
                 <div className="form-group">
                   <label>Template Name</label>
-                  <input
-                    type="text"
+                  <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={({ detail }) => setFormData({ ...formData, name: detail.value })}
                     placeholder="Enter template name..."
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Description</label>
-                  <input
-                    type="text"
+                  <Input
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={({ detail }) => setFormData({ ...formData, description: detail.value })}
                     placeholder="Brief description of this template..."
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Analysis Type</label>
-                  <select
-                    value={formData.analysisType}
-                    onChange={(e) => setFormData({ ...formData, analysisType: e.target.value as any })}
-                  >
-                    <option value="stride">STRIDE</option>
-                    <option value="stpa-sec">STPA-SEC</option>
-                    <option value="custom">Custom</option>
-                  </select>
+                  <Select
+                    selectedOption={{ value: formData.analysisType, label: formData.analysisType.toUpperCase() }}
+                    onChange={({ detail }) => setFormData({ ...formData, analysisType: detail.selectedOption?.value as any })}
+                    options={[
+                      { value: "stride", label: "STRIDE" },
+                      { value: "stpa-sec", label: "STPA-SEC" },
+                      { value: "custom", label: "Custom" }
+                    ]}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>
                     Template Content
-                    <button 
+                    <Button 
                       className="extract-vars-btn"
                       onClick={extractVariables}
-                      type="button"
                     >
                       Extract Variables
-                    </button>
+                    </Button>
                   </label>
-                  <textarea
+                  <Textarea
                     value={formData.template}
-                    onChange={(e) => setFormData({ ...formData, template: e.target.value })}
+                    onChange={({ detail }) => setFormData({ ...formData, template: detail.value })}
                     placeholder="Enter your prompt template here. Use {{variableName}} for variables..."
                     rows={15}
                   />
@@ -254,10 +266,9 @@ export default function TemplatesPage() {
 
                 <div className="form-group">
                   <label>Variables (comma-separated)</label>
-                  <input
-                    type="text"
+                  <Input
                     value={formData.variables}
-                    onChange={(e) => setFormData({ ...formData, variables: e.target.value })}
+                    onChange={({ detail }) => setFormData({ ...formData, variables: detail.value })}
                     placeholder="systemDescription, architectureComponents, ..."
                   />
                 </div>
@@ -271,9 +282,11 @@ export default function TemplatesPage() {
                     <path d="M32 12C21 12 12 21 12 32C12 43 21 52 32 52C43 52 52 43 52 32C52 21 43 12 32 12ZM32 48C23.2 48 16 40.8 16 32C16 23.2 23.2 16 32 16C40.8 16 48 23.2 48 32C48 40.8 40.8 48 32 48Z"/>
                   </svg>
                   <p>No templates found</p>
-                  <button className="create-first-btn" onClick={handleCreateNew}>
-                    Create your first template
-                  </button>
+                  <div className="create-first-btn">
+                    <Button onClick={handleCreateNew} variant="primary">
+                      Create your first template
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 filteredTemplates.map((template) => (
@@ -311,44 +324,44 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="template-actions">
-                      <button 
-                        className="action-btn primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUseTemplate(template);
-                        }}
-                      >
-                        Use Template
-                      </button>
-                      <button 
-                        className="action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(template);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className="action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicate(template);
-                        }}
-                      >
-                        Duplicate
-                      </button>
-                      {!template.id.includes('-default') && (
-                        <button 
-                          className="action-btn danger"
+                      <SpaceBetween direction="horizontal" size="xs">
+                        <Button 
+                          variant="primary"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(template.id);
+                            handleUseTemplate(template);
                           }}
                         >
-                          Delete
-                        </button>
-                      )}
+                          Use Template
+                        </Button>
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(template);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(template);
+                          }}
+                        >
+                          Duplicate
+                        </Button>
+                        {!template.id.includes('-default') && (
+                          <Button 
+                            variant="link"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(template.id);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </SpaceBetween>
                     </div>
                   </div>
                 ))

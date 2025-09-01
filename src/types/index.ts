@@ -8,6 +8,7 @@ export interface SecurityFinding {
   confidence?: number
   cweId?: string
   mitigations?: string[]
+  impact?: string // Impact description for the finding
   createdAt: string
 }
 

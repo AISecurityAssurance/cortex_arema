@@ -1,5 +1,8 @@
 # Cortex Arena - Claude Development Guide
 
+## 🚀 ACTIVE MIGRATION: Cloudscape Design System
+**IMPORTANT**: This project is actively migrating to AWS Cloudscape Design System. See `CLOUDSCAPE_MIGRATION_SPEC.md` for detailed migration instructions. Follow the specification exactly when making UI changes.
+
 ## Project Overview
 Cortex Arena is a security analysis tool that compares threat assessments from multiple Claude AI models. It allows users to upload architecture diagrams, select analysis templates (STRIDE, STPA-Sec, or custom), and get comparative security findings from different Claude models.
 
@@ -245,3 +248,33 @@ Fixed useEffect dependency issue in AnalysisView.tsx:
 6. Validate UI changes across breakpoints
 7. Keep debug logging enabled (per user preference)
 8. Use semantic component names
+
+## Cloudscape Migration Guidelines
+
+When working on UI components:
+
+1. **Check Migration Spec First**: Always refer to `CLOUDSCAPE_MIGRATION_SPEC.md` before modifying UI components
+2. **Preserve Functionality**: No feature regression is acceptable during migration
+3. **Use Cloudscape Components**: Replace custom components with Cloudscape equivalents when available
+4. **Custom Components**: When Cloudscape doesn't provide needed functionality, create custom components using Cloudscape design tokens
+5. **Test After Changes**: Verify all functionality works after component migration
+
+### Quick Migration Reference
+
+```bash
+# Install Cloudscape (if not already installed)
+npm install @cloudscape-design/components @cloudscape-design/global-styles @cloudscape-design/design-tokens
+
+# Run development server to test changes
+npm run dev
+
+# Type check after migration
+npm run typecheck
+
+# Lint check
+npm run lint
+```
+
+### Component Migration Status
+
+Track migration progress in `CLOUDSCAPE_MIGRATION_SPEC.md`. Mark phases as complete as you progress.

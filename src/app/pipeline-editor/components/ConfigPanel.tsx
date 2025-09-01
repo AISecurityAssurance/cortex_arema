@@ -32,12 +32,12 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && node.type === 'input-diagram') {
       onUpdateConfig({
-        ...node.config,
+        ...(node as ArchitectureDiagramNode).config,
         file,
         fileName: file.name,
-        uploadStatus: 'ready'
+        uploadStatus: 'ready' as const
       });
     }
   };

@@ -1,0 +1,52 @@
+/* Reset and base styles for Cloudscape integration */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+body {
+  color: var(--awsui-color-text-body-default);
+  background: var(--awsui-color-background-layout-main);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Remove any custom component styles - let Cloudscape handle everything */
+#header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Ensure proper height for app layout */
+#__next {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Override any remaining custom styles */
+.main-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Dark mode support through Cloudscape */
+[data-awsui-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+[data-awsui-color-scheme="light"] {
+  color-scheme: light;
+}

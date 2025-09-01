@@ -893,7 +893,7 @@ export class ReportGenerator {
             }
             ${finding.cweId ? `<span>CWE: ${finding.cweId}</span>` : ""}
             ${
-              nodeState.results.modelId
+              nodeState.results && 'modelId' in nodeState.results && nodeState.results.modelId
                 ? `<span>Model: ${nodeState.results.modelId}</span>`
                 : ""
             }
