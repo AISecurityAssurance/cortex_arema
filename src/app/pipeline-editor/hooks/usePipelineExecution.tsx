@@ -16,9 +16,10 @@ import {
 } from "../types/execution";
 import { NodeResult, DiagramResult, TextResult, FindingsResult } from "../types/results";
 import { OllamaConfig } from "../types/config";
-import { TemplateStorage } from "@/lib/storage/templateStorage";
+import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
+import { PromptTemplate } from "@/types";
 
 export function usePipelineExecution() {
   const [executionState, setExecutionState] = useState<PipelineExecutionState>({
@@ -352,18 +353,33 @@ export function usePipelineExecution() {
 
         // Get the template
         console.log("Loading template:", analysisConfig.promptTemplate);
-        const template = TemplateStorage.getTemplate(
-          analysisConfig.promptTemplate
-        );
-        if (!template) {
+        const { getTemplate, getAllTemplates } = useTemplateStore.getState();
+        const templateDef = getTemplate(analysisConfig.promptTemplate);
+        if (!templateDef) {
           console.error("Template not found:", {
             templateId: analysisConfig.promptTemplate,
-            availableTemplates: TemplateStorage.getAllTemplates().map(t => t.id)
+            availableTemplates: getAllTemplates().map(t => t.id)
           });
           throw new Error(
             `Template ${analysisConfig.promptTemplate} not found`
           );
         }
+        
+        // Convert to PromptTemplate format for backward compatibility
+        const template: PromptTemplate = {
+          id: templateDef.id,
+          name: templateDef.name,
+          description: templateDef.description,
+          template: templateDef.template,
+          variables: templateDef.variables.map(v => typeof v === 'string' ? v : v.name),
+          analysisType: templateDef.analysisType,
+          expectedOutputFormat: templateDef.expectedOutputFormat as 'structured' | 'freeform' | 'json',
+          version: templateDef.version,
+          isActive: true,
+          createdAt: templateDef.metadata.createdAt,
+          updatedAt: templateDef.metadata.updatedAt || templateDef.metadata.createdAt,
+        };
+        
         console.log("Template loaded successfully:", template.id);
 
         // Start with the system description from the node config

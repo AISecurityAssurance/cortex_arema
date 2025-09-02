@@ -60,7 +60,7 @@ export interface PromptTemplate {
   template: string
   variables: string[]
   analysisType: 'stride' | 'stpa-sec' | 'custom'
-  expectedOutputFormat: 'structured' | 'freeform'
+  expectedOutputFormat: 'structured' | 'freeform' | 'json'
   version: string
   isActive: boolean
   createdAt: string
