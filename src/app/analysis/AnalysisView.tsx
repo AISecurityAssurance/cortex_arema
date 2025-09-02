@@ -2,26 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Button, 
-  Input, 
-  Select,
-  Header,
-  SpaceBetween,
-  Grid,
-  FormField,
-  FileUpload,
-  Box,
-  ButtonDropdown,
-  Alert
-} from "@cloudscape-design/components";
 import { AnalysisLayout, SlidingPanel } from "@/components/layout";
-import { ModelComparisonView } from "@/components/analysis/ModelComparisonViewCloudscape";
-import { ValidationControls } from "@/components/validation/ValidationControlsCloudscape";
+import { ModelComparisonView } from "@/components/analysis";
+import { ValidationControls } from "@/components/validation";
 import { ModelSettings } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
-import { useToast } from "@/contexts/FlashbarContext";
+import { useToast } from "@/contexts/ToastContext";
 import { TemplateStorage } from "@/lib/storage/templateStorage";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
@@ -31,6 +18,7 @@ import {
   FindingValidation,
   PromptTemplate,
 } from "@/types";
+import "./AnalysisView.css";
 
 const MODEL_IDS = {
   // Bedrock Models
@@ -93,7 +81,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
   // Analysis configuration
   const [prompt, setPrompt] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [image, setImage] = useState<File | null>(null);
   const [isImageValidated, setIsImageValidated] = useState(false);
   const [isValidatingImage, setIsValidatingImage] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
@@ -206,7 +194,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     }
 
     // Check if there's an image that hasn't been validated
-    if (uploadedFiles.length > 0 && !isImageValidated) {
+    if (image && !isImageValidated) {
       setError("Invalid image uploaded");
       showToast(
         "The uploaded image is not a valid architecture diagram",
@@ -228,18 +216,12 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
         variables
       );
       const systemPrompt = PromptProcessor.buildSystemPrompt(
-        selectedTemplate.analysisType,
-        selectedTemplate.expectedOutputFormat
+        selectedTemplate.analysisType
       );
 
       let finalPrompt = processed.resolvedPrompt;
-      const image = uploadedFiles[0];
       if (image && isImageValidated) {
-        finalPrompt = PromptProcessor.addImageContext(
-          finalPrompt, 
-          true,
-          selectedTemplate.expectedOutputFormat
-        );
+        finalPrompt = PromptProcessor.addImageContext(finalPrompt, true);
       }
 
       // Prepare image if provided and validated
@@ -362,7 +344,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
 
       const response = await callModel(
-        MODEL_IDS["Claude Sonnet"],
+        MODEL_IDS["Claude Opus"],
         validationPrompt,
         "You are an image analysis assistant. Analyze images to determine their type and content.",
         base64Image
@@ -382,20 +364,21 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     }
   };
 
-  const handleImageUpload = async (files: File[]) => {
-    if (!files || files.length === 0) {
-      setUploadedFiles([]);
+  const handleImageUpload = async (file: File | null) => {
+    if (!file) {
+      setImage(null);
       setIsImageValidated(false);
       setIsValidatingImage(false);
       return;
     }
 
-    const file = files[0];
     try {
       setIsValidatingImage(true);
-      setUploadedFiles(files);
+      // Temporarily set the image to show filename
+      setImage(file);
       setIsImageValidated(false);
 
+      // Show loading toast
       showToast("Validating image...", "info");
 
       const isValid = await validateArchitectureImage(file);
@@ -404,7 +387,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
         setIsImageValidated(true);
         showToast("Architecture diagram uploaded successfully", "success");
       } else {
-        setUploadedFiles([]);
+        setImage(null);
         setIsImageValidated(false);
         showToast(
           "Please upload a valid architecture or system diagram",
@@ -413,7 +396,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       }
     } catch (error) {
       console.error("Error during image validation:", error);
-      setUploadedFiles([]);
+      setImage(null);
       setIsImageValidated(false);
       showToast("Error validating image", "error");
     } finally {
@@ -438,73 +421,101 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   );
 
   if (sessionLoading) {
-    return <div>Loading session...</div>;
+    return <div className="loading-screen">Loading session...</div>;
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <SpaceBetween size="l">
-        <Header
-          variant="h1"
-          description={session ? `Session ID: ${session.id.slice(0, 8)}` : undefined}
-          actions={
-            <SpaceBetween direction="horizontal" size="xs">
-              {session && (
-                <Input
-                  value={session.name}
-                  onChange={({ detail }) => updateSession({ name: detail.value })}
-                  placeholder="Session name..."
-                />
-              )}
-              <ModelSettings 
-                onOllamaConfigChange={setOllamaConfig}
-                onAzureConfigChange={setAzureConfig}
-              />
-            </SpaceBetween>
-          }
-        >
-          Security Analysis
-        </Header>
-
-        {error && (
-          <Alert type="error" dismissible onDismiss={() => setError(null)}>
-            {error}
-          </Alert>
+    <div className="analysis-view">
+      <div className="analysis-header">
+        {session && (
+          <div className="session-info">
+            <input
+              type="text"
+              className="session-name-input"
+              value={session.name}
+              onChange={(e) => updateSession({ name: e.target.value })}
+              placeholder="Session name..."
+            />
+            <span className="session-id">ID: {session.id.slice(0, 8)}</span>
+          </div>
         )}
 
-        <SpaceBetween size="m">
-          <Grid
-            gridDefinition={[
-              { colspan: 4 },
-              { colspan: 4 },
-              { colspan: 4 }
-            ]}
-          >
-            <FormField label="Analysis Template" constraintText="Required">
-              <Select
-                selectedOption={selectedTemplate ? { value: selectedTemplate.id, label: selectedTemplate.name } : null}
-                onChange={({ detail }) => {
-                  const template = detail.selectedOption ? TemplateStorage.getTemplate(detail.selectedOption.value || '') : null;
-                  if (template) {
-                    setSelectedTemplate(template);
-                    updateTemplate(template);
-                    setAnalysisType(template.analysisType);
-                  }
-                }}
-                placeholder="Select template..."
-                options={TemplateStorage.getActiveTemplates().map((template) => ({
-                  value: template.id,
-                  label: template.name
-                }))}
-              />
-            </FormField>
+        <div className="analysis-controls">
+          <div className="control-group">
+            <select
+              className="template-select"
+              value={selectedTemplate?.id || ""}
+              onChange={(e) => {
+                const template = TemplateStorage.getTemplate(e.target.value);
+                if (template) {
+                  setSelectedTemplate(template);
+                  updateTemplate(template);
+                  setAnalysisType(template.analysisType);
+                }
+              }}
+            >
+              <option value="">Select template...</option>
+              {TemplateStorage.getActiveTemplates().map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
 
-            <FormField label="Model A">
-              <Select
-                selectedOption={{ value: modelA, label: modelA }}
-                onChange={({ detail }) => {
-                  const newModelA = detail.selectedOption?.value || modelA;
+            <label
+              className={`image-upload ${
+                analysisInProgress || isValidatingImage ? "disabled" : ""
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                disabled={analysisInProgress || isValidatingImage}
+                onChange={(e) => {
+                  if (analysisInProgress || isValidatingImage) return;
+                  const file = e.target.files?.[0] || null;
+                  handleImageUpload(file);
+                }}
+                style={{ display: "none" }}
+              />
+              <span>
+                <svg className="icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z"/>
+                </svg>
+                {isValidatingImage
+                  ? "Validating..."
+                  : image && isImageValidated
+                  ? image.name.slice(0, 20)
+                  : "Upload diagram"}
+              </span>
+            </label>
+          </div>
+
+          <div className="control-group center">
+            <input
+              type="text"
+              className="prompt-input"
+              placeholder="Describe your system architecture..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </div>
+
+          <div className="control-group">
+            <ModelSettings 
+              onOllamaConfigChange={setOllamaConfig}
+              onAzureConfigChange={setAzureConfig}
+            />
+          </div>
+
+          <div className="control-group">
+            <div className="model-selectors">
+              <select
+                value={modelA}
+                onChange={(e) => {
+                  const newModelA = e.target.value;
                   setModelA(newModelA);
+                  // If the new selection matches modelB, find another available model for modelB
                   if (newModelA === modelB) {
                     const availableModel = MODELS.find(m => m !== newModelA);
                     if (availableModel) {
@@ -515,16 +526,20 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                     updateModels(newModelA, modelB);
                   }
                 }}
-                options={MODELS.map((m) => ({ value: m, label: m }))}
-              />
-            </FormField>
-
-            <FormField label="Model B">
-              <Select
-                selectedOption={{ value: modelB, label: modelB }}
-                onChange={({ detail }) => {
-                  const newModelB = detail.selectedOption?.value || modelB;
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <span className="vs">vs</span>
+              <select
+                value={modelB}
+                onChange={(e) => {
+                  const newModelB = e.target.value;
                   setModelB(newModelB);
+                  // If the new selection matches modelA, find another available model for modelA
                   if (newModelB === modelA) {
                     const availableModel = MODELS.find(m => m !== newModelB);
                     if (availableModel) {
@@ -535,66 +550,57 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                     updateModels(modelA, newModelB);
                   }
                 }}
-                options={MODELS.map((m) => ({ value: m, label: m }))}
-              />
-            </FormField>
-          </Grid>
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <FormField 
-            label="System Description" 
-            constraintText="Describe your system architecture and security concerns"
-          >
-            <Input
-              placeholder="Describe your system architecture..."
-              value={prompt}
-              onChange={({ detail }) => setPrompt(detail.value)}
-            />
-          </FormField>
-
-          <FormField 
-            label="Architecture Diagram" 
-            description="Upload an architecture diagram (optional)"
-            constraintText={isValidatingImage ? "Validating..." : isImageValidated ? "Valid diagram" : ""}
-          >
-            <FileUpload
-              onChange={({ detail }) => handleImageUpload(detail.value)}
-              value={uploadedFiles}
-              i18nStrings={{
-                uploadButtonText: e => e ? "Choose files" : "Choose file",
-                dropzoneText: e => e ? "Drop files to upload" : "Drop file to upload",
-                removeFileAriaLabel: e => `Remove file ${e + 1}`,
-                limitShowFewer: "Show fewer files",
-                limitShowMore: "Show more files",
-                errorIconAriaLabel: "Error"
-              }}
-              accept="image/*"
-              multiple={false}
-            />
-          </FormField>
-
-          <Box textAlign="center">
-            <Button
-              variant="primary"
+            <button
+              className="analyze-button"
               onClick={performAnalysis}
               disabled={analysisInProgress || !selectedTemplate}
-              loading={analysisInProgress}
             >
-              {analysisInProgress ? "Analyzing..." : "Analyze"}
-            </Button>
-          </Box>
-        </SpaceBetween>
+              {analysisInProgress ? (
+                <>
+                  <span className="spinner"></span>
+                  Analyzing
+                </>
+              ) : (
+                "Analyze"
+              )}
+            </button>
+          </div>
+        </div>
 
-        <ModelComparisonView
-          modelAResults={session?.modelAResults || []}
-          modelBResults={session?.modelBResults || []}
-          selectedFinding={selectedFinding || undefined}
-          onFindingSelect={handleFindingSelect}
-          modelAName={modelA}
-          modelBName={modelB}
-          validations={validationMap}
-          onValidationUpdate={handleValidationUpdate}
-        />
-      </SpaceBetween>
+        {error && <div className="error-message">{error}</div>}
+      </div>
+
+      <AnalysisLayout
+        centerPanel={
+          <ModelComparisonView
+            modelAResults={session?.modelAResults || []}
+            modelBResults={session?.modelBResults || []}
+            selectedFinding={selectedFinding || undefined}
+            onFindingSelect={handleFindingSelect}
+            modelAName={modelA}
+            modelBName={modelB}
+            validations={validationMap}
+          />
+        }
+        rightPanel={
+          <SlidingPanel side="right" width="380px">
+            <ValidationControls
+              finding={selectedFindingData}
+              validation={selectedValidation}
+              onValidationUpdate={handleValidationUpdate}
+            />
+          </SlidingPanel>
+        }
+      />
     </div>
   );
 };
