@@ -1,0 +1,50 @@
+{
+  "id": "owasp-top10-core",
+  "name": "OWASP Top 10 Analysis",
+  "description": "Analyze for OWASP Top 10 vulnerabilities",
+  "version": "2.0.0",
+  "author": "Cortex Arena",
+  "tags": ["owasp", "web-security", "core"],
+  "analysisType": "custom",
+  "expectedOutputFormat": "structured",
+  "variables": [
+    {
+      "name": "applicationType",
+      "label": "Application Type",
+      "type": "text",
+      "required": true,
+      "placeholder": "Web application, API, Mobile app, etc."
+    },
+    {
+      "name": "techStack",
+      "label": "Technology Stack",
+      "type": "text",
+      "required": true,
+      "placeholder": "React, Node.js, PostgreSQL, etc."
+    },
+    {
+      "name": "authMethod",
+      "label": "Authentication Method",
+      "type": "text",
+      "required": true,
+      "placeholder": "JWT, OAuth2, Session-based, etc."
+    }
+  ],
+  "template": "Analyze the following application for OWASP Top 10 vulnerabilities:\n\nApplication Type: {{applicationType}}\nTechnology Stack: {{techStack}}\nAuthentication Method: {{authMethod}}\n\nPlease check for:\n1. Broken Access Control\n2. Cryptographic Failures\n3. Injection\n4. Insecure Design\n5. Security Misconfiguration\n6. Vulnerable and Outdated Components\n7. Identification and Authentication Failures\n8. Software and Data Integrity Failures\n9. Security Logging and Monitoring Failures\n10. Server-Side Request Forgery\n\nFor each finding provide:\n- Specific vulnerability description\n- Attack scenario\n- Impact assessment\n- Remediation steps\n- Testing approach",
+  "validationRules": {
+    "minFindings": 5,
+    "requiredCategories": [
+      "access_control",
+      "cryptography",
+      "injection",
+      "configuration",
+      "authentication"
+    ]
+  },
+  "metadata": {
+    "isCore": true,
+    "isEditable": false,
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  }
+}

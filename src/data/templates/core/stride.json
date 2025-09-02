@@ -1,0 +1,44 @@
+{
+  "id": "stride-core",
+  "name": "STRIDE Analysis",
+  "description": "Analyze security threats using the STRIDE methodology",
+  "version": "2.0.0",
+  "author": "Cortex Arena",
+  "tags": ["stride", "threat-modeling", "core"],
+  "analysisType": "stride",
+  "expectedOutputFormat": "structured",
+  "variables": [
+    {
+      "name": "systemDescription",
+      "label": "System Description",
+      "type": "text",
+      "required": true,
+      "placeholder": "Describe the system architecture and its purpose"
+    },
+    {
+      "name": "architectureComponents",
+      "label": "Architecture Components",
+      "type": "multiline",
+      "required": true,
+      "placeholder": "List the key components, services, and data flows"
+    }
+  ],
+  "template": "Analyze the following system architecture for security vulnerabilities using the STRIDE methodology.\n\nSystem Description:\n{{systemDescription}}\n\nArchitecture Components:\n{{architectureComponents}}\n\nRespond ONLY with a valid JSON object in the following structure (no markdown, no additional text):\n\n{\n  \"spoofing\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ],\n  \"tampering\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ],\n  \"repudiation\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ],\n  \"information_disclosure\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ],\n  \"denial_of_service\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ],\n  \"elevation_of_privilege\": [\n    {\n      \"vulnerability\": \"Specific vulnerability description\",\n      \"severity\": \"High|Medium|Low\",\n      \"attack_scenario\": \"Detailed attack scenario\",\n      \"affected_components\": [\"component1\", \"component2\"],\n      \"mitigation\": \"Recommended mitigation steps\",\n      \"cwe_id\": \"CWE-XXX\"\n    }\n  ]\n}\n\nEnsure each STRIDE category has at least one finding. If no vulnerability exists for a category, include an entry explaining why that category doesn't apply. Make sure to follow the JSON format exactly as specified in the template with no text before or after.",
+  "validationRules": {
+    "minFindings": 6,
+    "requiredCategories": [
+      "spoofing",
+      "tampering", 
+      "repudiation",
+      "information_disclosure",
+      "denial_of_service",
+      "elevation_of_privilege"
+    ]
+  },
+  "metadata": {
+    "isCore": true,
+    "isEditable": false,
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  }
+}

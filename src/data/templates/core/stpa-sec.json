@@ -1,0 +1,42 @@
+{
+  "id": "stpa-sec-core",
+  "name": "STPA-SEC Analysis",
+  "description": "System-Theoretic Process Analysis for Security",
+  "version": "2.0.0",
+  "author": "Cortex Arena",
+  "tags": ["stpa-sec", "system-analysis", "core"],
+  "analysisType": "stpa-sec",
+  "expectedOutputFormat": "structured",
+  "variables": [
+    {
+      "name": "systemDescription",
+      "label": "System Description",
+      "type": "text",
+      "required": true,
+      "placeholder": "Describe the system and its operational context"
+    },
+    {
+      "name": "controlStructure",
+      "label": "Control Structure",
+      "type": "multiline",
+      "required": true,
+      "placeholder": "Describe the control structure, controllers, and feedback loops"
+    }
+  ],
+  "template": "Perform a STPA-SEC (System-Theoretic Process Analysis for Security) on the following system:\n\nSystem Description:\n{{systemDescription}}\n\nControl Structure:\n{{controlStructure}}\n\nPlease identify:\n1. Unsafe control actions that could lead to security losses\n2. Scenarios where safe control actions are not followed\n3. Missing or inadequate feedback\n4. Component failures or compromises\n5. Unsafe interactions between components\n\nFor each identified issue:\n- Describe the security loss scenario\n- Assess the impact severity\n- Provide specific constraints to prevent the loss\n- Suggest implementation mechanisms",
+  "validationRules": {
+    "minFindings": 5,
+    "requiredSections": [
+      "unsafe_control_actions",
+      "inadequate_feedback",
+      "component_failures",
+      "unsafe_interactions"
+    ]
+  },
+  "metadata": {
+    "isCore": true,
+    "isEditable": false,
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  }
+}
