@@ -9,13 +9,9 @@ import {
   Box,
   Badge,
   Button,
-  ButtonGroup,
   FormField,
   Textarea,
   RadioGroup,
-  Grid,
-  Alert,
-  StatusIndicator,
   ColumnLayout
 } from '@cloudscape-design/components';
 import { SecurityFinding, FindingValidation } from '@/types';
@@ -186,7 +182,7 @@ export const ValidationControls: React.FC<ValidationControlsProps> = ({
       <Container
         header={<Header variant="h3">Validation Status</Header>}
       >
-        <ButtonGroup>
+        <SpaceBetween direction="horizontal" size="xs">
           <Button
             variant={localValidation.status === 'confirmed' ? 'primary' : 'normal'}
             onClick={() => handleStatusChange('confirmed')}
@@ -215,7 +211,7 @@ export const ValidationControls: React.FC<ValidationControlsProps> = ({
           >
             Pending
           </Button>
-        </ButtonGroup>
+        </SpaceBetween>
       </Container>
 
       {localValidation.status !== 'pending' && (

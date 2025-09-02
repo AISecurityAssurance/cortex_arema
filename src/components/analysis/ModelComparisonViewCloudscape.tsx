@@ -39,6 +39,11 @@ export const ModelComparisonView: React.FC<ModelComparisonViewProps> = ({
   modelBName = 'Model B',
   validations = new Map()
 }) => {
+  console.log("ModelComparisonView props:");
+  console.log("modelAResults:", modelAResults);
+  console.log("modelBResults:", modelBResults);
+  console.log("Model A count:", modelAResults?.length);
+  console.log("Model B count:", modelBResults?.length);
   const [viewMode, setViewMode] = useState<'side-by-side' | 'unified'>('side-by-side');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
