@@ -9,10 +9,17 @@ export class FindingExtractor {
     analysisType: 'stride' | 'stpa-sec' | 'custom',
     modelSource: string
   ): SecurityFinding[] {
+    console.log("FindingExtractor.extractFindings called");
+    console.log("Response length:", response?.length);
+    console.log("Analysis type:", analysisType);
+    console.log("Model source:", modelSource);
+    
     const findings: SecurityFinding[] = [];
     
     // Try to parse structured response first
     const structuredFindings = this.parseStructuredResponse(response);
+    console.log("Structured findings found:", structuredFindings.length);
+    
     if (structuredFindings.length > 0) {
       return structuredFindings.map((f, index) => ({
         id: `finding_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
@@ -30,10 +37,12 @@ export class FindingExtractor {
     
     // Fallback to text parsing
     const sections = this.splitIntoSections(response);
+    console.log("Text sections found:", sections.length);
     
     sections.forEach((section, index) => {
       const finding = this.parseSectionToFinding(section, analysisType, modelSource);
       if (finding) {
+        console.log(`Finding ${index + 1} parsed:`, finding.title);
         findings.push({
           ...finding,
           id: `finding_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`
@@ -41,6 +50,7 @@ export class FindingExtractor {
       }
     });
     
+    console.log("Total findings extracted:", findings.length);
     return findings;
   }
 
@@ -48,7 +58,61 @@ export class FindingExtractor {
    * Try to parse JSON or structured format
    */
   private static parseStructuredResponse(response: string): Partial<SecurityFinding>[] {
-    // Try to extract JSON from response
+    // First try to parse as raw JSON (API returns raw JSON)
+    try {
+      const parsed = JSON.parse(response);
+      console.log("Successfully parsed raw JSON:", parsed);
+      
+      // Handle STRIDE format with categories
+      if (parsed.spoofing || parsed.tampering || parsed.repudiation || 
+          parsed.information_disclosure || parsed.denial_of_service || 
+          parsed.elevation_of_privilege) {
+        const findings: Partial<SecurityFinding>[] = [];
+        
+        // Extract findings from each STRIDE category
+        const categories = ['spoofing', 'tampering', 'repudiation', 
+                          'information_disclosure', 'denial_of_service', 
+                          'elevation_of_privilege'];
+        
+        for (const category of categories) {
+          if (parsed[category] && Array.isArray(parsed[category])) {
+            parsed[category].forEach((finding: Partial<SecurityFinding> & {
+              vulnerability?: string;
+              attack_scenario?: string;
+              cwe_id?: string;
+              recommended_mitigations?: string;
+            }) => {
+              findings.push({
+                title: finding.vulnerability || finding.title || 'Untitled Finding',
+                description: finding.attack_scenario || finding.description || 'No description',
+                severity: finding.severity?.toLowerCase() || 'medium',
+                category: category.toUpperCase().replace('_', ' '),
+                cweId: finding.cwe_id,
+                mitigations: finding.recommended_mitigations ? 
+                  [finding.recommended_mitigations] : finding.mitigations
+              });
+            });
+          }
+        }
+        
+        console.log("Extracted STRIDE findings:", findings.length);
+        return findings;
+      }
+      
+      // Handle array format
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      
+      // Handle object with findings array
+      if (parsed.findings && Array.isArray(parsed.findings)) {
+        return parsed.findings;
+      }
+    } catch (e) {
+      console.log("Failed to parse as raw JSON, trying markdown format");
+    }
+    
+    // Try to extract JSON from markdown code blocks
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/);
     if (jsonMatch) {
       try {

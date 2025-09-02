@@ -69,7 +69,15 @@ export function useAnalysisSession(sessionId?: string) {
     modelAResults: SecurityFinding[],
     modelBResults: SecurityFinding[]
   ) => {
-    if (!session) return;
+    console.log("useAnalysisSession.updateFindings called");
+    console.log("Session exists?", !!session);
+    console.log("Model A results count:", modelAResults?.length);
+    console.log("Model B results count:", modelBResults?.length);
+    
+    if (!session) {
+      console.error("No session available to update findings");
+      return;
+    }
 
     SessionStorage.updateSessionFindings(session.id, modelAResults, modelBResults);
     
@@ -83,6 +91,7 @@ export function useAnalysisSession(sessionId?: string) {
       }
     };
     
+    console.log("Setting updated session with findings");
     setSession(updatedSession);
   }, [session]);
 
