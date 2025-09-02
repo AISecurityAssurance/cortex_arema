@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from '@cloudscape-design/components';
+import './ErrorMessage.css';
 
 interface ErrorMessageProps {
   title?: string;
@@ -16,15 +16,30 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   onDismiss,
   className = ''
 }) => {
+  const icons = {
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  };
+
   return (
-    <Alert
-      type={type}
-      dismissible={!!onDismiss}
-      onDismiss={onDismiss}
-      header={title}
-      className={className}
-    >
-      {message}
-    </Alert>
+    <div className={`error-message error-message-${type} ${className}`}>
+      <div className="error-message-content">
+        <span className="error-message-icon">{icons[type]}</span>
+        <div className="error-message-text">
+          {title && <div className="error-message-title">{title}</div>}
+          <div className="error-message-body">{message}</div>
+        </div>
+      </div>
+      {onDismiss && (
+        <button
+          className="error-message-dismiss"
+          onClick={onDismiss}
+          aria-label="Dismiss message"
+        >
+          ×
+        </button>
+      )}
+    </div>
   );
 };

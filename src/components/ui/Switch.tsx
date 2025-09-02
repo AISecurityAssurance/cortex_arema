@@ -1,29 +1,43 @@
 import React from 'react';
-import { Toggle } from '@cloudscape-design/components';
+import './Switch.css';
 
 interface SwitchProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
   id?: string;
-  label?: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   onCheckedChange,
   disabled = false,
-  id,
-  label = ''
+  id
 }) => {
+  const handleClick = () => {
+    if (!disabled) {
+      onCheckedChange(!checked);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === ' ' || e.key === 'Enter') && !disabled) {
+      e.preventDefault();
+      onCheckedChange(!checked);
+    }
+  };
+
   return (
-    <Toggle
-      checked={checked}
-      onChange={({ detail }) => onCheckedChange(detail.checked)}
+    <button
+      id={id}
+      role="switch"
+      aria-checked={checked}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       disabled={disabled}
-      controlId={id}
+      className={`switch ${checked ? 'switch-checked' : ''} ${disabled ? 'switch-disabled' : ''}`}
     >
-      {label}
-    </Toggle>
+      <span className="switch-thumb" />
+    </button>
   );
 };
