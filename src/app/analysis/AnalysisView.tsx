@@ -411,10 +411,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       ].find((f) => f.id === selectedFinding) || null
     : null;
 
-  const selectedValidation =
-    selectedFinding && session
-      ? session.validations.find((v) => v.findingId === selectedFinding) || null
-      : null;
+  // First check the validations Map (in-memory state), then fall back to session validations
+  const selectedValidation = selectedFinding
+    ? validations.get(selectedFinding) || 
+      (session?.validations.find((v) => v.findingId === selectedFinding) || null)
+    : null;
 
   const validationMap = new Map(
     Array.from(validations.values()).map((v) => [v.findingId, v.status])
