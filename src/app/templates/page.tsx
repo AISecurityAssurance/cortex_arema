@@ -15,16 +15,26 @@ import {
   Modal,
   Box,
   Header,
-  Container
+  Container,
+  FormField
 } from '@cloudscape-design/components';
+import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { useTemplateStore } from '@/stores/templateStore';
 import { TemplateDefinition } from '@/data/templates';
 import { TemplateService } from '@/services/templates/TemplateService';
+import { useTheme } from '@/contexts/ThemeContext';
 import './page.css';
 
 export default function TemplatesPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
+  
+  // Apply Cloudscape theme mode based on current theme
+  useEffect(() => {
+    const mode = theme === 'dark' ? Mode.Dark : Mode.Light;
+    applyMode(mode);
+  }, [theme]);
   
   // Zustand store
   const {
@@ -249,8 +259,7 @@ export default function TemplatesPage() {
         )}
         
         <SpaceBetween size="l">
-          <div className="form-group">
-            <label>Template Name</label>
+          <FormField label="Template Name">
             <Input
               value={template.name}
               onChange={({ detail }) => 
@@ -258,10 +267,9 @@ export default function TemplatesPage() {
               }
               placeholder="Enter template name..."
             />
-          </div>
+          </FormField>
 
-          <div className="form-group">
-            <label>Description</label>
+          <FormField label="Description">
             <Input
               value={template.description}
               onChange={({ detail }) =>
@@ -269,10 +277,9 @@ export default function TemplatesPage() {
               }
               placeholder="Brief description of this template..."
             />
-          </div>
+          </FormField>
 
-          <div className="form-group">
-            <label>Template Content</label>
+          <FormField label="Template Content">
             <Textarea
               value={template.template}
               onChange={({ detail }) =>
@@ -281,7 +288,7 @@ export default function TemplatesPage() {
               placeholder="Enter your prompt template here. Use {{variableName}} for variables..."
               rows={15}
             />
-          </div>
+          </FormField>
         </SpaceBetween>
       </Container>
     );
@@ -391,26 +398,23 @@ export default function TemplatesPage() {
               }
             >
               <SpaceBetween size="l">
-                <div className="form-group">
-                  <label>Template Name</label>
+                <FormField label="Template Name">
                   <Input
                     value={formData.name}
                     onChange={({ detail }) => setFormData({ ...formData, name: detail.value })}
                     placeholder="Enter template name..."
                   />
-                </div>
+                </FormField>
 
-                <div className="form-group">
-                  <label>Description</label>
+                <FormField label="Description">
                   <Input
                     value={formData.description}
                     onChange={({ detail }) => setFormData({ ...formData, description: detail.value })}
                     placeholder="Brief description of this template..."
                   />
-                </div>
+                </FormField>
 
-                <div className="form-group">
-                  <label>Analysis Type</label>
+                <FormField label="Analysis Type">
                   <Select
                     selectedOption={{ value: formData.analysisType, label: formData.analysisType.toUpperCase() }}
                     onChange={({ detail }) => setFormData({ ...formData, analysisType: detail.selectedOption?.value as any })}
@@ -420,32 +424,32 @@ export default function TemplatesPage() {
                       { value: "custom", label: "Custom" }
                     ]}
                   />
-                </div>
+                </FormField>
 
-                <div className="form-group">
-                  <label>
-                    Template Content
+                <FormField 
+                  label="Template Content"
+                  secondaryControl={
                     <Button onClick={extractVariables}>
                       Extract Variables
                     </Button>
-                  </label>
+                  }
+                >
                   <Textarea
                     value={formData.template}
                     onChange={({ detail }) => setFormData({ ...formData, template: detail.value })}
                     placeholder="Enter your prompt template here. Use {{variableName}} for variables..."
                     rows={15}
                   />
-                </div>
+                </FormField>
 
-                <div className="form-group">
-                  <label>Variables (auto-extracted)</label>
+                <FormField label="Variables (auto-extracted)">
                   <Input
                     value={formData.variables}
                     onChange={({ detail }) => setFormData({ ...formData, variables: detail.value })}
                     placeholder="Variables will be extracted from template..."
                     disabled
                   />
-                </div>
+                </FormField>
               </SpaceBetween>
             </Container>
           ) : editingTemplateId ? (
