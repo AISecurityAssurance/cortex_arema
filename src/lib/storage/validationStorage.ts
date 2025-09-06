@@ -10,10 +10,18 @@ export class ValidationStorage {
       v => v.findingId === validation.findingId
     );
     
-    if (existingIndex >= 0) {
-      session.validations[existingIndex] = validation;
+    // If status is pending, remove the validation entirely
+    if (validation.status === 'pending') {
+      if (existingIndex >= 0) {
+        session.validations.splice(existingIndex, 1);
+      }
     } else {
-      session.validations.push(validation);
+      // Otherwise, update or add the validation
+      if (existingIndex >= 0) {
+        session.validations[existingIndex] = validation;
+      } else {
+        session.validations.push(validation);
+      }
     }
     
     SessionStorage.saveSession(session);
