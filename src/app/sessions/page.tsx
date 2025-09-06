@@ -157,8 +157,8 @@ export default function SessionsPage() {
               style={{ display: 'none' }}
             />
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 14L6 10H8V6H12V10H14L10 14Z"/>
-              <path d="M4 16H16V18H4V16Z"/>
+              <path d="M10 14L6 10H8V6H12V10H14L10 14Z" />
+              <path d="M4 16H16V18H4V16Z" />
             </svg>
             Import Session
           </label>
@@ -190,8 +190,8 @@ export default function SessionsPage() {
       {sortedSessions.length === 0 ? (
         <div className="empty-state">
           <svg width="64" height="64" viewBox="0 0 64 64" fill="currentColor">
-            <path d="M32 12C21 12 12 21 12 32C12 43 21 52 32 52C43 52 52 43 52 32C52 21 43 12 32 12ZM32 48C23.2 48 16 40.8 16 32C16 23.2 23.2 16 32 16C40.8 16 48 23.2 48 32C48 40.8 40.8 48 32 48Z"/>
-            <path d="M32 24C32.55 24 33 24.45 33 25V31H39C39.55 31 40 31.45 40 32C40 32.55 39.55 33 39 33H33V39C33 39.55 32.55 40 32 40C31.45 40 31 39.55 31 39V33H25C24.45 33 24 32.55 24 32C24 31.45 24.45 31 25 31H31V25C31 24.45 31.45 24 32 24Z"/>
+            <path d="M32 12C21 12 12 21 12 32C12 43 21 52 32 52C43 52 52 43 52 32C52 21 43 12 32 12ZM32 48C23.2 48 16 40.8 16 32C16 23.2 23.2 16 32 16C40.8 16 48 23.2 48 32C48 40.8 40.8 48 32 48Z" />
+            <path d="M32 24C32.55 24 33 24.45 33 25V31H39C39.55 31 40 31.45 40 32C40 32.55 39.55 33 39 33H33V39C33 39.55 32.55 40 32 40C31.45 40 31 39.55 31 39V33H25C24.45 33 24 32.55 24 32C24 31.45 24.45 31 25 31H31V25C31 24.45 31.45 24 32 24Z" />
           </svg>
           <p>No sessions found</p>
           <div className="create-first-btn">
@@ -236,8 +236,8 @@ export default function SessionsPage() {
                       title="Export session"
                     >
                       <svg viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 12L4 8H6V4H10V8H12L8 12Z"/>
-                        <path d="M2 14H14V15H2V14Z"/>
+                        <path d="M8 12L4 8H6V4H10V8H12L8 12Z" />
+                        <path d="M2 14H14V15H2V14Z" />
                       </svg>
                     </button>
                     <button
@@ -246,7 +246,7 @@ export default function SessionsPage() {
                       title="Delete session"
                     >
                       <svg viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M6 2V3H10V2H6ZM5 2C5 1.45 5.45 1 6 1H10C10.55 1 11 1.45 11 2V3H14C14.55 3 15 3.45 15 4C15 4.55 14.55 5 14 5H13V13C13 14.1 12.1 15 11 15H5C3.9 15 3 14.1 3 13V5H2C1.45 5 1 4.55 1 4C1 3.45 1.45 3 2 3H5V2ZM5 5V13H11V5H5ZM7 7V11H9V7H7Z"/>
+                        <path d="M6 2V3H10V2H6ZM5 2C5 1.45 5.45 1 6 1H10C10.55 1 11 1.45 11 2V3H14C14.55 3 15 3.45 15 4C15 4.55 14.55 5 14 5H13V13C13 14.1 12.1 15 11 15H5C3.9 15 3 14.1 3 13V5H2C1.45 5 1 4.55 1 4C1 3.45 1.45 3 2 3H5V2ZM5 5V13H11V5H5ZM7 7V11H9V7H7Z" />
                       </svg>
                     </button>
                   </div>
@@ -254,7 +254,7 @@ export default function SessionsPage() {
                 <div className="session-meta">
                   <span className="meta-item">
                     <svg viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 2C4.69 2 2 4.69 2 8C2 11.31 4.69 14 8 14C11.31 14 14 11.31 14 8C14 4.69 11.31 2 8 2ZM8 12C5.79 12 4 10.21 4 8C4 5.79 5.79 4 8 4C10.21 4 12 5.79 12 8C12 10.21 10.21 12 8 12ZM8.5 5H7V9L10.25 10.85L11 9.62L8.5 8V5Z"/>
+                      <path d="M8 2C4.69 2 2 4.69 2 8C2 11.31 4.69 14 8 14C11.31 14 14 11.31 14 8C14 4.69 11.31 2 8 2ZM8 12C5.79 12 4 10.21 4 8C4 5.79 5.79 4 8 4C10.21 4 12 5.79 12 8C12 10.21 10.21 12 8 12ZM8.5 5H7V9L10.25 10.85L11 9.62L8.5 8V5Z" />
                     </svg>
                     {formatDate(session.updatedAt)}
                   </span>
@@ -287,7 +287,7 @@ export default function SessionsPage() {
 
               <div className="session-progress">
                 <div className="progress-bar">
-                  <div 
+                  <div
                     className="progress-fill"
                     style={{ width: `${getProgressPercentage(session)}%` }}
                   />
@@ -295,9 +295,18 @@ export default function SessionsPage() {
                 <span className="progress-value">{getProgressPercentage(session)}%</span>
               </div>
 
-              <Link href={`/analysis?session=${session.id}`} className="resume-btn">
-                Resume
-              </Link>
+              <div className="session-footer">
+                <Link href={`/analysis?session=${session.id}`} className="resume-btn">
+                  Resume
+                </Link>
+                <button
+                  className="delete-btn"
+                  onClick={(e) => deleteSession(session.id, e)}
+                >
+                  Delete
+                </button>
+              </div>
+
             </div>
           ))}
         </div>
