@@ -71,6 +71,12 @@
   margin-bottom: var(--space-3);
 }
 
+/* Fix Cloudscape RadioGroup text color in filter section */
+.filter-section [class*="awsui_label"],
+.filter-section [class*="awsui_radio-button"] {
+  color: var(--color-text) !important;
+}
+
 .filter-buttons {
   display: flex;
   flex-direction: column;
