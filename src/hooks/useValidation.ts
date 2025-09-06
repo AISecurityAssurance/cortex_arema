@@ -12,11 +12,16 @@ export function useValidation({ sessionId, onValidationSave }: UseValidationProp
   const [validations, setValidations] = useState<Map<string, FindingValidation>>(new Map());
   const [currentValidation, setCurrentValidation] = useState<FindingValidation | null>(null);
 
-  // Add or update validation
+  // Add or update validation (remove if status is pending)
   const addValidation = useCallback((validation: FindingValidation) => {
     setValidations(prev => {
       const next = new Map(prev);
-      next.set(validation.findingId, validation);
+      // If status is pending, remove the validation entirely
+      if (validation.status === 'pending') {
+        next.delete(validation.findingId);
+      } else {
+        next.set(validation.findingId, validation);
+      }
       return next;
     });
 
