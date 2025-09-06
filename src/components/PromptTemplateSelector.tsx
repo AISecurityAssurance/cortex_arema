@@ -1,6 +1,7 @@
 "use client";
 
-import { usePromptStore } from "@/stores/promptStore";
+import { useTemplateStore } from "@/stores/templateStore";
+import { TemplateDefinition } from "@/data/templates";
 import { useMemo } from "react";
 import "./PromptTemplateSelector.css";
 
@@ -10,13 +11,14 @@ type Props = {
 };
 
 export function PromptTemplateSelector({ onTemplateInsert, className = "" }: Props) {
-  const { templates } = usePromptStore();
+  const getAllTemplates = useTemplateStore(state => state.getAllTemplates);
+  const templates = getAllTemplates();
 
   const groupedTemplates = useMemo(() => {
-    const groups: Record<string, typeof templates> = {};
+    const groups: Record<string, TemplateDefinition[]> = {};
     templates
-      .filter((t) => t.template.trim())
-      .forEach((t) => {
+      .filter((t: TemplateDefinition) => t.template && t.template.trim())
+      .forEach((t: TemplateDefinition) => {
         if (!groups[t.analysisType]) groups[t.analysisType] = [];
         groups[t.analysisType].push(t);
       });
@@ -26,7 +28,7 @@ export function PromptTemplateSelector({ onTemplateInsert, className = "" }: Pro
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
     if (selectedId) {
-      const selected = templates.find((t) => t.id === selectedId);
+      const selected = templates.find((t: TemplateDefinition) => t.id === selectedId);
       if (selected) {
         onTemplateInsert(selected.template);
       }
@@ -46,7 +48,7 @@ export function PromptTemplateSelector({ onTemplateInsert, className = "" }: Pro
       </option>
       {Object.entries(groupedTemplates).map(([type, items]) => (
         <optgroup key={type} label={type.toUpperCase()}>
-          {items.map((t) => (
+          {items.map((t: TemplateDefinition) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>
