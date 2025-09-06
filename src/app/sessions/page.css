@@ -373,6 +373,23 @@
   height: 32px;
 }
 
+.delete-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1-5) var(--space-3);
+  background: red;
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  height: 32px;
+  margin-left: 10px;
+}
+
 .resume-btn:hover {
   background: var(--color-primary-hover);
   box-shadow: var(--shadow-sm);
