@@ -236,12 +236,12 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
               >
                 {node.type === 'analysis-stride' ? (
                   <>
-                    <option value="stride-default">STRIDE Analysis</option>
-                    <option value="owasp-top10-default">OWASP Top 10</option>
+                    <option value="stride-core">STRIDE Analysis</option>
+                    <option value="owasp-top10-core">OWASP Top 10</option>
                   </>
                 ) : (
                   <>
-                    <option value="stpa-sec-default">STPA-SEC Analysis</option>
+                    <option value="stpa-sec-core">STPA-SEC Analysis</option>
                   </>
                 )}
               </select>

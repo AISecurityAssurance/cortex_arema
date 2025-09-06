@@ -83,7 +83,7 @@ export function usePipeline() {
           config: {
             modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",  // Default to Sonnet for better performance
             temperature: 0.7,
-            promptTemplate: "stride-default",
+            promptTemplate: "stride-core",
             systemDescription: "",
           },
           inputs: ["diagram_data"],
@@ -100,7 +100,7 @@ export function usePipeline() {
           config: {
             modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",  // Default to Sonnet for better performance
             temperature: 0.7,
-            promptTemplate: "stpa-sec-default",
+            promptTemplate: "stpa-sec-core",
             systemDescription: "",
           },
           inputs: ["diagram_data"],

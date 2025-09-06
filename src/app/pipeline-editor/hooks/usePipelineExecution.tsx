@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { 
   PipelineNode, 
   Connection,
@@ -28,6 +28,16 @@ export function usePipelineExecution() {
     nodeStates: new Map(),
     totalProgress: 0,
   });
+
+  // Load templates on mount
+  useEffect(() => {
+    const initTemplates = async () => {
+      const { loadTemplates, runMigration } = useTemplateStore.getState();
+      await runMigration();
+      await loadTemplates();
+    };
+    initTemplates();
+  }, []);
 
   const validatePipeline = (
     nodes: PipelineNode[],
