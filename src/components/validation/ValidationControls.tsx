@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SecurityFinding, FindingValidation } from '@/types';
 import { RatingScale } from './RatingScale';
@@ -28,6 +28,18 @@ export const ValidationControls: React.FC<ValidationControlsProps> = ({
     notes: validation?.notes || ''
   });
 
+  // Update local state when switching to a different finding
+  useEffect(() => {
+    setLocalValidation({
+      status: validation?.status || 'pending',
+      accuracy: validation?.accuracy || 3,
+      completeness: validation?.completeness || 3,
+      relevance: validation?.relevance || 3,
+      actionability: validation?.actionability || 3,
+      notes: validation?.notes || ''
+    });
+  }, [finding?.id]); // Only reset when finding changes, not when validation updates
+
   if (!finding) {
     return (
       <div className="validation-controls empty">
@@ -43,13 +55,15 @@ export const ValidationControls: React.FC<ValidationControlsProps> = ({
   }
 
   const handleStatusChange = (status: FindingValidation['status']) => {
-    const updated = { ...localValidation, status };
+    // If clicking the same status that's already selected, unselect it (set to pending)
+    const newStatus = localValidation.status === status ? 'pending' : status;
+    const updated = { ...localValidation, status: newStatus };
     setLocalValidation(updated);
     
     if (finding) {
       onValidationUpdate({
         findingId: finding.id,
-        status,
+        status: newStatus,
         accuracy: updated.accuracy || 3,
         completeness: updated.completeness || 3,
         relevance: updated.relevance || 3,
