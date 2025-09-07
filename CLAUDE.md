@@ -11,12 +11,13 @@ Cortex Arena is a security analysis platform that compares threat assessments fr
 - **TypeScript**: 5.9.2 (strict mode)
 - **State Management**: Zustand 5.0.6
 - **UI Framework**: AWS Cloudscape Design System (active migration - see CLOUDSCAPE_MIGRATION_SPEC.md)
-- **Backend**: FastAPI server at localhost:8000
+- **Styling**: CSS Modules with styled-jsx
+- **Backend**: FastAPI server at localhost:8000 (../agr/serve.py)
 
 ## Development Commands
 
 ```bash
-# Start development server
+# Start development server (runs on port 3001)
 npm run dev
 
 # Type checking
@@ -27,40 +28,72 @@ npm run lint
 
 # Production build
 npm run build
+
+# Start production server
+npm run start
+```
+
+## Backend Setup
+```bash
+# From ../agr directory
+python serve.py  # FastAPI server runs on localhost:8000
 ```
 
 ## Architecture & Key Patterns
 
 ### State Management Architecture
-- **Zustand stores** for templates (`lib/storage/templateStore.ts`)
-- **LocalStorage persistence** for sessions (`lib/storage/sessionStorage.ts`)
-- **React Context** for cross-cutting concerns (Toast notifications, Theme)
+- **Zustand stores** with typed interfaces
+  - Template management: `src/stores/templateStore.ts`
+  - Pipeline state: `src/app/pipeline-editor/hooks/usePipeline.tsx`
+- **LocalStorage persistence** with atomic operations
+  - Sessions: `src/lib/storage/sessionStorage.ts`
+  - Validations: `src/lib/storage/validationStorage.ts`
+- **React Context** for cross-cutting concerns
+  - Toast notifications: `src/contexts/ToastContext.tsx`
+  - Theme management: `src/contexts/ThemeContext.tsx`
+  - Cloudscape theme: `src/contexts/CloudscapeThemeContext.tsx`
 
 ### Component Architecture
 ```
-src/app/analysis/AnalysisView.tsx      # Main analysis orchestrator
-src/components/layout/AnalysisLayout.tsx # Three-panel layout container
-src/components/analysis/ModelComparisonView.tsx # Side-by-side model results
-src/components/validation/ValidationControls.tsx # Finding validation UI
+src/app/
+├── analysis/                           # Main analysis feature
+│   ├── AnalysisView.tsx               # Primary analysis orchestrator
+│   └── AnalysisView-new.tsx           # Cloudscape migration version
+├── pipeline-editor/                    # Visual pipeline builder
+│   ├── components/                     # Pipeline-specific components
+│   ├── hooks/                         # Custom React hooks
+│   ├── types/                         # TypeScript types
+│   └── utils/                         # Helper functions
+├── templates/                          # Template management
+└── sessions/                           # Session history
+
+src/components/
+├── analysis/                           # Analysis UI components
+│   ├── ModelComparisonView.tsx        # Side-by-side comparison
+│   └── FindingCard.tsx                # Individual finding display
+├── layout/                            # Layout components
+│   ├── AnalysisLayout.tsx            # Three-panel container
+│   ├── CloudscapeLayout.tsx          # Cloudscape wrapper
+│   └── SlidingPanel.tsx              # Resizable panels
+├── validation/                        # Finding validation UI
+│   ├── ValidationControls.tsx        # Main validation interface
+│   ├── StatusButtons.tsx             # Status selection
+│   └── RatingScale.tsx               # Multi-dimensional scoring
+└── ui/                               # Reusable UI primitives
 ```
 
 ### Data Flow
 1. User uploads image → AI validation → Session created
-2. Template selected → Prompt generated → Models called in parallel
-3. Results parsed → Findings extracted → Displayed for comparison
-4. User validates findings → Progress tracked → Session persisted
-
-### Session Management
-Sessions are persisted to localStorage with atomic operations to prevent data corruption. Each session contains:
-- Model selections (A/B comparison)
-- Analysis results from both models
-- Validation data with multi-dimensional scoring
-- Progress metrics
-
-## Critical Implementation Details
+2. Template selected → Variables populated → Prompt generated
+3. Backend API called → Models process in parallel
+4. Raw responses → Finding extraction (`lib/analysis/findingExtractor.ts`)
+5. Findings displayed → User validates → Progress tracked
+6. Session persisted to localStorage with atomic updates
 
 ### Model Integration
-Backend API at `http://localhost:8000/generate` expects:
+Backend API endpoint: `http://localhost:8000/generate`
+
+Request structure:
 ```typescript
 {
   model_id: string,      // e.g., "us.anthropic.claude-opus-4-20250514-v1:0"
@@ -70,17 +103,31 @@ Backend API at `http://localhost:8000/generate` expects:
 }
 ```
 
-### Finding Extraction
-The system extracts structured findings from unstructured model responses using:
+Available models configured in `src/app/analysis/AnalysisView.tsx`:
+- AWS Bedrock Claude Opus 4
+- AWS Bedrock Claude Sonnet 4
+
+### Finding Extraction System
+Located in `src/lib/analysis/findingExtractor.ts`:
+- Extracts structured findings from unstructured model responses
 - Pattern matching for severity levels (Critical, High, Medium, Low)
 - Multi-format support (STRIDE categories, STPA-SEC hazards, custom formats)
-- Located in `src/lib/analysis/findingExtractor.ts`
+- Handles various response formats from different models
 
 ### Validation System
-Findings are validated with:
-- Status: confirmed, false-positive, needs-review, pending
-- Multi-dimensional scoring: accuracy, completeness, relevance, actionability
-- Progress tracking with automatic calculation
+Multi-dimensional validation with scoring:
+- **Status**: confirmed, false-positive, needs-review, pending
+- **Dimensions**: accuracy, completeness, relevance, actionability (1-5 scale)
+- **Storage**: Persisted to localStorage via `validationStorage.ts`
+- **Progress**: Automatic calculation and tracking
+
+### Template System
+Templates stored via Zustand (`src/stores/templateStore.ts`):
+- **Core templates**: Built-in, read-only templates
+- **User overrides**: Custom modifications to core templates
+- **Draft edits**: Unsaved changes during editing
+- Variable substitution: `{{variable_name}}` syntax
+- Import/export functionality for sharing
 
 ## Active Migration: Cloudscape Design System
 
@@ -90,57 +137,122 @@ Findings are validated with:
 3. Preserve all existing functionality
 4. Test thoroughly after changes
 
-Migration phases:
+Current migration status:
 - Phase 1: Foundation (✅ Complete)
 - Phase 2: Layout & Navigation (🔄 In Progress)
 - Phase 3: Core Components (📋 Planned)
 
+When creating new components:
+- Check if a Cloudscape equivalent exists
+- Use Cloudscape design tokens for styling
+- Follow patterns in `ModelComparisonViewCloudscape.tsx`
+
 ## Common Development Tasks
 
 ### Adding a New Model
-1. Add model configuration to `src/types/index.ts` (ModelConfig)
-2. Update model lists in `src/app/analysis/AnalysisView.tsx`
-3. Ensure backend supports the model ID
+1. Add model configuration to `ModelConfig` type in `src/types/index.ts`
+2. Update `MODEL_IDS` in `src/app/analysis/AnalysisView.tsx`
+3. Add to model selection dropdowns
+4. Ensure backend supports the model ID
 
 ### Creating New Templates
-1. Use the Template Editor UI at `/templates`
-2. Templates support variables like `{{threat_type}}`, `{{analysis_scope}}`
-3. Templates are stored in localStorage via Zustand
+1. Use Template Editor UI at `/templates`
+2. Define variables with `{{variable_name}}` syntax
+3. Set appropriate `analysisType` and `expectedOutputFormat`
+4. Templates auto-save to localStorage via Zustand
 
-### Debugging Tips
-- **Toast notifications not showing**: Verify ToastProvider wraps the component
-- **Infinite loops**: Check useEffect dependencies, especially object comparisons
-- **Session persistence issues**: Clear localStorage if corrupted
-- **Model errors**: Verify backend is running and accessible
+### Modifying the Pipeline Editor
+The pipeline editor (`/pipeline-editor`) is a complex drag-and-drop system:
+- Canvas rendering: Custom React implementation
+- Node types: Defined in `types/nodeConfigs.ts`
+- Execution: Managed by `usePipelineExecution` hook
+- Auto-layout: Uses dagre library (`utils/autoLayout.ts`)
+
+### Working with Sessions
+Sessions are managed through:
+- `useAnalysisSession` hook for current session
+- `sessionStorage.ts` for persistence
+- Atomic operations to prevent corruption
+- Session interface defined in `src/types/index.ts`
 
 ## Important Patterns to Follow
 
 ### Error Handling
-- Use toast notifications for user feedback
-- Wrap async operations in try-catch blocks
-- Log errors to console (debug logging is intentionally kept enabled)
+```typescript
+try {
+  // Operation
+} catch (error) {
+  console.error('Descriptive error:', error);
+  toast.error('User-friendly message');
+}
+```
 
-### Component Guidelines
-- Use "use client" directive for interactive components
-- Keep components focused and single-purpose
-- Use absolute imports with @ alias
-- Follow existing naming conventions (e.g., `ModelComparisonView`, not `ModelComparison`)
+### Component Structure
+```typescript
+'use client';  // For interactive components
+
+import { ComponentProps } from '@/types';
+
+export const Component: React.FC<ComponentProps> = ({ prop1, prop2 }) => {
+  // Hooks first
+  const state = useState();
+  
+  // Effects next
+  useEffect(() => {}, []);
+  
+  // Handlers
+  const handleAction = () => {};
+  
+  // Render
+  return <div>...</div>;
+};
+```
 
 ### Type Safety
-- Never use `any` type
+- Never use `any` - use `unknown` and type guards instead
 - Define interfaces for all data structures
 - Use strict TypeScript configuration
 - Validate external data (API responses, localStorage)
 
+### LocalStorage Operations
+Always use atomic operations to prevent data corruption:
+```typescript
+const data = localStorage.getItem(key);
+if (data) {
+  const parsed = JSON.parse(data);
+  // Validate structure
+  // Process data
+  localStorage.setItem(key, JSON.stringify(updated));
+}
+```
+
+## Debugging Tips
+
+### Common Issues and Solutions
+- **Toast notifications not showing**: Verify `ToastProvider` wraps the component tree
+- **Infinite re-renders**: Check useEffect dependencies, especially object/array comparisons
+- **Session persistence issues**: Clear localStorage if corrupted: `localStorage.clear()`
+- **Model API errors**: Verify backend is running (`http://localhost:8000`)
+- **Cloudscape styling conflicts**: Check component is wrapped in CloudscapeLayout
+- **Finding extraction failures**: Check console for parsing errors in `findingExtractor.ts`
+
+### Debug Logging
+Console logging is intentionally kept enabled for development. Use descriptive messages:
+```typescript
+console.log('[ComponentName] Action description:', data);
+console.error('[ComponentName] Error context:', error);
+```
+
 ## Security Considerations
 - No API keys or secrets in frontend code
-- Image validation before processing
+- Image validation before processing (size, type)
 - Input sanitization for prompts
 - CORS restricted to localhost
+- Template variables sanitized before substitution
 
-## Testing Strategy
-Currently no automated tests exist. When implementing tests:
-- Unit tests for utility functions
-- Component tests for React components
-- Integration tests for API interactions
-- E2E tests for critical user workflows
+## Performance Considerations
+- Use React.memo for expensive components
+- Implement virtualization for long lists
+- Lazy load heavy components with dynamic imports
+- Debounce localStorage writes
+- Use Cloudscape's built-in optimizations where available
