@@ -26,11 +26,11 @@
       "placeholder": "Describe the scope of analysis"
     }
   ],
-  "template": "Analyze the following system for security vulnerabilities:\n\nSystem: {{systemName}}\nScope: {{analysisScope}}\n\nProvide a comprehensive security analysis including:\n1. Potential vulnerabilities\n2. Risk assessment\n3. Recommended mitigations\n4. Priority actions\n\nthis is a test to make sure the persistence works as we expect",
+  "template": "Analyze the following system for security vulnerabilities:\n\nSystem: {{systemName}}\nScope: {{analysisScope}}\n\nProvide a comprehensive security analysis including:\n1. Potential vulnerabilities\n2. Risk assessment\n3. Recommended mitigations\n4. Priority actions\n\nthis is a test to make sure the persistence works as we expect. And now also the unsaved logic",
   "metadata": {
     "isCore": false,
     "isEditable": true,
     "createdAt": "2024-01-01T00:00:00Z",
-    "updatedAt": "2025-09-07T05:32:43.107Z"
+    "updatedAt": "2025-09-07T21:24:49.573Z"
   }
 }

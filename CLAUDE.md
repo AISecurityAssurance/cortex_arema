@@ -12,7 +12,7 @@ Cortex Arena is a security analysis platform that compares threat assessments fr
 - **State Management**: Zustand 5.0.6
 - **UI Framework**: AWS Cloudscape Design System (active migration - see CLOUDSCAPE_MIGRATION_SPEC.md)
 - **Styling**: CSS Modules with styled-jsx
-- **Backend**: FastAPI server at localhost:8000 (../agr/serve.py)
+- **Backend**: FastAPI server at localhost:8000 (../agr directory)
 
 ## Development Commands
 
@@ -36,7 +36,7 @@ npm run start
 ## Backend Setup
 ```bash
 # From ../agr directory
-python serve.py  # FastAPI server runs on localhost:8000
+python agr.py  # FastAPI server runs on localhost:8000
 ```
 
 ## Architecture & Key Patterns
@@ -51,7 +51,6 @@ python serve.py  # FastAPI server runs on localhost:8000
 - **React Context** for cross-cutting concerns
   - Toast notifications: `src/contexts/ToastContext.tsx`
   - Theme management: `src/contexts/ThemeContext.tsx`
-  - Cloudscape theme: `src/contexts/CloudscapeThemeContext.tsx`
 
 ### Component Architecture
 ```
@@ -73,7 +72,6 @@ src/components/
 │   └── FindingCard.tsx                # Individual finding display
 ├── layout/                            # Layout components
 │   ├── AnalysisLayout.tsx            # Three-panel container
-│   ├── CloudscapeLayout.tsx          # Cloudscape wrapper
 │   └── SlidingPanel.tsx              # Resizable panels
 ├── validation/                        # Finding validation UI
 │   ├── ValidationControls.tsx        # Main validation interface
@@ -104,8 +102,9 @@ Request structure:
 ```
 
 Available models configured in `src/app/analysis/AnalysisView.tsx`:
-- AWS Bedrock Claude Opus 4
-- AWS Bedrock Claude Sonnet 4
+- AWS Bedrock: Claude Opus 4, Claude Sonnet 4, Claude 3.5 Sonnet, Nova Pro, Nova Lite, Llama 3.2, Pixtral Large
+- Ollama: Llava, Llama 3.2, Llama 3.2 Vision, Qwen 2.5
+- Azure OpenAI: GPT-4o, GPT-4o Mini, GPT-4 Vision, GPT-4 Turbo, GPT-3.5 Turbo, O1 Preview, O1 Mini
 
 ### Finding Extraction System
 Located in `src/lib/analysis/findingExtractor.ts`:
@@ -150,10 +149,9 @@ When creating new components:
 ## Common Development Tasks
 
 ### Adding a New Model
-1. Add model configuration to `ModelConfig` type in `src/types/index.ts`
-2. Update `MODEL_IDS` in `src/app/analysis/AnalysisView.tsx`
-3. Add to model selection dropdowns
-4. Ensure backend supports the model ID
+1. Add model configuration to `MODEL_IDS` in `src/app/analysis/AnalysisView.tsx`
+2. Ensure backend supports the model ID
+3. Model will automatically appear in selection dropdowns
 
 ### Creating New Templates
 1. Use Template Editor UI at `/templates`
