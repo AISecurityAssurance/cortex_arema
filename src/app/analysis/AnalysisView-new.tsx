@@ -18,7 +18,7 @@ import { ModelComparisonView } from "@/components/analysis/ModelComparisonViewCl
 import { ModelSettings } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
-import { useToast } from "@/contexts/FlashbarContext";
+import { useToast } from "@/contexts/ToastContext";
 import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
