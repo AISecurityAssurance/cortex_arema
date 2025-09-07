@@ -575,6 +575,105 @@
   color: var(--color-text);
 }
 
+/* Template Viewer (Read-only) */
+.template-viewer {
+  width: 100%;
+}
+
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.viewer-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  flex: 1;
+  margin-right: var(--space-4);
+}
+
+.viewer-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.viewer-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.info-group label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.info-value {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.variables-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.no-variables {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.template-content-viewer {
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.template-content-viewer pre {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.metadata-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.metadata-info span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .templates-container {
@@ -603,13 +702,15 @@
     grid-template-columns: 1fr;
   }
   
-  .editor-header {
+  .editor-header,
+  .viewer-header {
     flex-direction: column;
     gap: var(--space-3);
     align-items: stretch;
   }
   
-  .editor-actions {
+  .editor-actions,
+  .viewer-actions {
     width: 100%;
   }
   

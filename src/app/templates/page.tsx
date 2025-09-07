@@ -50,6 +50,8 @@ export default function TemplatesPage() {
   // Local UI state
   const [filterMode, setFilterMode] = useState<'all' | 'core' | 'custom'>('all');
   const [isCreating, setIsCreating] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
+  const [viewingTemplateId, setViewingTemplateId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -138,6 +140,16 @@ export default function TemplatesPage() {
     }
     startEditing(template.id);
     setIsCreating(false);
+    setIsViewing(false);
+  };
+
+  const handleView = (template: TemplateDefinition) => {
+    setViewingTemplateId(template.id);
+    setIsViewing(true);
+    setIsCreating(false);
+    if (editingTemplateId) {
+      cancelEdit(editingTemplateId);
+    }
   };
 
   const handleSave = async () => {
@@ -262,6 +274,96 @@ export default function TemplatesPage() {
     const variables = TemplateService.extractVariables(formData.template);
     setFormData({ ...formData, variables: variables.join(', ') });
     showToast(`Found ${variables.length} variable${variables.length !== 1 ? 's' : ''}`, 'info');
+  };
+
+  // Render the read-only viewer for core templates
+  const renderTemplateViewer = () => {
+    const template = getTemplate(viewingTemplateId!);
+    if (!template) return null;
+
+    return (
+      <div className="template-viewer">
+        <div className="viewer-header">
+          <h2>View Template: {template.name}</h2>
+          <div className="viewer-actions">
+            <button 
+              className="action-btn primary"
+              onClick={() => handleUseTemplate(template)}
+            >
+              Use Template
+            </button>
+            <button 
+              className="action-btn"
+              onClick={() => handleDuplicate(template)}
+            >
+              Duplicate
+            </button>
+            <button 
+              className="cancel-btn"
+              onClick={() => setIsViewing(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        
+        <div className="viewer-content">
+          <div className="info-group">
+            <label>Template Name</label>
+            <div className="info-value">{template.name}</div>
+          </div>
+
+          <div className="info-group">
+            <label>Description</label>
+            <div className="info-value">{template.description}</div>
+          </div>
+
+          <div className="info-group">
+            <label>Analysis Type</label>
+            <div className="info-value">
+              <Badge variant="info" size="small">
+                {template.analysisType?.toUpperCase()}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="info-group">
+            <label>Variables</label>
+            <div className="info-value">
+              {template.variables?.length ? (
+                <div className="variables-list">
+                  {template.variables.map(v => (
+                    <Badge key={v.name} variant="default" size="small">
+                      {v.label || v.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="no-variables">No variables defined</span>
+              )}
+            </div>
+          </div>
+
+          <div className="info-group">
+            <label>Template Content</label>
+            <div className="template-content-viewer">
+              <pre>{template.template}</pre>
+            </div>
+          </div>
+
+          <div className="info-group">
+            <label>Metadata</label>
+            <div className="metadata-info">
+              <span>Version: {template.version}</span>
+              <span>Author: {template.author}</span>
+              {template.metadata?.createdAt && (
+                <span>Created: {new Date(template.metadata.createdAt).toLocaleDateString()}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Render the editor for existing templates (with draft support)
@@ -597,6 +699,8 @@ export default function TemplatesPage() {
             </div>
           ) : editingTemplateId ? (
             renderTemplateEditor()
+          ) : isViewing ? (
+            renderTemplateViewer()
           ) : (
             <div className="templates-grid">
               {filteredTemplates.length === 0 ? (
@@ -657,7 +761,21 @@ export default function TemplatesPage() {
                       </button>
                       
                       <div className="action-buttons">
-                        {!template.metadata?.isCore && (
+                        {template.metadata?.isCore ? (
+                          <button 
+                            className="icon-btn"
+                            title="View template"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleView(template);
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                              <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                            </svg>
+                          </button>
+                        ) : (
                           <button 
                             className="icon-btn"
                             title="Edit template"
