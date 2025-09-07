@@ -1,18 +1,33 @@
-import { loadCoreTemplates, TemplateDefinition, isCoreTemplate } from '@/data/templates';
+import { loadCoreTemplates, loadCustomTemplates, TemplateDefinition, isCoreTemplate } from '@/data/templates';
 
 export class TemplateService {
   private static USER_OVERRIDES_KEY = 'cortex_user_templates_v2';
   private static SETTINGS_KEY = 'cortex_template_settings';
 
   /**
-   * Load all templates (core + user overrides)
+   * Load all templates (core + filesystem custom + localStorage overrides)
    */
   static async loadAllTemplates(): Promise<{
     core: TemplateDefinition[];
     overrides: Map<string, TemplateDefinition>;
   }> {
     const core = await loadCoreTemplates();
-    const overrides = this.loadUserOverrides();
+    const customTemplates = await loadCustomTemplates();
+    const localOverrides = this.loadUserOverrides();
+    
+    // Merge custom templates from filesystem with local overrides
+    const overrides = new Map<string, TemplateDefinition>();
+    
+    // First add filesystem custom templates
+    for (const template of customTemplates) {
+      overrides.set(template.id, template);
+    }
+    
+    // Then add/override with localStorage templates (for backwards compatibility)
+    for (const [id, template] of localOverrides) {
+      overrides.set(id, template);
+    }
+    
     return { core, overrides };
   }
 
@@ -35,13 +50,11 @@ export class TemplateService {
   }
 
   /**
-   * Save a user template (custom template)
+   * Save a user template (custom template) to filesystem via API
    */
-  static saveUserOverride(template: TemplateDefinition): void {
+  static async saveUserOverride(template: TemplateDefinition): Promise<void> {
     if (typeof window === 'undefined') return;
 
-    const overrides = this.loadUserOverrides();
-    
     // Update metadata for user template
     const updatedTemplate: TemplateDefinition = {
       ...template,
@@ -51,23 +64,44 @@ export class TemplateService {
       },
     };
 
-    overrides.set(template.id, updatedTemplate);
-    
     try {
+      // Try to save to filesystem via API
+      const response = await fetch('/api/templates', {
+        method: updatedTemplate.metadata?.createdAt ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTemplate),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save template: ${response.statusText}`);
+      }
+
+      // Also update localStorage for immediate UI update
+      const overrides = this.loadUserOverrides();
+      overrides.set(template.id, updatedTemplate);
       localStorage.setItem(
         this.USER_OVERRIDES_KEY,
         JSON.stringify(Array.from(overrides.values()))
       );
     } catch (error) {
       console.error('Error saving user template:', error);
-      throw new Error('Failed to save template');
+      // Fall back to localStorage only
+      const overrides = this.loadUserOverrides();
+      overrides.set(template.id, updatedTemplate);
+      localStorage.setItem(
+        this.USER_OVERRIDES_KEY,
+        JSON.stringify(Array.from(overrides.values()))
+      );
+      throw new Error('Failed to save template to server, saved locally');
     }
   }
 
   /**
-   * Delete a user template override
+   * Delete a user template from filesystem via API
    */
-  static deleteUserOverride(id: string): void {
+  static async deleteUserOverride(id: string): Promise<void> {
     if (typeof window === 'undefined') return;
 
     // Don't allow deletion of core templates
@@ -76,17 +110,33 @@ export class TemplateService {
       return;
     }
 
-    const overrides = this.loadUserOverrides();
-    overrides.delete(id);
-
     try {
+      // Try to delete from filesystem via API
+      const response = await fetch(`/api/templates?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete template: ${response.statusText}`);
+      }
+
+      // Also remove from localStorage
+      const overrides = this.loadUserOverrides();
+      overrides.delete(id);
       localStorage.setItem(
         this.USER_OVERRIDES_KEY,
         JSON.stringify(Array.from(overrides.values()))
       );
     } catch (error) {
       console.error('Error deleting template:', error);
-      throw new Error('Failed to delete template');
+      // Fall back to localStorage only
+      const overrides = this.loadUserOverrides();
+      overrides.delete(id);
+      localStorage.setItem(
+        this.USER_OVERRIDES_KEY,
+        JSON.stringify(Array.from(overrides.values()))
+      );
+      throw new Error('Failed to delete template from server');
     }
   }
 
