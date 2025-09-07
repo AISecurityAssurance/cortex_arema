@@ -12,10 +12,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
-import {
-  FindingValidation,
-  PromptTemplate,
-} from "@/types";
+import { FindingValidation, PromptTemplate } from "@/types";
 import "./AnalysisView.css";
 
 const MODEL_IDS = {
@@ -66,11 +63,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   } = useAnalysisSession(sessionId);
 
   // Validation management
-  const { validations, addValidation, getStatus, setAllValidations } =
-    useValidation({
-      sessionId,
-      onValidationSave: saveValidationToSession,
-    });
+  const { validations, addValidation, setAllValidations } = useValidation({
+    sessionId,
+    onValidationSave: saveValidationToSession,
+  });
 
   // Component state
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
@@ -84,7 +80,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   const [isValidatingImage, setIsValidatingImage] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<PromptTemplate | null>(null);
-  
+
   // Template store
   const { loadTemplates, getTemplate, getAllTemplates } = useTemplateStore();
   const [modelA, setModelA] = useState(MODELS[0]);
@@ -93,7 +89,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     "stride" | "stpa-sec" | "custom"
   >("stride");
   const [ollamaConfig, setOllamaConfig] = useState<{
-    mode: 'local' | 'remote';
+    mode: "local" | "remote";
     remoteIp?: string;
     privateKeyPath?: string;
   } | null>(null);
@@ -124,13 +120,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             name: template.name,
             description: template.description,
             template: template.template,
-            variables: template.variables?.map(v => v.name) || [],
+            variables: template.variables?.map((v) => v.name) || [],
             analysisType: template.analysisType,
             expectedOutputFormat: template.expectedOutputFormat,
             version: template.version,
             isActive: true,
             createdAt: template.metadata?.createdAt || new Date().toISOString(),
-            updatedAt: template.metadata?.updatedAt || new Date().toISOString()
+            updatedAt: template.metadata?.updatedAt || new Date().toISOString(),
           };
           setSelectedTemplate(promptTemplate);
           updateTemplate(promptTemplate);
@@ -305,12 +301,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     };
 
     // Add Ollama config if using an Ollama model
-    if (modelId.startsWith('ollama:') && ollamaConfig) {
+    if (modelId.startsWith("ollama:") && ollamaConfig) {
       requestBody.ollama_config = ollamaConfig;
     }
 
     // Add Azure config if using an Azure OpenAI model
-    if ((modelId.startsWith('gpt-') || modelId.startsWith('o1-')) && azureConfig) {
+    if (
+      (modelId.startsWith("gpt-") || modelId.startsWith("o1-")) &&
+      azureConfig
+    ) {
       requestBody.azure_config = azureConfig;
     }
 
@@ -328,12 +327,12 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     // The backend returns a standardized format for all providers
     // with the actual response text in the 'response' field
     const result = json.response || "No response from model.";
-    
+
     // Ensure we always return a string
-    if (typeof result !== 'string') {
+    if (typeof result !== "string") {
       return String(result);
     }
-    
+
     return result;
   };
 
@@ -372,10 +371,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       );
 
       // Ensure response is a string before processing
-      const responseText = typeof response === 'string' 
-        ? response 
-        : String(response);
-      
+      const responseText =
+        typeof response === "string" ? response : String(response);
+
       const isValid = responseText.trim().toUpperCase().includes("YES");
       return isValid;
     } catch (error) {
@@ -434,8 +432,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
   // First check the validations Map (in-memory state), then fall back to session validations
   const selectedValidation = selectedFinding
-    ? validations.get(selectedFinding) || 
-      (session?.validations.find((v) => v.findingId === selectedFinding) || null)
+    ? validations.get(selectedFinding) ||
+      session?.validations.find((v) => v.findingId === selectedFinding) ||
+      null
     : null;
 
   const validationMap = new Map(
@@ -476,13 +475,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                     name: template.name,
                     description: template.description,
                     template: template.template,
-                    variables: template.variables?.map(v => v.name) || [],
+                    variables: template.variables?.map((v) => v.name) || [],
                     analysisType: template.analysisType,
                     expectedOutputFormat: template.expectedOutputFormat,
                     version: template.version,
                     isActive: true,
-                    createdAt: template.metadata?.createdAt || new Date().toISOString(),
-                    updatedAt: template.metadata?.updatedAt || new Date().toISOString()
+                    createdAt:
+                      template.metadata?.createdAt || new Date().toISOString(),
+                    updatedAt:
+                      template.metadata?.updatedAt || new Date().toISOString(),
                   };
                   setSelectedTemplate(promptTemplate);
                   updateTemplate(promptTemplate);
@@ -516,7 +517,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
               />
               <span>
                 <svg className="icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z"/>
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z" />
                 </svg>
                 {isValidatingImage
                   ? "Validating..."
@@ -538,7 +539,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           </div>
 
           <div className="control-group">
-            <ModelSettings 
+            <ModelSettings
               onOllamaConfigChange={setOllamaConfig}
               onAzureConfigChange={setAzureConfig}
             />
@@ -553,7 +554,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                   setModelA(newModelA);
                   // If the new selection matches modelB, find another available model for modelB
                   if (newModelA === modelB) {
-                    const availableModel = MODELS.find(m => m !== newModelA);
+                    const availableModel = MODELS.find((m) => m !== newModelA);
                     if (availableModel) {
                       setModelB(availableModel);
                       updateModels(newModelA, availableModel);
@@ -577,7 +578,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                   setModelB(newModelB);
                   // If the new selection matches modelA, find another available model for modelA
                   if (newModelB === modelA) {
-                    const availableModel = MODELS.find(m => m !== newModelB);
+                    const availableModel = MODELS.find((m) => m !== newModelB);
                     if (availableModel) {
                       setModelA(availableModel);
                       updateModels(availableModel, newModelB);
