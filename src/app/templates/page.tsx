@@ -23,12 +23,14 @@ import { useTemplateStore } from '@/stores/templateStore';
 import { TemplateDefinition } from '@/data/templates';
 import { TemplateService } from '@/services/templates/TemplateService';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/contexts/ToastContext';
 import './page.css';
 
 export default function TemplatesPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
+  const { showToast } = useToast();
   
   // Apply Cloudscape theme mode based on current theme
   useEffect(() => {
@@ -142,53 +144,85 @@ export default function TemplatesPage() {
   };
 
   const handleEdit = (template: TemplateDefinition) => {
+    // Don't allow editing core templates
+    if (template.metadata?.isCore) {
+      return;
+    }
     startEditing(template.id);
     setIsCreating(false);
   };
 
   const handleSave = async () => {
-    if (isCreating) {
-      // Create new template
-      const variables = TemplateService.extractVariables(formData.template);
-      const newTemplate: Omit<TemplateDefinition, 'id'> = {
-        name: formData.name,
-        description: formData.description,
-        template: formData.template,
-        version: '1.0.0',
-        author: 'User',
-        tags: [formData.analysisType],
-        analysisType: formData.analysisType,
-        expectedOutputFormat: 'structured',
-        variables: variables.map(v => ({
-          name: v,
-          label: v.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim(),
-          type: 'text' as const,
-          required: true,
-        })),
-        metadata: {
-          isCore: false,
-          isEditable: true,
-          createdAt: new Date().toISOString(),
-        },
-      };
-      
-      await createTemplate(newTemplate);
-      setIsCreating(false);
-    } else if (editingTemplateId) {
-      // Save existing draft
-      await saveDraft(editingTemplateId);
+    try {
+      if (isCreating) {
+        // Create new template
+        const variables = TemplateService.extractVariables(formData.template);
+        const newTemplate: Omit<TemplateDefinition, 'id'> = {
+          name: formData.name,
+          description: formData.description,
+          template: formData.template,
+          version: '1.0.0',
+          author: 'User',
+          tags: [formData.analysisType],
+          analysisType: formData.analysisType,
+          expectedOutputFormat: 'structured',
+          variables: variables.map(v => ({
+            name: v,
+            label: v.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim(),
+            type: 'text' as const,
+            required: true,
+          })),
+          metadata: {
+            isCore: false,
+            isEditable: true,
+            createdAt: new Date().toISOString(),
+          },
+        };
+        
+        await createTemplate(newTemplate);
+        setIsCreating(false);
+        showToast('Template created successfully', 'success');
+      } else if (editingTemplateId) {
+        // Save existing draft
+        await saveDraft(editingTemplateId);
+        showToast('Template saved successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Failed to save template',
+        'error'
+      );
     }
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this template?')) {
-      await deleteTemplate(id);
+      try {
+        await deleteTemplate(id);
+        showToast('Template deleted successfully', 'success');
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        showToast(
+          error instanceof Error ? error.message : 'Failed to delete template',
+          'error'
+        );
+      }
     }
   };
 
   const handleDuplicate = async (template: TemplateDefinition) => {
-    const newName = `${template.name} (Copy)`;
-    await duplicateTemplate(template.id, newName);
+    try {
+      const newName = `${template.name} (Copy)`;
+      await duplicateTemplate(template.id, newName);
+      showToast('Template duplicated successfully', 'success');
+    } catch (error) {
+      console.error('Error duplicating template:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Failed to duplicate template',
+        'error'
+      );
+    }
   };
 
   const handleUseTemplate = (template: TemplateDefinition) => {
@@ -207,8 +241,13 @@ export default function TemplatesPage() {
       setImportError(null);
       await importTemplate(file);
       setShowImportModal(false);
+      showToast('Template imported successfully', 'success');
     } catch (error) {
       setImportError(error instanceof Error ? error.message : 'Import failed');
+      showToast(
+        error instanceof Error ? error.message : 'Failed to import template',
+        'error'
+      );
     }
     
     // Reset file input
@@ -238,7 +277,8 @@ export default function TemplatesPage() {
                 <Button
                   onClick={() => saveDraft(editingTemplateId!)}
                   variant="primary"
-                  disabled={!isDirty}
+                  disabled={!isDirty || isLoading}
+                  loading={isLoading}
                 >
                   Save Changes
                 </Button>
@@ -330,7 +370,12 @@ export default function TemplatesPage() {
           >
             Actions
           </ButtonDropdown>
-          <Button onClick={handleCreateNew} variant="primary" iconName="add-plus">
+          <Button 
+            onClick={handleCreateNew} 
+            variant="primary" 
+            iconName="add-plus"
+            disabled={isLoading}
+          >
             New Template
           </Button>
         </SpaceBetween>
@@ -384,7 +429,12 @@ export default function TemplatesPage() {
                   variant="h2"
                   actions={
                     <SpaceBetween direction="horizontal" size="xs">
-                      <Button onClick={handleSave} variant="primary">
+                      <Button 
+                        onClick={handleSave} 
+                        variant="primary"
+                        loading={isLoading}
+                        disabled={isLoading}
+                      >
                         Create Template
                       </Button>
                       <Button onClick={() => setIsCreating(false)}>
@@ -504,15 +554,17 @@ export default function TemplatesPage() {
                           Use Template
                         </Button>
                         
-                        <Button 
-                          iconName="edit"
-                          variant="icon"
-                          ariaLabel="Edit template"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(template);
-                          }}
-                        />
+                        {!template.metadata?.isCore && (
+                          <Button 
+                            iconName="edit"
+                            variant="icon"
+                            ariaLabel="Edit template"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(template);
+                            }}
+                          />
+                        )}
                         <Button 
                           iconName="copy"
                           variant="icon"
