@@ -166,9 +166,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
     const draft = get().draftEdits.get(id);
     if (!draft) return;
 
+    set({ isLoading: true, error: null });
+    
     try {
-      // Save to user overrides
-      TemplateService.saveUserOverride(draft);
+      // Save to filesystem via API
+      await TemplateService.saveUserOverride(draft);
       
       // Update state
       set(state => {
@@ -183,11 +185,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
           draftEdits: newDrafts,
           editingTemplateId: state.editingTemplateId === id ? null : state.editingTemplateId,
           isDirty: false,
+          isLoading: false,
         };
       });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to save template',
+        isLoading: false,
       });
       throw error;
     }
@@ -231,19 +235,22 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
       },
     };
 
+    set({ isLoading: true, error: null });
+    
     try {
-      TemplateService.saveUserOverride(newTemplate);
+      await TemplateService.saveUserOverride(newTemplate);
       
       set(state => {
         const newOverrides = new Map(state.userOverrides);
         newOverrides.set(newId, newTemplate);
-        return { userOverrides: newOverrides };
+        return { userOverrides: newOverrides, isLoading: false };
       });
 
       return newId;
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to create template',
+        isLoading: false,
       });
       throw error;
     }
@@ -251,8 +258,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
 
   // Delete a template
   deleteTemplate: async (id) => {
+    set({ isLoading: true, error: null });
+    
     try {
-      TemplateService.deleteUserOverride(id);
+      await TemplateService.deleteUserOverride(id);
       
       set(state => {
         const newOverrides = new Map(state.userOverrides);
@@ -266,11 +275,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
           draftEdits: newDrafts,
           selectedTemplateId: state.selectedTemplateId === id ? null : state.selectedTemplateId,
           editingTemplateId: state.editingTemplateId === id ? null : state.editingTemplateId,
+          isLoading: false,
         };
       });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to delete template',
+        isLoading: false,
       });
       throw error;
     }
@@ -297,19 +308,22 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
       },
     };
 
+    set({ isLoading: true, error: null });
+    
     try {
-      TemplateService.saveUserOverride(duplicated);
+      await TemplateService.saveUserOverride(duplicated);
       
       set(state => {
         const newOverrides = new Map(state.userOverrides);
         newOverrides.set(newId, duplicated);
-        return { userOverrides: newOverrides };
+        return { userOverrides: newOverrides, isLoading: false };
       });
 
       return newId;
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to duplicate template',
+        isLoading: false,
       });
       throw error;
     }
