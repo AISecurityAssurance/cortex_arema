@@ -63,7 +63,6 @@ export default function TemplatesPage() {
     importTemplate,
     exportTemplate,
     exportAllTemplates,
-    runMigration,
     getTemplateSource,
     hasUnsavedChanges,
   } = useTemplateStore();
@@ -83,14 +82,10 @@ export default function TemplatesPage() {
     analysisType: 'custom' as 'stride' | 'stpa-sec' | 'custom'
   });
 
-  // Load templates and run migration on mount
+  // Load templates on mount
   useEffect(() => {
-    const initialize = async () => {
-      await runMigration();
-      await loadTemplates();
-    };
-    initialize();
-  }, [loadTemplates, runMigration]);
+    loadTemplates();
+  }, [loadTemplates]);
 
   // Get filtered templates
   const getFilteredTemplates = (): (TemplateDefinition & { source: string; hasUnsavedChanges: boolean })[] => {

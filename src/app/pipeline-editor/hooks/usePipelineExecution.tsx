@@ -32,8 +32,7 @@ export function usePipelineExecution() {
   // Load templates on mount
   useEffect(() => {
     const initTemplates = async () => {
-      const { loadTemplates, runMigration } = useTemplateStore.getState();
-      await runMigration();
+      const { loadTemplates } = useTemplateStore.getState();
       await loadTemplates();
     };
     initTemplates();

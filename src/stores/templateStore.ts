@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { TemplateDefinition } from '@/data/templates';
 import { TemplateService } from '@/services/templates/TemplateService';
-import { TemplateMigration } from '@/services/templates/TemplateMigration';
 
 interface TemplateState {
   // Template collections
@@ -43,9 +42,6 @@ interface TemplateState {
   exportTemplate: (id: string) => void;
   exportTemplates: (ids: string[]) => void;
   exportAllTemplates: () => void;
-
-  // Actions - Migration
-  runMigration: () => Promise<void>;
 
   // Helper methods
   getTemplateSource: (id: string) => 'core' | 'custom' | 'draft' | null;
@@ -417,23 +413,6 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  },
-
-  // Run migration
-  runMigration: async () => {
-    try {
-      const result = await TemplateMigration.migrate();
-      if (!result.skipped && result.migrated > 0) {
-        // Reload templates to include migrated ones
-        await get().loadTemplates();
-      }
-      console.log('Migration result:', result);
-    } catch (error) {
-      console.error('Migration failed:', error);
-      set({
-        error: error instanceof Error ? error.message : 'Migration failed',
-      });
-    }
   },
 
   // Get template source
