@@ -63,3 +63,31 @@ export const getCoreTemplate = (id: string): TemplateDefinition | null => {
 export const isCoreTemplate = (id: string): boolean => {
   return id in coreTemplates;
 };
+
+// Load custom templates from filesystem via API
+export const loadCustomTemplates = async (): Promise<TemplateDefinition[]> => {
+  try {
+    const response = await fetch('/api/templates');
+    if (!response.ok) {
+      console.error('Failed to load custom templates:', response.statusText);
+      return [];
+    }
+    const templates = await response.json();
+    return templates;
+  } catch (error) {
+    console.error('Error loading custom templates:', error);
+    return [];
+  }
+};
+
+// Load all templates (core + custom)
+export const loadAllTemplates = async (): Promise<{
+  core: TemplateDefinition[];
+  custom: TemplateDefinition[];
+}> => {
+  const [core, custom] = await Promise.all([
+    loadCoreTemplates(),
+    loadCustomTemplates()
+  ]);
+  return { core, custom };
+};
