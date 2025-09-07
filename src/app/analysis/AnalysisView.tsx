@@ -9,12 +9,10 @@ import { ModelSettings } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
 import { useToast } from "@/contexts/ToastContext";
-import { TemplateStorage } from "@/lib/storage/templateStorage";
+import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
 import {
-  SecurityFinding,
-  ThreatAnnotation,
   FindingValidation,
   PromptTemplate,
 } from "@/types";
@@ -86,6 +84,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   const [isValidatingImage, setIsValidatingImage] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<PromptTemplate | null>(null);
+  
+  // Template store
+  const { loadTemplates, getTemplate, getAllTemplates } = useTemplateStore();
   const [modelA, setModelA] = useState(MODELS[0]);
   const [modelB, setModelB] = useState(MODELS[1] || MODELS[0]);
   const [analysisType, setAnalysisType] = useState<
@@ -103,6 +104,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     apiVersion?: string;
   } | null>(null);
 
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
+
   // Initialize session if needed
   useEffect(() => {
     if (!sessionId && !sessionLoading && !session) {
@@ -110,10 +116,24 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       const newSession = createSession("New Analysis Session");
 
       if (newSession && templateId) {
-        const template = TemplateStorage.getTemplate(templateId);
+        const template = getTemplate(templateId);
         if (template) {
-          setSelectedTemplate(template);
-          updateTemplate(template);
+          // Convert to PromptTemplate format
+          const promptTemplate: PromptTemplate = {
+            id: template.id,
+            name: template.name,
+            description: template.description,
+            template: template.template,
+            variables: template.variables?.map(v => v.name) || [],
+            analysisType: template.analysisType,
+            expectedOutputFormat: template.expectedOutputFormat,
+            version: template.version,
+            isActive: true,
+            createdAt: template.metadata?.createdAt || new Date().toISOString(),
+            updatedAt: template.metadata?.updatedAt || new Date().toISOString()
+          };
+          setSelectedTemplate(promptTemplate);
+          updateTemplate(promptTemplate);
           setAnalysisType(template.analysisType);
         }
       }
@@ -130,6 +150,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     router,
     searchParams,
     updateTemplate,
+    getTemplate,
   ]);
 
   // Load session data
@@ -447,16 +468,30 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
               className="template-select"
               value={selectedTemplate?.id || ""}
               onChange={(e) => {
-                const template = TemplateStorage.getTemplate(e.target.value);
+                const template = getTemplate(e.target.value);
                 if (template) {
-                  setSelectedTemplate(template);
-                  updateTemplate(template);
+                  // Convert to PromptTemplate format
+                  const promptTemplate: PromptTemplate = {
+                    id: template.id,
+                    name: template.name,
+                    description: template.description,
+                    template: template.template,
+                    variables: template.variables?.map(v => v.name) || [],
+                    analysisType: template.analysisType,
+                    expectedOutputFormat: template.expectedOutputFormat,
+                    version: template.version,
+                    isActive: true,
+                    createdAt: template.metadata?.createdAt || new Date().toISOString(),
+                    updatedAt: template.metadata?.updatedAt || new Date().toISOString()
+                  };
+                  setSelectedTemplate(promptTemplate);
+                  updateTemplate(promptTemplate);
                   setAnalysisType(template.analysisType);
                 }
               }}
             >
               <option value="">Select template...</option>
-              {TemplateStorage.getActiveTemplates().map((template) => (
+              {getAllTemplates().map((template) => (
                 <option key={template.id} value={template.id}>
                   {template.name}
                 </option>
