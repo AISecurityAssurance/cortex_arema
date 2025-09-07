@@ -24,12 +24,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     setThemeState(initialTheme)
     document.documentElement.setAttribute('data-theme', initialTheme)
+    // Also set class for Tailwind dark mode
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }, [])
 
   useEffect(() => {
     if (mounted) {
       localStorage.setItem('theme', theme)
       document.documentElement.setAttribute('data-theme', theme)
+      // Also set class for Tailwind dark mode
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark')
+        document.documentElement.classList.remove('light')
+      } else {
+        document.documentElement.classList.add('light')
+        document.documentElement.classList.remove('dark')
+      }
     }
   }, [theme, mounted])
 
