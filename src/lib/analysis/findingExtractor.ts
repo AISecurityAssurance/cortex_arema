@@ -85,7 +85,7 @@ export class FindingExtractor {
               findings.push({
                 title: finding.vulnerability || finding.title || 'Untitled Finding',
                 description: finding.attack_scenario || finding.description || 'No description',
-                severity: finding.severity?.toLowerCase() || 'medium',
+                severity: (finding.severity?.toLowerCase() as 'high' | 'medium' | 'low') || 'medium',
                 category: category.toUpperCase().replace('_', ' '),
                 cweId: finding.cwe_id,
                 mitigations: finding.recommended_mitigations ? 
