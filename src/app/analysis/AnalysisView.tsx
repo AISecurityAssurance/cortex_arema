@@ -13,6 +13,14 @@ import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
 import { FindingValidation, PromptTemplate } from "@/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
+import '@/components/ui/dropdown-menu.css';
 import "./AnalysisView.css";
 
 const MODEL_IDS = {
@@ -384,41 +392,42 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
         <div className="analysis-controls">
           <div className="control-group">
-            <select
-              className="template-select"
-              value={selectedTemplate?.id || ""}
-              onChange={(e) => {
-                const template = getTemplate(e.target.value);
-                if (template) {
-                  // Convert to PromptTemplate format
-                  const promptTemplate: PromptTemplate = {
-                    id: template.id,
-                    name: template.name,
-                    description: template.description,
-                    template: template.template,
-                    variables: template.variables?.map((v) => v.name) || [],
-                    analysisType: template.analysisType,
-                    expectedOutputFormat: template.expectedOutputFormat,
-                    version: template.version,
-                    isActive: true,
-                    createdAt:
-                      template.metadata?.createdAt || new Date().toISOString(),
-                    updatedAt:
-                      template.metadata?.updatedAt || new Date().toISOString(),
-                  };
-                  setSelectedTemplate(promptTemplate);
-                  updateTemplate(promptTemplate);
-                  setAnalysisType(template.analysisType);
-                }
-              }}
-            >
-              <option value="">Select template...</option>
-              {getAllTemplates().map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="dropdown-trigger template-select">
+                <span>{selectedTemplate?.name || "Select template..."}</span>
+                <ChevronDown />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {getAllTemplates().map((template) => (
+                  <DropdownMenuItem
+                    key={template.id}
+                    onClick={() => {
+                      // Convert to PromptTemplate format
+                      const promptTemplate: PromptTemplate = {
+                        id: template.id,
+                        name: template.name,
+                        description: template.description,
+                        template: template.template,
+                        variables: template.variables?.map((v) => v.name) || [],
+                        analysisType: template.analysisType,
+                        expectedOutputFormat: template.expectedOutputFormat,
+                        version: template.version,
+                        isActive: true,
+                        createdAt:
+                          template.metadata?.createdAt || new Date().toISOString(),
+                        updatedAt:
+                          template.metadata?.updatedAt || new Date().toISOString(),
+                      };
+                      setSelectedTemplate(promptTemplate);
+                      updateTemplate(promptTemplate);
+                      setAnalysisType(template.analysisType);
+                    }}
+                  >
+                    {template.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <label
               className={`image-upload ${
@@ -464,53 +473,65 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
           <div className="control-group">
             <div className="model-selectors">
-              <select
-                value={modelA}
-                onChange={(e) => {
-                  const newModelA = e.target.value;
-                  setModelA(newModelA);
-                  // If the new selection matches modelB, find another available model for modelB
-                  if (newModelA === modelB) {
-                    const availableModel = MODELS.find((m) => m !== newModelA);
-                    if (availableModel) {
-                      setModelB(availableModel);
-                      updateModels(newModelA, availableModel);
-                    }
-                  } else {
-                    updateModels(newModelA, modelB);
-                  }
-                }}
-              >
-                {MODELS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="dropdown-trigger model-select">
+                  <span>{modelA}</span>
+                  <ChevronDown />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {MODELS.map((m) => (
+                    <DropdownMenuItem
+                      key={m}
+                      onClick={() => {
+                        const newModelA = m;
+                        setModelA(newModelA);
+                        // If the new selection matches modelB, find another available model for modelB
+                        if (newModelA === modelB) {
+                          const availableModel = MODELS.find((model) => model !== newModelA);
+                          if (availableModel) {
+                            setModelB(availableModel);
+                            updateModels(newModelA, availableModel);
+                          }
+                        } else {
+                          updateModels(newModelA, modelB);
+                        }
+                      }}
+                    >
+                      {m}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <span className="vs">vs</span>
-              <select
-                value={modelB}
-                onChange={(e) => {
-                  const newModelB = e.target.value;
-                  setModelB(newModelB);
-                  // If the new selection matches modelA, find another available model for modelA
-                  if (newModelB === modelA) {
-                    const availableModel = MODELS.find((m) => m !== newModelB);
-                    if (availableModel) {
-                      setModelA(availableModel);
-                      updateModels(availableModel, newModelB);
-                    }
-                  } else {
-                    updateModels(modelA, newModelB);
-                  }
-                }}
-              >
-                {MODELS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="dropdown-trigger model-select">
+                  <span>{modelB}</span>
+                  <ChevronDown />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {MODELS.map((m) => (
+                    <DropdownMenuItem
+                      key={m}
+                      onClick={() => {
+                        const newModelB = m;
+                        setModelB(newModelB);
+                        // If the new selection matches modelA, find another available model for modelA
+                        if (newModelB === modelA) {
+                          const availableModel = MODELS.find((model) => model !== newModelB);
+                          if (availableModel) {
+                            setModelA(availableModel);
+                            updateModels(availableModel, newModelB);
+                          }
+                        } else {
+                          updateModels(modelA, newModelB);
+                        }
+                      }}
+                    >
+                      {m}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <button
