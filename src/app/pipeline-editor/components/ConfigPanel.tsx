@@ -237,30 +237,30 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                   </span>
                   <ChevronDown />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="config-dropdown-content">
+                <DropdownMenuContent className="config-dropdown-content" matchTriggerWidth>
                   <DropdownMenuLabel>Bedrock Models</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-opus-4-20250514-v1:0" })}>Claude Opus</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0" })}>Claude Sonnet</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0" })}>Claude 3.5 Sonnet</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-pro-v1:0" })}>Nova Pro</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-lite-v1:0" })}>Nova Lite</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.meta.llama3-2-11b-instruct-v1:0" })}>Llama 3.2 11B</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.mistral.pixtral-large-2502-v1:0" })}>Pixtral Large</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-opus-4-20250514-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-opus-4-20250514-v1:0" })}>Claude Opus</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-sonnet-4-20250514-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0" })}>Claude Sonnet</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-3-5-sonnet-20241022-v2:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0" })}>Claude 3.5 Sonnet</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.amazon.nova-pro-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-pro-v1:0" })}>Nova Pro</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.amazon.nova-lite-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-lite-v1:0" })}>Nova Lite</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.meta.llama3-2-11b-instruct-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.meta.llama3-2-11b-instruct-v1:0" })}>Llama 3.2 11B</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.mistral.pixtral-large-2502-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.mistral.pixtral-large-2502-v1:0" })}>Pixtral Large</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel>Ollama Models</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llava" })}>Ollama Llava (Vision)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2" })}>Ollama Llama 3.2</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2-vision" })}>Ollama Llama 3.2 Vision</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:qwen2.5" })}>Ollama Qwen 2.5</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llava" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llava" })}>Ollama Llava (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llama3.2" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2" })}>Ollama Llama 3.2</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llama3.2-vision" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2-vision" })}>Ollama Llama 3.2 Vision</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:qwen2.5" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:qwen2.5" })}>Ollama Qwen 2.5</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel>Azure OpenAI Models</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o" })}>GPT-4o (Vision)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o-mini" })}>GPT-4o Mini (Vision)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-vision-preview" })}>GPT-4 Vision</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-turbo" })}>GPT-4 Turbo</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-3.5-turbo" })}>GPT-3.5 Turbo</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-preview" })}>O1 Preview (Reasoning)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-mini" })}>O1 Mini (Reasoning)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4o" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o" })}>GPT-4o (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4o-mini" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o-mini" })}>GPT-4o Mini (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4-vision-preview" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-vision-preview" })}>GPT-4 Vision</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4-turbo" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-turbo" })}>GPT-4 Turbo</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-3.5-turbo" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-3.5-turbo" })}>GPT-3.5 Turbo</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "o1-preview" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-preview" })}>O1 Preview (Reasoning)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "o1-mini" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-mini" })}>O1 Mini (Reasoning)</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -284,14 +284,14 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
                   <span>{getTemplateDisplayName((node as any).config.promptTemplate)}</span>
                   <ChevronDown />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent matchTriggerWidth>
                   {node.type === 'analysis-stride' ? (
                     <>
-                      <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stride-core" })}>STRIDE Analysis</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "owasp-top10-core" })}>OWASP Top 10</DropdownMenuItem>
+                      <DropdownMenuItem className={(node as any).config.promptTemplate === "stride-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stride-core" })}>STRIDE Analysis</DropdownMenuItem>
+                      <DropdownMenuItem className={(node as any).config.promptTemplate === "owasp-top10-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "owasp-top10-core" })}>OWASP Top 10</DropdownMenuItem>
                     </>
                   ) : (
-                    <DropdownMenuItem onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stpa-sec-core" })}>STPA-SEC Analysis</DropdownMenuItem>
+                    <DropdownMenuItem className={(node as any).config.promptTemplate === "stpa-sec-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stpa-sec-core" })}>STPA-SEC Analysis</DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -187,7 +187,7 @@ export default function SessionsPage() {
             <span>Sort by {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}</span>
             <ChevronDown />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" matchTriggerWidth>
             <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as 'date' | 'name' | 'progress')}>
               <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>

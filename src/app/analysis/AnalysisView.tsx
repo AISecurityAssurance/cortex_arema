@@ -397,10 +397,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 <span>{selectedTemplate?.name || "Select template..."}</span>
                 <ChevronDown />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" matchTriggerWidth>
                 {getAllTemplates().map((template) => (
                   <DropdownMenuItem
                     key={template.id}
+                    className={selectedTemplate?.id === template.id ? "selected" : ""}
                     onClick={() => {
                       // Convert to PromptTemplate format
                       const promptTemplate: PromptTemplate = {
@@ -478,10 +479,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                   <span>{modelA}</span>
                   <ChevronDown />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent align="start" matchTriggerWidth>
                   {MODELS.map((m) => (
                     <DropdownMenuItem
                       key={m}
+                      className={modelA === m ? "selected" : ""}
                       onClick={() => {
                         const newModelA = m;
                         setModelA(newModelA);
@@ -508,10 +510,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                   <span>{modelB}</span>
                   <ChevronDown />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" matchTriggerWidth>
                   {MODELS.map((m) => (
                     <DropdownMenuItem
                       key={m}
+                      className={modelB === m ? "selected" : ""}
                       onClick={() => {
                         const newModelB = m;
                         setModelB(newModelB);
