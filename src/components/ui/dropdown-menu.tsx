@@ -50,14 +50,17 @@ DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayNam
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
+    matchTriggerWidth?: boolean
+  }
+>(({ className, sideOffset = 4, matchTriggerWidth = false, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
       className={clsx(
         "dropdown-menu-content",
+        matchTriggerWidth && "dropdown-menu-match-width",
         className
       )}
       {...props}
@@ -138,7 +141,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={clsx(
-      "px-2 py-1.5 text-sm font-semibold",
+      "dropdown-menu-label",
       inset && "pl-8",
       className
     )}
@@ -153,7 +156,7 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={clsx("-mx-1 my-1 h-px bg-muted", className)}
+    className={clsx("dropdown-menu-separator", className)}
     {...props}
   />
 ))
