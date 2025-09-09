@@ -3,9 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Input, Select } from '@cloudscape-design/components';
 import { SessionStorage } from '@/lib/storage/sessionStorage';
 import { AnalysisSession } from '@/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
+import '@/components/ui/dropdown-menu.css';
 import './page.css';
 
 export default function SessionsPage() {
@@ -140,15 +149,15 @@ export default function SessionsPage() {
       <div className="sessions-header">
         <h1>Analysis Sessions</h1>
         <div className="header-actions">
-          <div className="new-session-btn">
-            <Button
-              onClick={createNewSession}
-              variant="primary"
-              iconName="add-plus"
-            >
-              New Analysis
-            </Button>
-          </div>
+          <button
+            className="new-session-btn"
+            onClick={createNewSession}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4V7H5V9H8V12H10V9H13V7H10V4H8Z"/>
+            </svg>
+            New Analysis
+          </button>
           <label className="import-btn">
             <input
               type="file"
@@ -166,25 +175,26 @@ export default function SessionsPage() {
       </div>
 
       <div className="sessions-controls">
-        <div className="search-input">
-          <Input
-            placeholder="Search sessions..."
-            value={searchTerm}
-            onChange={({ detail }) => setSearchTerm(detail.value)}
-            type="search"
-          />
-        </div>
-        <div className="sort-select">
-          <Select
-            selectedOption={{ value: sortBy, label: `Sort by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}` }}
-            onChange={({ detail }) => setSortBy(detail.selectedOption?.value as any)}
-            options={[
-              { value: "date", label: "Sort by Date" },
-              { value: "name", label: "Sort by Name" },
-              { value: "progress", label: "Sort by Progress" }
-            ]}
-          />
-        </div>
+        <input
+          className="search-input"
+          placeholder="Search sessions..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          type="search"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger className="dropdown-trigger">
+            <span>Sort by {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}</span>
+            <ChevronDown />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as 'date' | 'name' | 'progress')}>
+              <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="progress">Progress</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {sortedSessions.length === 0 ? (
@@ -194,11 +204,9 @@ export default function SessionsPage() {
             <path d="M32 24C32.55 24 33 24.45 33 25V31H39C39.55 31 40 31.45 40 32C40 32.55 39.55 33 39 33H33V39C33 39.55 32.55 40 32 40C31.45 40 31 39.55 31 39V33H25C24.45 33 24 32.55 24 32C24 31.45 24.45 31 25 31H31V25C31 24.45 31.45 24 32 24Z"/>
           </svg>
           <p>No sessions found</p>
-          <div className="create-first-btn">
-            <Button onClick={createNewSession} variant="primary">
-              Create your first analysis
-            </Button>
-          </div>
+          <button className="create-first-btn" onClick={createNewSession}>
+            Create your first analysis
+          </button>
         </div>
       ) : (
         <div className="sessions-grid">
