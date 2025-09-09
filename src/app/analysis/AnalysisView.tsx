@@ -76,8 +76,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   // Analysis configuration
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<File | null>(null);
-  const [isImageValidated, setIsImageValidated] = useState(false);
-  const [isValidatingImage, setIsValidatingImage] = useState(false);
+  // Removed image validation states - no longer validating if image is architecture diagram
   const [selectedTemplate, setSelectedTemplate] =
     useState<PromptTemplate | null>(null);
 
@@ -203,22 +202,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       return;
     }
 
-    // Check if image is being validated
-    if (isValidatingImage) {
-      setError("Please wait for image validation to complete");
-      showToast("Image validation in progress", "warning");
-      return;
-    }
-
-    // Check if there's an image that hasn't been validated
-    if (image && !isImageValidated) {
-      setError("Invalid image uploaded");
-      showToast(
-        "The uploaded image is not a valid architecture diagram",
-        "error"
-      );
-      return;
-    }
+    // Image validation removed - accept any image
 
     setAnalysisInProgress(true);
 
@@ -237,13 +221,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       );
 
       let finalPrompt = processed.resolvedPrompt;
-      if (image && isImageValidated) {
+      if (image) {
         finalPrompt = PromptProcessor.addImageContext(finalPrompt, true);
       }
 
-      // Prepare image if provided and validated
+      // Prepare image if provided
       let base64Image: string | undefined;
-      if (image && isImageValidated) {
+      if (image) {
         base64Image = await fileToBase64(image);
       }
 
@@ -348,79 +332,16 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     });
   };
 
-  const validateArchitectureImage = async (file: File): Promise<boolean> => {
-    try {
-      const base64Image = await fileToBase64(file);
+  // Removed validateArchitectureImage function - no longer validating images
 
-      const validationPrompt = `Analyze this image and determine if it appears to be a software/system architecture diagram, network diagram, or technical design diagram. 
-      
-      Look for elements like:
-      - Boxes or shapes representing components/services
-      - Arrows or lines showing connections/data flow
-      - Technical labels or annotations
-      - Network topology elements
-      - System boundaries or layers
-      
-      Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
-
-      const response = await callModel(
-        MODEL_IDS["Claude Opus"],
-        validationPrompt,
-        "You are an image analysis assistant. Analyze images to determine their type and content.",
-        base64Image
-      );
-
-      // Ensure response is a string before processing
-      const responseText =
-        typeof response === "string" ? response : String(response);
-
-      const isValid = responseText.trim().toUpperCase().includes("YES");
-      return isValid;
-    } catch (error) {
-      console.error("Error validating image:", error);
-      showToast("Failed to validate image. Please try again.", "error");
-      return false;
-    }
-  };
-
-  const handleImageUpload = async (file: File | null) => {
+  const handleImageUpload = (file: File | null) => {
     if (!file) {
       setImage(null);
-      setIsImageValidated(false);
-      setIsValidatingImage(false);
       return;
     }
 
-    try {
-      setIsValidatingImage(true);
-      // Temporarily set the image to show filename
-      setImage(file);
-      setIsImageValidated(false);
-
-      // Show loading toast
-      showToast("Validating image...", "info");
-
-      const isValid = await validateArchitectureImage(file);
-
-      if (isValid) {
-        setIsImageValidated(true);
-        showToast("Architecture diagram uploaded successfully", "success");
-      } else {
-        setImage(null);
-        setIsImageValidated(false);
-        showToast(
-          "Please upload a valid architecture or system diagram",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Error during image validation:", error);
-      setImage(null);
-      setIsImageValidated(false);
-      showToast("Error validating image", "error");
-    } finally {
-      setIsValidatingImage(false);
-    }
+    setImage(file);
+    showToast("Image uploaded successfully", "success");
   };
 
   const selectedFindingData = selectedFinding
@@ -501,15 +422,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
             <label
               className={`image-upload ${
-                analysisInProgress || isValidatingImage ? "disabled" : ""
+                analysisInProgress ? "disabled" : ""
               }`}
             >
               <input
                 type="file"
                 accept="image/*"
-                disabled={analysisInProgress || isValidatingImage}
+                disabled={analysisInProgress}
                 onChange={(e) => {
-                  if (analysisInProgress || isValidatingImage) return;
+                  if (analysisInProgress) return;
                   const file = e.target.files?.[0] || null;
                   handleImageUpload(file);
                 }}
@@ -519,11 +440,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 <svg className="icon" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z" />
                 </svg>
-                {isValidatingImage
-                  ? "Validating..."
-                  : image && isImageValidated
-                  ? image.name.slice(0, 20)
-                  : "Upload diagram"}
+                {image ? image.name.slice(0, 20) : "Upload image"}
               </span>
             </label>
           </div>
