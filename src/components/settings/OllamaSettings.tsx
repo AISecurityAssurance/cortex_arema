@@ -5,6 +5,7 @@ import { Switch } from '../ui/Switch';
 
 interface OllamaConfig {
   mode: 'local' | 'remote';
+  baseUrl?: string;
   private_key_path?: string;
 }
 
@@ -13,9 +14,14 @@ interface OllamaSettingsProps {
 }
 
 export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }) => {
-  const [config, setConfig] = useState<OllamaConfig>({ mode: 'local' });
-  const [isExpanded, setIsExpanded] = useState(false);
+  const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+  const [config, setConfig] = useState<OllamaConfig>({
+    mode: 'local',
+    baseUrl: DEFAULT_OLLAMA_URL
+  });
   const [isHydrated, setIsHydrated] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
 
   // Load config from localStorage after hydration
   useEffect(() => {
@@ -58,38 +64,52 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
     }));
   };
 
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig(prev => ({
+      ...prev,
+      baseUrl: e.target.value || DEFAULT_OLLAMA_URL
+    }));
+  };
+
+  const testConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/test-provider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'ollama',
+          config: {
+            mode: config.mode,
+            ollama_host: config.baseUrl || DEFAULT_OLLAMA_URL,
+            private_key_path: config.private_key_path
+          }
+        })
+      });
+
+      if (response.ok) {
+        setTestResult({ success: true, message: 'Connection successful!' });
+      } else {
+        const error = await response.text();
+        setTestResult({ success: false, message: error || 'Connection failed' });
+      }
+    } catch (error) {
+      setTestResult({ success: false, message: 'Failed to connect to backend. Ensure the backend is running on port 8000.' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <div className="ollama-settings">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="ollama-settings-toggle"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem',
-          background: 'transparent',
-          border: '1px solid var(--border-color)',
-          borderRadius: '0.375rem',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          color: 'var(--text-secondary)',
-          width: '100%',
-          textAlign: 'left'
-        }}
-      >
-        <span style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▶</span>
-        Ollama Configuration (Optional)
-      </button>
-
-      {isExpanded && (
-        <div style={{
-          marginTop: '1rem',
-          padding: '1rem',
-          background: 'var(--panel-bg)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '0.375rem'
-        }}>
+      <div style={{
+        padding: '1rem',
+        background: 'var(--panel-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '0.375rem'
+      }}>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ 
               display: 'flex', 
@@ -116,6 +136,41 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
                 : 'Ollama will run on a remote EC2 instance (infrastructure deployed on-demand)'}
             </p>
           </div>
+
+          {config.mode === 'local' && (
+            <div style={{ marginTop: '1rem' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                color: 'var(--text-primary)',
+                marginBottom: '0.25rem'
+              }}>
+                Ollama Server URL
+              </label>
+              <input
+                type="text"
+                value={config.baseUrl || ''}
+                onChange={handleUrlChange}
+                placeholder={DEFAULT_OLLAMA_URL}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  fontSize: '0.875rem',
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '0.375rem',
+                  color: 'var(--text-primary)'
+                }}
+              />
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                marginTop: '0.25rem'
+              }}>
+                Default: {DEFAULT_OLLAMA_URL}. Change if using a different port.
+              </p>
+            </div>
+          )}
 
           {config.mode === 'remote' && (
             <>
@@ -151,27 +206,41 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
                   Path to your SSH private key for connecting to the remote EC2 instance
                 </p>
               </div>
-
-              <div style={{
-                padding: '0.75rem',
-                background: 'var(--info-bg, rgba(59, 130, 246, 0.1))',
-                border: '1px solid var(--info-border, rgba(59, 130, 246, 0.3))',
-                borderRadius: '0.375rem',
-                marginTop: '0.75rem'
-              }}>
-                <p style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--info-text, #3b82f6)',
-                  margin: 0,
-                  lineHeight: '1.4'
-                }}>
-                  <strong>Remote Infrastructure Setup:</strong><br/>
-                  1. First deploy: <code style={{ fontSize: '0.7rem' }}>python agr.py tf-deploy --pem-path [your-key]</code><br/>
-                  2. Enter the same key path above<br/>
-                  3. When done: <code style={{ fontSize: '0.7rem' }}>python agr.py tf-destroy</code>
-                </p>
-              </div>
             </>
+          )}
+
+          {config.mode === 'local' && (
+            <div style={{
+              marginTop: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
+              <button
+                onClick={testConnection}
+                disabled={testing}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: testing ? 'var(--button-disabled-bg)' : 'var(--button-primary-bg, #3b82f6)',
+                  color: 'var(--button-primary-text, white)',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: testing ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '500'
+                }}
+              >
+                {testing ? 'Testing...' : 'Test Connection'}
+              </button>
+              {testResult && (
+                <span style={{
+                  fontSize: '0.875rem',
+                  color: testResult.success ? 'var(--success-color, #10b981)' : 'var(--error-color, #ef4444)'
+                }}>
+                  {testResult.message}
+                </span>
+              )}
+            </div>
           )}
 
           <div style={{
@@ -184,13 +253,28 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
             <p style={{
               fontSize: '0.75rem',
               color: 'var(--info-text, #3b82f6)',
-              margin: 0
+              margin: 0,
+              lineHeight: '1.4'
             }}>
-              ℹ️ These settings control where Ollama models execute. Remote mode automatically provisions EC2 infrastructure on-demand.
+              <strong>Setup Instructions:</strong><br/>
+              {config.mode === 'local' ? (
+                <>
+                  1. Install Ollama: <code style={{ fontSize: '0.7rem' }}>curl -fsSL https://ollama.com/install.sh | sh</code><br/>
+                  2. Pull models: <code style={{ fontSize: '0.7rem' }}>ollama pull llama3.2</code> or <code style={{ fontSize: '0.7rem' }}>ollama pull llava</code><br/>
+                  3. Ollama automatically starts on port 11434<br/>
+                  4. Click "Test Connection" above to verify setup
+                </>
+              ) : (
+                <>
+                  1. Deploy infrastructure: <code style={{ fontSize: '0.7rem' }}>python agr.py tf-deploy --pem-path [your-key]</code><br/>
+                  2. Enter the SSH key path above (same key used in deployment)<br/>
+                  3. The remote Ollama server URL will be configured automatically<br/>
+                  4. When done: <code style={{ fontSize: '0.7rem' }}>python agr.py tf-destroy</code>
+                </>
+              )}
             </p>
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
