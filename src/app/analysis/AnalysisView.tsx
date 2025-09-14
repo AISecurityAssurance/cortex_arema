@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnalysisLayout, SlidingPanel } from "@/components/layout";
 import { ModelComparisonView } from "@/components/analysis";
 import { ValidationControls } from "@/components/validation";
-import { ModelSettings } from "@/components/settings";
+import { ModelProviderSettings, ModelSelector } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
 import { useToast } from "@/contexts/ToastContext";
@@ -13,33 +13,24 @@ import { useTemplateStore } from "@/stores/templateStore";
 import { PromptProcessor } from "@/lib/prompts/promptProcessor";
 import { FindingExtractor } from "@/lib/analysis/findingExtractor";
 import { FindingValidation, PromptTemplate } from "@/types";
+import {
+  ModelProvider,
+  MODEL_CATALOG,
+  OpenAIConfig,
+  AnthropicConfig,
+  GoogleConfig,
+  CohereConfig,
+  MistralConfig,
+  OllamaConfig,
+  AzureOpenAIConfig
+} from "@/types/modelProvider";
 import "./AnalysisView.css";
 
-const MODEL_IDS = {
-  // Bedrock Models
-  "Claude Opus": "us.anthropic.claude-opus-4-20250514-v1:0",
-  "Claude Sonnet": "us.anthropic.claude-sonnet-4-20250514-v1:0",
-  "Claude 3.5 Sonnet": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-  "Nova Pro": "us.amazon.nova-pro-v1:0",
-  "Nova Lite": "us.amazon.nova-lite-v1:0",
-  "Llama 3.2 11B": "us.meta.llama3-2-11b-instruct-v1:0",
-  "Pixtral Large": "us.mistral.pixtral-large-2502-v1:0",
-  // Ollama Models
-  "Ollama Llava": "ollama:llava",
-  "Ollama Llama 3.2": "ollama:llama3.2",
-  "Ollama Llama 3.2 Vision": "ollama:llama3.2-vision",
-  "Ollama Qwen 2.5": "ollama:qwen2.5",
-  // Azure OpenAI Models
-  "GPT-4o": "gpt-4o",
-  "GPT-4o Mini": "gpt-4o-mini",
-  "GPT-4 Vision": "gpt-4-vision-preview",
-  "GPT-4 Turbo": "gpt-4-turbo",
-  "GPT-3.5 Turbo": "gpt-3.5-turbo",
-  "O1 Preview": "o1-preview",
-  "O1 Mini": "o1-mini",
-};
-
-const MODELS = Object.keys(MODEL_IDS);
+// Legacy model mapping for backward compatibility
+const MODEL_IDS: Record<string, string> = {};
+MODEL_CATALOG.forEach(model => {
+  MODEL_IDS[model.name] = model.id;
+});
 
 interface AnalysisViewProps {
   sessionId?: string;
@@ -83,13 +74,11 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
   // Template store
   const { loadTemplates, getTemplate, getAllTemplates } = useTemplateStore();
-  const [modelA, setModelA] = useState(MODELS[0]);
-  const [modelB, setModelB] = useState(MODELS[1] || MODELS[0]);
-  const [analysisType, setAnalysisType] = useState<
-    "stride" | "stpa-sec" | "custom"
-  >("stride");
+  const [modelA, setModelA] = useState(MODEL_CATALOG[0]?.id || '');
+  const [modelB, setModelB] = useState(MODEL_CATALOG[1]?.id || MODEL_CATALOG[0]?.id || '');
   const [ollamaConfig, setOllamaConfig] = useState<{
     mode: "local" | "remote";
+    baseUrl?: string;
     remoteIp?: string;
     privateKeyPath?: string;
   } | null>(null);
@@ -99,6 +88,12 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     deployment?: string;
     apiVersion?: string;
   } | null>(null);
+
+  // BYOM configurations
+  const [providerConfigs, setProviderConfigs] = useState<Partial<Record<ModelProvider,
+    OpenAIConfig | AnthropicConfig | GoogleConfig | CohereConfig | MistralConfig | OllamaConfig | AzureOpenAIConfig
+  >>>({});
+  const [configuredProviders, setConfiguredProviders] = useState<ModelProvider[]>(['bedrock', 'ollama', 'azure']);
 
   // Load templates on mount
   useEffect(() => {
@@ -130,7 +125,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           };
           setSelectedTemplate(promptTemplate);
           updateTemplate(promptTemplate);
-          setAnalysisType(template.analysisType);
         }
       }
 
@@ -161,7 +155,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
       if (session.promptTemplate) {
         setSelectedTemplate(session.promptTemplate);
-        setAnalysisType(session.promptTemplate.analysisType);
       }
     }
   }, [
@@ -292,25 +285,48 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     systemPrompt: string,
     base64Image?: string
   ): Promise<string> => {
+    // Find the model configuration
+    const modelConfig = MODEL_CATALOG.find(m => m.id === modelId);
+    if (!modelConfig) {
+      throw new Error(`Unknown model: ${modelId}`);
+    }
+
     // Build request body
     const requestBody: Record<string, unknown> = {
       model_id: modelId,
       prompt,
       images: base64Image ? [base64Image] : [],
       system_instructions: systemPrompt,
+      provider: modelConfig.provider,
     };
 
-    // Add Ollama config if using an Ollama model
-    if (modelId.startsWith("ollama:") && ollamaConfig) {
-      requestBody.ollama_config = ollamaConfig;
-    }
+    // Add provider-specific configurations
+    switch (modelConfig.provider) {
+      case 'ollama':
+        if (ollamaConfig) {
+          requestBody.ollama_config = ollamaConfig;
+        }
+        break;
 
-    // Add Azure config if using an Azure OpenAI model
-    if (
-      (modelId.startsWith("gpt-") || modelId.startsWith("o1-")) &&
-      azureConfig
-    ) {
-      requestBody.azure_config = azureConfig;
+      case 'azure':
+        if (azureConfig) {
+          requestBody.azure_config = azureConfig;
+        }
+        break;
+
+      case 'openai':
+      case 'anthropic':
+      case 'google':
+      case 'cohere':
+      case 'mistral':
+        const config = providerConfigs[modelConfig.provider];
+        if (config && 'apiKey' in config && config.apiKey) {
+          requestBody.api_key = config.apiKey;
+          if ('baseUrl' in config && config.baseUrl) requestBody.base_url = config.baseUrl;
+          if ('organization' in config && config.organization) requestBody.organization = config.organization;
+          if ('maxTokens' in config && config.maxTokens) requestBody.max_tokens = config.maxTokens;
+        }
+        break;
     }
 
     const response = await fetch("http://localhost:8000/generate", {
@@ -363,8 +379,17 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       
       Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
 
+      // Use the first available vision-capable model for validation
+      const visionModel = MODEL_CATALOG.find(m =>
+        m.supportsVision && configuredProviders.includes(m.provider)
+      ) || MODEL_CATALOG.find(m => m.supportsVision);
+
+      if (!visionModel) {
+        throw new Error("No vision-capable model available for image validation");
+      }
+
       const response = await callModel(
-        MODEL_IDS["Claude Opus"],
+        visionModel.id,
         validationPrompt,
         "You are an image analysis assistant. Analyze images to determine their type and content.",
         base64Image
@@ -487,7 +512,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                   };
                   setSelectedTemplate(promptTemplate);
                   updateTemplate(promptTemplate);
-                  setAnalysisType(template.analysisType);
                 }
               }}
             >
@@ -539,61 +563,76 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           </div>
 
           <div className="control-group">
-            <ModelSettings
-              onOllamaConfigChange={setOllamaConfig}
-              onAzureConfigChange={setAzureConfig}
+            <ModelProviderSettings
+              onConfigChange={(provider, config) => {
+                const newConfigs = { ...providerConfigs, [provider]: config };
+                setProviderConfigs(newConfigs);
+
+                // Update configured providers list
+                const configured: ModelProvider[] = ['bedrock']; // Always available
+                Object.entries(newConfigs).forEach(([p, c]) => {
+                  const provider = p as ModelProvider;
+                  if (provider === 'ollama' || provider === 'azure' || (c && 'apiKey' in c && c.apiKey)) {
+                    configured.push(provider);
+                  }
+                });
+                setConfiguredProviders(configured);
+
+                // Handle legacy configs with proper type checking
+                if (provider === 'ollama' && config && 'mode' in config) {
+                  setOllamaConfig(config as OllamaConfig);
+                }
+                if (provider === 'azure' && config && 'endpoint' in config) {
+                  setAzureConfig(config as AzureOpenAIConfig);
+                }
+              }}
+              configuredProviders={configuredProviders}
             />
           </div>
 
           <div className="control-group">
             <div className="model-selectors">
-              <select
+              <ModelSelector
                 value={modelA}
-                onChange={(e) => {
-                  const newModelA = e.target.value;
+                onChange={(newModelA) => {
                   setModelA(newModelA);
                   // If the new selection matches modelB, find another available model for modelB
                   if (newModelA === modelB) {
-                    const availableModel = MODELS.find((m) => m !== newModelA);
+                    const availableModel = MODEL_CATALOG
+                      .filter(m => configuredProviders.includes(m.provider))
+                      .find(m => m.id !== newModelA);
                     if (availableModel) {
-                      setModelB(availableModel);
-                      updateModels(newModelA, availableModel);
+                      setModelB(availableModel.id);
+                      updateModels(newModelA, availableModel.id);
                     }
                   } else {
                     updateModels(newModelA, modelB);
                   }
                 }}
-              >
-                {MODELS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+                configuredProviders={configuredProviders}
+                label="Model A"
+              />
               <span className="vs">vs</span>
-              <select
+              <ModelSelector
                 value={modelB}
-                onChange={(e) => {
-                  const newModelB = e.target.value;
+                onChange={(newModelB) => {
                   setModelB(newModelB);
                   // If the new selection matches modelA, find another available model for modelA
                   if (newModelB === modelA) {
-                    const availableModel = MODELS.find((m) => m !== newModelB);
+                    const availableModel = MODEL_CATALOG
+                      .filter(m => configuredProviders.includes(m.provider))
+                      .find(m => m.id !== newModelB);
                     if (availableModel) {
-                      setModelA(availableModel);
-                      updateModels(availableModel, newModelB);
+                      setModelA(availableModel.id);
+                      updateModels(availableModel.id, newModelB);
                     }
                   } else {
                     updateModels(modelA, newModelB);
                   }
                 }}
-              >
-                {MODELS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+                configuredProviders={configuredProviders}
+                label="Model B"
+              />
             </div>
 
             <button
@@ -623,8 +662,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             modelBResults={session?.modelBResults || []}
             selectedFinding={selectedFinding || undefined}
             onFindingSelect={handleFindingSelect}
-            modelAName={modelA}
-            modelBName={modelB}
+            modelAName={MODEL_CATALOG.find(m => m.id === modelA)?.name || modelA}
+            modelBName={MODEL_CATALOG.find(m => m.id === modelB)?.name || modelB}
             validations={validationMap}
           />
         }
