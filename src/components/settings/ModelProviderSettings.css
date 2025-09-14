@@ -1,0 +1,109 @@
+.model-provider-settings {
+  display: inline-block;
+}
+
+.provider-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.provider-button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #d0d0d0);
+  background: var(--button-background, #ffffff);
+  color: var(--text-primary, #333);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  position: relative;
+}
+
+.provider-button:hover {
+  background: var(--hover-background, #f5f5f5);
+  border-color: var(--hover-border, #a0a0a0);
+  transform: translateY(-1px);
+}
+
+.provider-button.configured {
+  background: var(--success-light-background, #e6f4ea);
+  border-color: var(--success-border, #34a853);
+  color: var(--success-color, #188038);
+}
+
+.provider-button.configured:hover {
+  background: var(--success-hover-background, #d4edda);
+}
+
+.provider-button.partial {
+  background: var(--warning-light-background, #fef3e2);
+  border-color: var(--warning-border, #fbbc05);
+  color: var(--warning-color, #ea8600);
+}
+
+.provider-button.partial:hover {
+  background: var(--warning-hover-background, #fde8c3);
+}
+
+.provider-button-name {
+  font-weight: 500;
+}
+
+.provider-status-icon {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Compact mode for fitting in header */
+.analysis-header .model-provider-settings {
+  margin: 0;
+}
+
+.analysis-header .provider-buttons {
+  gap: 0.375rem;
+}
+
+.analysis-header .provider-button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .provider-button {
+    background: var(--button-background, #2a2a2a);
+    border-color: var(--border-color, #444);
+    color: var(--text-primary, #e0e0e0);
+  }
+
+  .provider-button:hover {
+    background: var(--hover-background, #333);
+    border-color: var(--hover-border, #555);
+  }
+
+  .provider-button.configured {
+    background: var(--success-dark-background, #0f3a1f);
+    border-color: var(--success-border, #4ade80);
+    color: var(--success-color, #4ade80);
+  }
+
+  .provider-button.configured:hover {
+    background: var(--success-hover-background, #154428);
+  }
+
+  .provider-button.partial {
+    background: var(--warning-dark-background, #3a2f0f);
+    border-color: var(--warning-border, #fbbf24);
+    color: var(--warning-color, #fbbf24);
+  }
+
+  .provider-button.partial:hover {
+    background: var(--warning-hover-background, #4a3a15);
+  }
+}
