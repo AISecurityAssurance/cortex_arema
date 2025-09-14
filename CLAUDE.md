@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Cortex Arena is a security analysis platform that compares threat assessments from multiple Claude AI models. Users upload architecture diagrams, select analysis templates (STRIDE, STPA-Sec, or custom), and receive comparative security findings from different models.
+Cortex Arena is a security analysis platform that compares threat assessments from multiple AI models. Users upload architecture diagrams, select analysis templates (STRIDE, STPA-Sec, or custom), and receive comparative security findings from different models.
 
 ## Tech Stack
 - **Framework**: Next.js 15.4.2 with App Router
@@ -101,10 +101,16 @@ Request structure:
 }
 ```
 
-Available models configured in `src/app/analysis/AnalysisView.tsx`:
+Available models in `src/app/analysis/AnalysisView.tsx`:
 - AWS Bedrock: Claude Opus 4, Claude Sonnet 4, Claude 3.5 Sonnet, Nova Pro, Nova Lite, Llama 3.2, Pixtral Large
 - Ollama: Llava, Llama 3.2, Llama 3.2 Vision, Qwen 2.5
 - Azure OpenAI: GPT-4o, GPT-4o Mini, GPT-4 Vision, GPT-4 Turbo, GPT-3.5 Turbo, O1 Preview, O1 Mini
+
+### Model Provider Configuration
+Model providers are configured through the Settings UI (`src/components/settings/`):
+- AWS Bedrock: Requires AWS credentials and region
+- Ollama: Local model server endpoint
+- Azure OpenAI: API key and endpoint configuration
 
 ### Finding Extraction System
 Located in `src/lib/analysis/findingExtractor.ts`:
@@ -150,8 +156,9 @@ When creating new components:
 
 ### Adding a New Model
 1. Add model configuration to `MODEL_IDS` in `src/app/analysis/AnalysisView.tsx`
-2. Ensure backend supports the model ID
-3. Model will automatically appear in selection dropdowns
+2. Configure provider settings in `src/components/settings/ModelProviderSettings.tsx`
+3. Ensure backend supports the model ID in `../agr/agr.py`
+4. Model will automatically appear in selection dropdowns
 
 ### Creating New Templates
 1. Use Template Editor UI at `/templates`
@@ -231,6 +238,7 @@ if (data) {
 - **Infinite re-renders**: Check useEffect dependencies, especially object/array comparisons
 - **Session persistence issues**: Clear localStorage if corrupted: `localStorage.clear()`
 - **Model API errors**: Verify backend is running (`http://localhost:8000`)
+- **Provider connection errors**: Check provider settings in Settings modal
 - **Cloudscape styling conflicts**: Check component is wrapped in CloudscapeLayout
 - **Finding extraction failures**: Check console for parsing errors in `findingExtractor.ts`
 
@@ -243,6 +251,7 @@ console.error('[ComponentName] Error context:', error);
 
 ## Security Considerations
 - No API keys or secrets in frontend code
+- Provider credentials stored only in localStorage
 - Image validation before processing (size, type)
 - Input sanitization for prompts
 - CORS restricted to localhost
