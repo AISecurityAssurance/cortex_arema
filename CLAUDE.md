@@ -4,13 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 Cortex Arena is a security analysis platform that compares threat assessments from multiple AI models. Users upload architecture diagrams, select analysis templates (STRIDE, STPA-Sec, or custom), and receive comparative security findings from different models.
-Cortex Arena is a security analysis platform that compares threat assessments from multiple AI models. Users upload architecture diagrams, select analysis templates (STRIDE, STPA-Sec, or custom), and receive comparative security findings from different models.
 
 ## Tech Stack
 - **Framework**: Next.js 15.4.2 with App Router
 - **TypeScript**: 5.9.2 (strict mode enabled)
 - **State Management**: Zustand 5.0.6
-- **UI Migration**: AWS Cloudscape Design System (active migration - see CLOUDSCAPE_MIGRATION_SPEC.md)
+- **UI Libraries**: Radix UI, Lucide React icons, Tailwind CSS
 - **Backend**: FastAPI server at localhost:8000 (../agr directory)
 
 ## Development Commands
@@ -106,20 +105,6 @@ Multi-dimensional validation scoring:
 - **Dimensions**: accuracy, completeness, relevance, actionability (1-5 scale)
 - **Persistence**: LocalStorage via `validationStorage.ts`
 
-## Cloudscape Migration
-
-**IMPORTANT**: Active UI migration to AWS Cloudscape. Check `CLOUDSCAPE_MIGRATION_SPEC.md` before modifying UI components.
-
-Current status:
-- Phase 1: Foundation (✅ Complete)
-- Phase 2: Layout & Navigation (🔄 In Progress)
-- Phase 3: Core Components (📋 Planned)
-
-When creating new components:
-1. Check if Cloudscape equivalent exists
-2. Use Cloudscape design tokens
-3. Follow patterns in existing migrated components
-
 ## Pipeline Editor
 
 Complex drag-and-drop system (`/pipeline-editor`):
@@ -183,11 +168,13 @@ Common issues:
 - **Session persistence issues**: Clear localStorage if corrupted
 - **Model API errors**: Verify backend running at localhost:8000
 - **Finding extraction failures**: Check console for parsing errors
+- **Port conflicts**: Frontend runs on port 3001 (not 3000)
 
 Console logging is enabled for development - use descriptive messages:
 ```typescript
 console.log('[ComponentName] Action:', data);
 ```
+
 ## Security Considerations
 - No API keys or secrets in frontend code
 - Image validation before processing (size, type)
