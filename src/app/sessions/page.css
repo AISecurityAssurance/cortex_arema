@@ -35,7 +35,22 @@
   gap: var(--space-2);
 }
 
-.new-session-btn,
+.new-session-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1-5) var(--space-3);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  height: 32px;
+}
+
 .import-btn {
   display: flex;
   align-items: center;
@@ -82,7 +97,6 @@
   margin-bottom: var(--space-3);
 }
 
-/* Now handled by Cloudscape component + overrides
 .search-input {
   flex: 1;
   padding: var(--space-1-5) var(--space-2);
@@ -99,31 +113,8 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
 }
-*/
 
-.search-input {
-  flex: 1;
-}
-
-/* Now handled by Cloudscape component + overrides
-.sort-select {
-  padding: var(--space-1-5) var(--space-2);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-  cursor: pointer;
-  height: 32px;
-  min-width: 140px;
-}
-
-.sort-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
-}
-*/
+/* Sort dropdown now using shadcn dropdown-menu component */
 
 /* Empty State */
 .empty-state {
@@ -141,7 +132,6 @@
   margin: var(--space-3) 0;
 }
 
-/* Now handled by Cloudscape component + overrides
 .create-first-btn {
   padding: var(--space-2) var(--space-4);
   background: var(--color-primary);
@@ -158,11 +148,6 @@
 .create-first-btn:hover {
   background: var(--color-primary-hover);
   box-shadow: var(--shadow-sm);
-}
-*/
-
-.create-first-btn {
-  margin-top: var(--space-3);
 }
 
 /* Sessions Grid - Compact Table-like Layout */
@@ -432,8 +417,11 @@
     flex-direction: column;
   }
 
-  .search-input,
-  .sort-select {
+  .search-input {
+    width: 100%;
+  }
+  
+  .dropdown-trigger {
     width: 100%;
   }
 }

@@ -69,21 +69,9 @@
   justify-content: center;
 }
 
-.template-select {
-  padding: var(--space-1-5) var(--space-2);
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
+/* Template dropdown now using shadcn dropdown-menu component */
+.dropdown-trigger.template-select {
   min-width: 180px;
-  height: 32px;
-}
-
-.template-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .prompt-input {
@@ -147,20 +135,9 @@
   gap: var(--space-1);
 }
 
-.model-selectors select {
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-  height: 32px;
-}
-
-.model-selectors select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
+/* Model dropdowns now using shadcn dropdown-menu component */
+.dropdown-trigger.model-select {
+  min-width: 140px;
 }
 
 .model-selectors .vs {
@@ -258,5 +235,21 @@
 
   .prompt-input {
     min-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .dropdown-trigger.template-select {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .model-selectors {
+    width: 100%;
+  }
+  
+  .model-selectors .dropdown-trigger.model-select {
+    flex: 1;
+    min-width: unset;
   }
 }

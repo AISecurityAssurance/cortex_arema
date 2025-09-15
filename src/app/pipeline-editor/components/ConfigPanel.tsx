@@ -5,12 +5,57 @@ import { PipelineNode, ArchitectureDiagramNode } from "../types/pipeline";
 import { NodeConfig } from "../types/nodeConfigs";
 import { ImageModal } from "./ImageModal";
 import { OllamaSettings } from "@/components/settings/OllamaSettings";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
+import '@/components/ui/dropdown-menu.css';
 
 interface ConfigPanelProps {
   node: PipelineNode;
   onUpdateConfig: (config: NodeConfig) => void;
   onClose: () => void;
 }
+
+// Helper function to get display name for model IDs
+const getModelDisplayName = (modelId: string): string => {
+  const modelMap: Record<string, string> = {
+    "us.anthropic.claude-opus-4-20250514-v1:0": "Claude Opus",
+    "us.anthropic.claude-sonnet-4-20250514-v1:0": "Claude Sonnet",
+    "us.anthropic.claude-3-5-sonnet-20241022-v2:0": "Claude 3.5 Sonnet",
+    "us.amazon.nova-pro-v1:0": "Nova Pro",
+    "us.amazon.nova-lite-v1:0": "Nova Lite",
+    "us.meta.llama3-2-11b-instruct-v1:0": "Llama 3.2 11B",
+    "us.mistral.pixtral-large-2502-v1:0": "Pixtral Large",
+    "ollama:llava": "Ollama Llava (Vision)",
+    "ollama:llama3.2": "Ollama Llama 3.2",
+    "ollama:llama3.2-vision": "Ollama Llama 3.2 Vision",
+    "ollama:qwen2.5": "Ollama Qwen 2.5",
+    "gpt-4o": "GPT-4o (Vision)",
+    "gpt-4o-mini": "GPT-4o Mini (Vision)",
+    "gpt-4-vision-preview": "GPT-4 Vision",
+    "gpt-4-turbo": "GPT-4 Turbo",
+    "gpt-3.5-turbo": "GPT-3.5 Turbo",
+    "o1-preview": "O1 Preview (Reasoning)",
+    "o1-mini": "O1 Mini (Reasoning)",
+  };
+  return modelMap[modelId] || modelId;
+};
+
+// Helper function to get display name for template IDs
+const getTemplateDisplayName = (templateId: string): string => {
+  const templateMap: Record<string, string> = {
+    "stride-core": "STRIDE Analysis",
+    "owasp-top10-core": "OWASP Top 10",
+    "stpa-sec-core": "STPA-SEC Analysis",
+  };
+  return templateMap[templateId] || "Select template...";
+};
 
 export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps) {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -183,36 +228,41 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
             </div>
             <div className="config-section">
               <label className="config-label">Model</label>
-              <select
-                value={(node as any).config.modelId}
-                onChange={(e) => onUpdateConfig({ ...(node as any).config, modelId: e.target.value })}
-                className="config-select"
-              >
-                <optgroup label="Bedrock Models">
-                  <option value="us.anthropic.claude-opus-4-20250514-v1:0">Claude Opus</option>
-                  <option value="us.anthropic.claude-sonnet-4-20250514-v1:0">Claude Sonnet</option>
-                  <option value="us.anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
-                  <option value="us.amazon.nova-pro-v1:0">Nova Pro</option>
-                  <option value="us.amazon.nova-lite-v1:0">Nova Lite</option>
-                  <option value="us.meta.llama3-2-11b-instruct-v1:0">Llama 3.2 11B</option>
-                  <option value="us.mistral.pixtral-large-2502-v1:0">Pixtral Large</option>
-                </optgroup>
-                <optgroup label="Ollama Models">
-                  <option value="ollama:llava">Ollama Llava (Vision)</option>
-                  <option value="ollama:llama3.2">Ollama Llama 3.2</option>
-                  <option value="ollama:llama3.2-vision">Ollama Llama 3.2 Vision</option>
-                  <option value="ollama:qwen2.5">Ollama Qwen 2.5</option>
-                </optgroup>
-                <optgroup label="Azure OpenAI Models">
-                  <option value="gpt-4o">GPT-4o (Vision)</option>
-                  <option value="gpt-4o-mini">GPT-4o Mini (Vision)</option>
-                  <option value="gpt-4-vision-preview">GPT-4 Vision</option>
-                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  <option value="o1-preview">O1 Preview (Reasoning)</option>
-                  <option value="o1-mini">O1 Mini (Reasoning)</option>
-                </optgroup>
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="dropdown-trigger config-select">
+                  <span>
+                    {(node as any).config.modelId ? 
+                      getModelDisplayName((node as any).config.modelId) : 
+                      "Select model..."}
+                  </span>
+                  <ChevronDown />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="config-dropdown-content" matchTriggerWidth>
+                  <DropdownMenuLabel>Bedrock Models</DropdownMenuLabel>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-opus-4-20250514-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-opus-4-20250514-v1:0" })}>Claude Opus</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-sonnet-4-20250514-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0" })}>Claude Sonnet</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.anthropic.claude-3-5-sonnet-20241022-v2:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0" })}>Claude 3.5 Sonnet</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.amazon.nova-pro-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-pro-v1:0" })}>Nova Pro</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.amazon.nova-lite-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.amazon.nova-lite-v1:0" })}>Nova Lite</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.meta.llama3-2-11b-instruct-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.meta.llama3-2-11b-instruct-v1:0" })}>Llama 3.2 11B</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "us.mistral.pixtral-large-2502-v1:0" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "us.mistral.pixtral-large-2502-v1:0" })}>Pixtral Large</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Ollama Models</DropdownMenuLabel>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llava" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llava" })}>Ollama Llava (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llama3.2" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2" })}>Ollama Llama 3.2</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:llama3.2-vision" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:llama3.2-vision" })}>Ollama Llama 3.2 Vision</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "ollama:qwen2.5" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "ollama:qwen2.5" })}>Ollama Qwen 2.5</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Azure OpenAI Models</DropdownMenuLabel>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4o" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o" })}>GPT-4o (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4o-mini" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4o-mini" })}>GPT-4o Mini (Vision)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4-vision-preview" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-vision-preview" })}>GPT-4 Vision</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-4-turbo" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-4-turbo" })}>GPT-4 Turbo</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "gpt-3.5-turbo" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "gpt-3.5-turbo" })}>GPT-3.5 Turbo</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "o1-preview" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-preview" })}>O1 Preview (Reasoning)</DropdownMenuItem>
+                  <DropdownMenuItem className={(node as any).config.modelId === "o1-mini" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, modelId: "o1-mini" })}>O1 Mini (Reasoning)</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="config-section">
               <label className="config-label">Temperature</label>
@@ -229,22 +279,22 @@ export function ConfigPanel({ node, onUpdateConfig, onClose }: ConfigPanelProps)
             </div>
             <div className="config-section">
               <label className="config-label">Prompt Template</label>
-              <select
-                value={(node as any).config.promptTemplate}
-                onChange={(e) => onUpdateConfig({ ...(node as any).config, promptTemplate: e.target.value })}
-                className="config-select"
-              >
-                {node.type === 'analysis-stride' ? (
-                  <>
-                    <option value="stride-core">STRIDE Analysis</option>
-                    <option value="owasp-top10-core">OWASP Top 10</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="stpa-sec-core">STPA-SEC Analysis</option>
-                  </>
-                )}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="dropdown-trigger config-select">
+                  <span>{getTemplateDisplayName((node as any).config.promptTemplate)}</span>
+                  <ChevronDown />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent matchTriggerWidth>
+                  {node.type === 'analysis-stride' ? (
+                    <>
+                      <DropdownMenuItem className={(node as any).config.promptTemplate === "stride-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stride-core" })}>STRIDE Analysis</DropdownMenuItem>
+                      <DropdownMenuItem className={(node as any).config.promptTemplate === "owasp-top10-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "owasp-top10-core" })}>OWASP Top 10</DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem className={(node as any).config.promptTemplate === "stpa-sec-core" ? "selected" : ""} onClick={() => onUpdateConfig({ ...(node as any).config, promptTemplate: "stpa-sec-core" })}>STPA-SEC Analysis</DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Show Ollama settings when an Ollama model is selected */}

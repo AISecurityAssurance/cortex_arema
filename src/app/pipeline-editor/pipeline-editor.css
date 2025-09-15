@@ -660,7 +660,6 @@
 }
 
 .config-input,
-.config-select,
 .config-textarea {
   width: 100%;
   padding: 0.5rem;
@@ -671,10 +670,25 @@
   font-size: 0.875rem;
 }
 
-.config-select option {
-  background: var(--color-background, #000000);
+/* Config dropdowns now using shadcn dropdown-menu component */
+.dropdown-trigger.config-select {
+  width: 100%;
+  background: var(--color-surface-secondary, rgba(255, 255, 255, 0.05));
+  border-color: var(--panel-border);
   color: var(--color-text, white);
-  padding: 0.5rem;
+  font-size: 0.875rem;
+  justify-content: space-between;
+}
+
+.dropdown-trigger.config-select:hover {
+  background: var(--color-surface-secondary, rgba(255, 255, 255, 0.08));
+  border-color: var(--color-border-hover, rgba(255, 255, 255, 0.2));
+}
+
+/* Config dropdown content styling */
+.config-dropdown-content {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .config-textarea {
