@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnalysisLayout, SlidingPanel } from "@/components/layout";
 import { ModelComparisonView } from "@/components/analysis";
 import { ValidationControls } from "@/components/validation";
-import { ModelProviderSettings, ModelSelector } from "@/components/settings";
+import { ModelSelector } from "@/components/settings";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useValidation } from "@/hooks/useValidation";
 import { useToast } from "@/contexts/ToastContext";
@@ -88,15 +88,49 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     apiVersion?: string;
   } | null>(null);
 
-  // BYOM configurations
+  // BYOM configurations - loaded from sessionStorage
   const [providerConfigs, setProviderConfigs] = useState<Partial<Record<ModelProvider,
     OpenAIConfig | AnthropicConfig | GoogleConfig | CohereConfig | MistralConfig | OllamaConfig | AzureOpenAIConfig
   >>>({});
-  const [configuredProviders, setConfiguredProviders] = useState<ModelProvider[]>(['bedrock', 'ollama', 'azure']);
+  const [configuredProviders, setConfiguredProviders] = useState<ModelProvider[]>(['bedrock']);
 
-  // Load templates on mount
+  // Load templates and provider configurations on mount
   useEffect(() => {
     loadTemplates();
+
+    // Load saved provider configurations from session storage
+    const savedKeys = sessionStorage.getItem('byom_api_keys');
+    if (savedKeys) {
+      try {
+        const parsed = JSON.parse(savedKeys);
+        setProviderConfigs(parsed);
+
+        // Update configured providers list based on saved configurations
+        const configured: ModelProvider[] = ['bedrock']; // Always available
+        Object.entries(parsed).forEach(([provider, config]) => {
+          const p = provider as ModelProvider;
+          if (p === 'ollama' || p === 'azure') {
+            configured.push(p);
+          } else if (config && typeof config === 'object' && 'apiKey' in config) {
+            const configWithKey = config as { apiKey?: string };
+            if (configWithKey.apiKey) {
+              configured.push(p);
+            }
+          }
+        });
+        setConfiguredProviders(configured);
+
+        // Set legacy configs for backward compatibility
+        if (parsed.ollama && 'mode' in parsed.ollama) {
+          setOllamaConfig(parsed.ollama as OllamaConfig);
+        }
+        if (parsed.azure && 'endpoint' in parsed.azure) {
+          setAzureConfig(parsed.azure as AzureOpenAIConfig);
+        }
+      } catch (error) {
+        console.error('[AnalysisView] Error loading provider configurations:', error);
+      }
+    }
   }, [loadTemplates]);
 
   // Initialize session if needed
@@ -348,50 +382,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     });
   };
 
-  // Removed validateArchitectureImage function - no longer validating images
-  const validateArchitectureImage = async (file: File): Promise<boolean> => {
-    try {
-      const base64Image = await fileToBase64(file);
-
-      const validationPrompt = `Analyze this image and determine if it appears to be a software/system architecture diagram, network diagram, or technical design diagram. 
-      
-      Look for elements like:
-      - Boxes or shapes representing components/services
-      - Arrows or lines showing connections/data flow
-      - Technical labels or annotations
-      - Network topology elements
-      - System boundaries or layers
-      
-      Respond with ONLY "YES" if this appears to be an architecture/technical diagram, or "NO" if it appears to be something else (like a photo, screenshot of unrelated content, meme, etc.).`;
-
-      // Use the first available vision-capable model for validation
-      const visionModel = MODEL_CATALOG.find(m =>
-        m.supportsVision && configuredProviders.includes(m.provider)
-      ) || MODEL_CATALOG.find(m => m.supportsVision);
-
-      if (!visionModel) {
-        throw new Error("No vision-capable model available for image validation");
-      }
-
-      const response = await callModel(
-        visionModel.id,
-        validationPrompt,
-        "You are an image analysis assistant. Analyze images to determine their type and content.",
-        base64Image
-      );
-
-      // Ensure response is a string before processing
-      const responseText =
-        typeof response === "string" ? response : String(response);
-
-      const isValid = responseText.trim().toUpperCase().includes("YES");
-      return isValid;
-    } catch (error) {
-      console.error("Error validating image:", error);
-      showToast("Failed to validate image. Please try again.", "error");
-      return false;
-    }
-  };
 
   const handleImageUpload = (file: File | null) => {
     if (!file) {
@@ -513,33 +503,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             />
           </div>
 
-          <div className="control-group">
-            <ModelProviderSettings
-              onConfigChange={(provider, config) => {
-                const newConfigs = { ...providerConfigs, [provider]: config };
-                setProviderConfigs(newConfigs);
-
-                // Update configured providers list
-                const configured: ModelProvider[] = ['bedrock']; // Always available
-                Object.entries(newConfigs).forEach(([p, c]) => {
-                  const provider = p as ModelProvider;
-                  if (provider === 'ollama' || provider === 'azure' || (c && 'apiKey' in c && c.apiKey)) {
-                    configured.push(provider);
-                  }
-                });
-                setConfiguredProviders(configured);
-
-                // Handle legacy configs with proper type checking
-                if (provider === 'ollama' && config && 'mode' in config) {
-                  setOllamaConfig(config as OllamaConfig);
-                }
-                if (provider === 'azure' && config && 'endpoint' in config) {
-                  setAzureConfig(config as AzureOpenAIConfig);
-                }
-              }}
-              configuredProviders={configuredProviders}
-            />
-          </div>
 
           <div className="control-group">
             <div className="model-selectors">

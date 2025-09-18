@@ -176,10 +176,43 @@
   height: 14px;
 }
 
+.model-selectors-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .model-selectors {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.configure-models-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.configure-models-link:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.configure-models-link .settings-icon {
+  flex-shrink: 0;
+}
+
+.configure-models-link .configure-text {
+  white-space: nowrap;
 }
 
 /* Model dropdowns now using shadcn dropdown-menu component */
@@ -291,12 +324,22 @@
     min-width: unset;
   }
   
+  .model-selectors-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .model-selectors {
     width: 100%;
   }
-  
+
   .model-selectors .dropdown-trigger.model-select {
     flex: 1;
     min-width: unset;
+  }
+
+  .configure-models-link {
+    justify-content: center;
+    width: 100%;
   }
 }
