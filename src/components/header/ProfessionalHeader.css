@@ -130,6 +130,31 @@
   justify-content: flex-end;
 }
 
+/* Settings Icon Link */
+.settings-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.settings-icon-link:hover {
+  background: var(--color-background-tertiary);
+  color: var(--color-text);
+  transform: rotate(90deg);
+}
+
+.settings-icon-link:active {
+  transform: rotate(90deg);
+  opacity: 0.8;
+}
+
 .validation-status {
   display: flex;
   align-items: center;

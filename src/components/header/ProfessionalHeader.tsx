@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Settings } from "lucide-react";
 import "./ProfessionalHeader.css";
 
 interface ProfessionalHeaderProps {
@@ -109,7 +109,14 @@ export const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({
               <span className="status-count">{validationCount}</span>
             </div>
           )}
-          <ThemeToggle />
+          <Link
+            href="/settings"
+            className="settings-icon-link"
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings size={20} />
+          </Link>
         </div>
       </div>
     </header>
