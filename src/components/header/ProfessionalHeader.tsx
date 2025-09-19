@@ -78,6 +78,14 @@ export const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({
             >
               Templates
             </Link>
+            <Link
+              href="/attack-tree"
+              className={`nav-link ${
+                pathname.startsWith("/attack-tree") ? "active" : ""
+              }`}
+            >
+              Attack Tree
+            </Link>
           </nav>
         </div>
 
