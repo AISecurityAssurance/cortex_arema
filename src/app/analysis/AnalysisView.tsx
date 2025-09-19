@@ -416,9 +416,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   }
 
   return (
-    <div className="analysis-view">
-      <div className="analysis-header">
-        {session && (
+    <>
+      <div className="analysis-view">
+        <div className="analysis-header">
+          {session && (
           <div className="session-info">
             <input
               type="text"
@@ -429,9 +430,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             />
             <span className="session-id">ID: {session.id.slice(0, 8)}</span>
           </div>
-        )}
+          )}
 
-        <div className="analysis-controls">
+          <div className="analysis-controls">
           <div className="control-group">
             <select
               className="template-select"
@@ -564,9 +565,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
               )}
             </button>
           </div>
-        </div>
+          </div>
 
-        {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
+        </div>
       </div>
 
       <AnalysisLayout
@@ -591,6 +593,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           </SlidingPanel>
         }
       />
-    </div>
+    </>
   );
 };
