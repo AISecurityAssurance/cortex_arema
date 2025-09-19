@@ -59,6 +59,7 @@ The application routes model requests through a unified API that handles multipl
 src/
 ├── app/                    # Next.js App Router pages
 │   ├── analysis/          # Main analysis feature with model comparison
+│   ├── attack-tree/       # Attack tree visualization and generation
 │   ├── pipeline-editor/   # Visual pipeline builder (drag-and-drop)
 │   ├── templates/         # Template CRUD operations
 │   ├── sessions/          # Session history and management
@@ -70,6 +71,7 @@ src/
 │   └── settings/         # Model provider configuration components
 ├── lib/                   # Core business logic
 │   ├── analysis/         # Finding extraction from model responses
+│   ├── attackTree/       # Attack tree parsing and generation
 │   ├── prompts/          # Template processing and variable substitution
 │   └── storage/          # LocalStorage persistence utilities
 ├── stores/               # Zustand state management
@@ -133,6 +135,16 @@ Multi-dimensional validation scoring:
 - **Statuses**: confirmed, false-positive, needs-review, pending
 - **Dimensions**: accuracy, completeness, relevance, actionability (1-5 scale)
 - **Persistence**: LocalStorage via `validationStorage.ts`
+
+## Attack Tree System
+
+Visual security threat modeling (`/attack-tree`):
+- **Visualization**: D3-based interactive tree rendering with zoom/pan
+- **Node Types**: AND/OR logical operators for attack path combinations
+- **Metrics**: Difficulty, impact, likelihood, cost, time-to-exploit
+- **Generation**: AI-powered attack tree generation from system descriptions
+- **Parser**: `lib/attackTree/parser.ts` extracts structured trees from LLM responses
+- **Session Management**: Attack trees persisted with metadata and view settings
 
 ## Pipeline Editor
 
