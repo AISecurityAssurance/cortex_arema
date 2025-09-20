@@ -81,15 +81,30 @@ export class FindingExtractor {
               attack_scenario?: string;
               cwe_id?: string;
               recommended_mitigations?: string;
+              mitigation?: string;  // Add singular form
+              recommendation?: string;  // Add singular form
             }) => {
+              // Handle various mitigation field names
+              let mitigations: string[] | undefined;
+
+              if (finding.recommended_mitigations) {
+                mitigations = [finding.recommended_mitigations];
+              } else if (finding.mitigation) {
+                mitigations = [finding.mitigation];
+              } else if (finding.recommendation) {
+                mitigations = [finding.recommendation];
+              } else if (finding.mitigations) {
+                mitigations = Array.isArray(finding.mitigations) ? finding.mitigations : [finding.mitigations];
+              }
+
+
               findings.push({
                 title: finding.vulnerability || finding.title || 'Untitled Finding',
                 description: finding.attack_scenario || finding.description || 'No description',
                 severity: (finding.severity?.toLowerCase() as 'high' | 'medium' | 'low') || 'medium',
                 category: category.toUpperCase().replace('_', ' '),
                 cweId: finding.cwe_id,
-                mitigations: finding.recommended_mitigations ? 
-                  [finding.recommended_mitigations] : finding.mitigations
+                mitigations: mitigations
               });
             });
           }
@@ -101,12 +116,38 @@ export class FindingExtractor {
       
       // Handle array format
       if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed.map((f: any) => {
+          // Handle various mitigation field names
+          let mitigations: string[] | undefined;
+          if (f.recommended_mitigations) {
+            mitigations = [f.recommended_mitigations];
+          } else if (f.mitigation) {
+            mitigations = [f.mitigation];
+          } else if (f.recommendation) {
+            mitigations = [f.recommendation];
+          } else if (f.mitigations) {
+            mitigations = Array.isArray(f.mitigations) ? f.mitigations : [f.mitigations];
+          }
+          return { ...f, mitigations };
+        });
       }
-      
+
       // Handle object with findings array
       if (parsed.findings && Array.isArray(parsed.findings)) {
-        return parsed.findings;
+        return parsed.findings.map((f: any) => {
+          // Handle various mitigation field names
+          let mitigations: string[] | undefined;
+          if (f.recommended_mitigations) {
+            mitigations = [f.recommended_mitigations];
+          } else if (f.mitigation) {
+            mitigations = [f.mitigation];
+          } else if (f.recommendation) {
+            mitigations = [f.recommendation];
+          } else if (f.mitigations) {
+            mitigations = Array.isArray(f.mitigations) ? f.mitigations : [f.mitigations];
+          }
+          return { ...f, mitigations };
+        });
       }
     } catch (e) {
       console.log("Failed to parse as raw JSON, trying markdown format");
@@ -342,24 +383,46 @@ export class FindingExtractor {
    */
   private static extractMitigations(section: string): string[] {
     const mitigations: string[] = [];
-    
-    // Look for mitigation section
-    const mitigationSection = section.match(/mitigations?[:\s]*\n([\s\S]*?)(?=\n\n|$)/i);
-    if (mitigationSection) {
-      const mitigationText = mitigationSection[1];
-      const items = mitigationText.split(/\n[\*\-\d\.]\s+/).filter(m => m.trim());
-      mitigations.push(...items.map(m => m.trim()));
+
+    // Look for mitigation section with various patterns
+    const mitigationPatterns = [
+      /(?:mitigations?|remediation|countermeasures?)[:\s]*\n([\s\S]*?)(?=\n\n|\n(?:severity|category|cwe|confidence)|$)/i,
+      /(?:recommendations?|suggested\s+actions?|fixes?)[:\s]*\n([\s\S]*?)(?=\n\n|\n(?:severity|category|cwe|confidence)|$)/i,
+      /(?:how\s+to\s+fix|solutions?|treatments?)[:\s]*\n([\s\S]*?)(?=\n\n|\n(?:severity|category|cwe|confidence)|$)/i,
+    ];
+
+    for (const pattern of mitigationPatterns) {
+      const match = section.match(pattern);
+      if (match && match[1]) {
+        const mitigationText = match[1];
+        // Split by bullet points, numbered lists, or newlines
+        const items = mitigationText
+          .split(/\n[\*\-\+•]\s+|\n\d+[\.\)]\s+|\n{2,}/)
+          .map(m => m.trim())
+          .filter(m => m.length > 10); // Filter out very short items
+
+        mitigations.push(...items);
+      }
     }
-    
-    // Look for recommendations
-    const recommendationSection = section.match(/recommendations?[:\s]*\n([\s\S]*?)(?=\n\n|$)/i);
-    if (recommendationSection) {
-      const recommendationText = recommendationSection[1];
-      const items = recommendationText.split(/\n[\*\-\d\.]\s+/).filter(m => m.trim());
-      mitigations.push(...items.map(m => m.trim()));
+
+    // Also look for inline mitigations after "Mitigation:" or similar keywords
+    const inlinePatterns = [
+      /(?:mitigation|remediation|fix|solution):\s*([^\n]+)/gi,
+      /(?:to\s+mitigate|to\s+fix|to\s+prevent)[:\s]+([^\n]+)/gi
+    ];
+
+    for (const pattern of inlinePatterns) {
+      let match;
+      while ((match = pattern.exec(section)) !== null) {
+        if (match[1] && match[1].length > 10) {
+          mitigations.push(match[1].trim());
+        }
+      }
     }
-    
-    return mitigations.filter((m, i, arr) => arr.indexOf(m) === i); // Remove duplicates
+
+
+    // Remove duplicates and return
+    return mitigations.filter((m, i, arr) => arr.indexOf(m) === i);
   }
 
   /**
