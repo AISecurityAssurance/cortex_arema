@@ -4,14 +4,28 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SessionStorage } from "@/lib/storage/sessionStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import "./page.css";
 
 export default function HomePage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const handleQuickStart = () => {
-    const session = SessionStorage.createSession("Quick Start Session");
-    router.push(`/analysis?session=${session.id}`);
+    if (isAuthenticated) {
+      const session = SessionStorage.createSession("Quick Start Session");
+      router.push(`/analysis?session=${session.id}`);
+    } else {
+      router.push('/auth/signup');
+    }
+  };
+
+  const handlePipelineEditor = () => {
+    if (isAuthenticated) {
+      router.push('/pipeline-editor');
+    } else {
+      router.push('/auth/login?redirect=/pipeline-editor');
+    }
   };
 
   return (
@@ -36,7 +50,7 @@ export default function HomePage() {
               </svg>
               Start Security Analysis
             </button>
-            <Link href="/pipeline-editor" className="hero-btn secondary">
+            <button onClick={handlePipelineEditor} className="hero-btn secondary">
               <svg
                 width="20"
                 height="20"
@@ -50,7 +64,7 @@ export default function HomePage() {
                 <path d="M6 8L14 8" stroke="currentColor" strokeWidth="0.5" />
               </svg>
               Visual Pipeline Editor
-            </Link>
+            </button>
           </div>
         </div>
       </div>
