@@ -77,7 +77,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
       return (
         <div>
           <h4>Text Input Data</h4>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '0.25rem', marginTop: '0.5rem' }}>
+          <div className="results-modal-code-block">
             <p><strong>System Name:</strong> {textResults.data.systemName}</p>
             <p><strong>Description:</strong> {textResults.data.description}</p>
             <p><strong>Context:</strong> {textResults.data.context}</p>
@@ -116,11 +116,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
             <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
               {findingsResults.data.length > 0 ? (
                 findingsResults.data.map((finding, index) => (
-                  <div key={finding.id || index} style={{
-                    background: 'rgba(0,0,0,0.3)',
-                    padding: '1rem',
-                    borderRadius: '0.25rem',
-                    marginBottom: '1rem',
+                  <div key={finding.id || index} className="results-modal-finding-card" style={{
                     borderLeft: `4px solid ${
                       finding.severity === 'high' ? '#ef4444' :
                       finding.severity === 'medium' ? '#f59e0b' : '#4ade80'
@@ -129,12 +125,16 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                       <strong>{finding.title}</strong>
                       <span style={{
-                        padding: '0.25rem 0.5rem',
+                        padding: '0.125rem 0.5rem',
                         background: finding.severity === 'high' ? '#ef4444' :
                                    finding.severity === 'medium' ? '#f59e0b' : '#4ade80',
                         borderRadius: '0.25rem',
                         fontSize: '0.75rem',
-                        textTransform: 'uppercase'
+                        textTransform: 'uppercase',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: '1.25rem',
+                        lineHeight: 1
                       }}>
                         {finding.severity}
                       </span>
@@ -162,13 +162,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
                   </div>
                 ))
               ) : (
-                <div style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid #ef4444',
-                  padding: '1rem',
-                  borderRadius: '0.25rem',
-                  color: '#f87171'
-                }}>
+                <div className="results-modal-error">
                   No structured findings could be extracted. Check the raw response for details.
                 </div>
               )}
@@ -182,10 +176,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
     return (
       <div>
         <h4>Raw Results</h4>
-        <pre style={{
-          background: 'rgba(0,0,0,0.3)',
-          padding: '1rem',
-          borderRadius: '0.25rem',
+        <pre className="results-modal-code-block" style={{
           overflow: 'auto',
           maxHeight: '400px',
           fontSize: '0.75rem'
@@ -197,7 +188,8 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
   };
 
   return (
-    <div 
+    <div
+      className="results-modal-overlay"
       onClick={onClose}
       onWheel={(e) => e.stopPropagation()}
       style={{
@@ -206,7 +198,6 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0,0,0,0.8)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -214,12 +205,11 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
         backdropFilter: 'blur(4px)'
       }}
     >
-      <div 
+      <div
+        className="results-modal-content"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
         style={{
-          background: '#1a1a1a',
-          border: '1px solid #333',
           borderRadius: '0.5rem',
           padding: '1.5rem',
           maxWidth: '800px',
@@ -231,32 +221,27 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
       >
         <button
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'none',
-            border: 'none',
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: '1.5rem',
-            cursor: 'pointer'
-          }}
+          className="results-modal-close"
         >
           ×
         </button>
 
-        <h3 style={{ marginBottom: '1rem', color: '#fff' }}>
+        <h3 style={{ marginBottom: '1rem' }}>
           Node Results: {nodeId}
         </h3>
 
         <div style={{ marginBottom: '1rem' }}>
           <span style={{
-            padding: '0.25rem 0.5rem',
+            padding: '0.125rem 0.5rem',
             background: executionState.status === 'complete' ? '#10b981' :
                        executionState.status === 'error' ? '#ef4444' : '#3b82f6',
             borderRadius: '0.25rem',
             fontSize: '0.75rem',
-            textTransform: 'uppercase'
+            textTransform: 'uppercase',
+            display: 'inline-flex',
+            alignItems: 'center',
+            height: '1.25rem',
+            lineHeight: 1
           }}>
             {executionState.status}
           </span>
@@ -268,13 +253,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
         </div>
 
         {executionState.error ? (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid #ef4444',
-            padding: '1rem',
-            borderRadius: '0.25rem',
-            color: '#ef4444'
-          }}>
+          <div className="results-modal-error">
             <strong>Error:</strong> {executionState.error}
           </div>
         ) : (

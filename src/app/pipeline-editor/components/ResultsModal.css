@@ -1,3 +1,86 @@
+/* Modal background colors */
+.results-modal-content {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+}
+
+[data-theme="light"] .results-modal-content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+.results-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .results-modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Finding card styles */
+.results-modal-finding-card {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+[data-theme="light"] .results-modal-finding-card {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Error message styles */
+.results-modal-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  color: #ef4444;
+}
+
+[data-theme="light"] .results-modal-error {
+  background: rgba(239, 68, 68, 0.05);
+  color: #dc2626;
+}
+
+/* Code block styles */
+.results-modal-code-block {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+[data-theme="light"] .results-modal-code-block {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Close button styles */
+.results-modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.5rem;
+  cursor: pointer;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+[data-theme="light"] .results-modal-close {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.results-modal-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .results-modal-close:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
 /* Markdown styles for ResultsModal */
 .results-modal-markdown {
   font-size: inherit;
