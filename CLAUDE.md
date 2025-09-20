@@ -12,6 +12,7 @@ Cortex Arena is a security analysis platform that compares threat assessments fr
 - **UI Libraries**: Radix UI, Lucide React icons, Tailwind CSS
 - **Styling**: Tailwind CSS with CSS modules, styled-jsx for dynamic styles
 - **Backend**: FastAPI server at localhost:8000 (../agr directory)
+- **Path Aliases**: `@/*` maps to `./src/*` for clean imports
 
 ## Development Commands
 
@@ -20,12 +21,12 @@ Cortex Arena is a security analysis platform that compares threat assessments fr
 npm run dev          # Start development server with Turbopack
 npm run build        # Production build
 npm run start        # Start production server
-npm run lint         # Run ESLint
+npm run lint         # Run ESLint with Next.js rules
 npm run typecheck    # TypeScript type checking (tsc --noEmit)
 
 # Backend (from ../agr directory)
 python agr.py serve  # FastAPI server on localhost:8000 with observability
-# Alternative: python agr.py serve --reload --workers=1
+python agr.py serve --reload --workers=1  # Development mode with auto-reload
 ```
 
 ## Architecture Overview
