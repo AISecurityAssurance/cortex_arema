@@ -317,3 +317,66 @@
   margin: 0 auto;
   padding: 0 var(--space-4);
 }
+
+/* Global Scrollbar Styles */
+
+/* All scrollable elements - Dark theme (default) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.4) rgba(255, 255, 255, 0.1);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(59, 130, 246, 0.8);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Light theme scrollbar styles */
+[data-theme="light"] * {
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] *::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+[data-theme="light"] *::-webkit-scrollbar-thumb:active {
+  background: rgba(59, 130, 246, 0.9);
+}
+
+/* Optional: Class for elements that should use custom scrollbars */
+.custom-scrollbar {
+  /* This class can be used for fine-tuning specific elements if needed */
+  overflow: auto;
+}
