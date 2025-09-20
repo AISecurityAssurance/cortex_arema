@@ -132,10 +132,19 @@ Templates use `{{variable_name}}` syntax for substitution:
 
 ## Validation System
 
-Multi-dimensional validation scoring:
+Multi-dimensional validation scoring for both findings and remediations:
+
+### Finding Validation
 - **Statuses**: confirmed, false-positive, needs-review, pending
 - **Dimensions**: accuracy, completeness, relevance, actionability (1-5 scale)
 - **Persistence**: LocalStorage via `validationStorage.ts`
+
+### Remediation Validation
+- **Individual Validation**: Each remediation in the `mitigations` array can be validated separately
+- **ID Structure**: Remediation validations use ID format: `{findingId}-remediation-{index}`
+- **Same Dimensions**: Uses same 4 quality dimensions as finding validation
+- **UI Location**: Appears below finding validation in the right panel when a finding with remediations is selected
+- **Storage**: Stored in the same validation Map structure, differentiated by the ID format
 
 ## Attack Tree System
 
