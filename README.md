@@ -41,7 +41,7 @@ An AI model comparison platform that allows you to evaluate and compare response
 5. **Start the backend server**
    ```bash
    # From the agr directory
-   python serve.py
+   python agr.py serve
    ```
    The backend API will run on http://localhost:8000
 
@@ -50,7 +50,7 @@ An AI model comparison platform that allows you to evaluate and compare response
    # From the cortex_arena directory
    npm run dev
    ```
-   Open http://localhost:3000 in your browser
+   Open http://localhost:3001 in your browser
 
 ## 🎯 Features
 
@@ -74,7 +74,7 @@ npm run start     # Start production server
 npm run lint      # Run ESLint
 
 # Backend (from agr directory)
-python serve.py   # Start FastAPI server with auto-reload
+python agr.py serve   # Start FastAPI server with auto-reload
 ```
 
 ### Project Structure
@@ -93,7 +93,7 @@ cortex_arena/
 └── package.json         # Project dependencies
 
 ../agr/                  # Backend directory
-├── serve.py            # FastAPI server
+├── agr.py              # FastAPI server CLI
 ├── core/               # Core model runtime
 └── requirements.txt    # Python dependencies
 ```
@@ -110,8 +110,8 @@ To add more models, update the `MODEL_IDS` object in the main page component.
 
 ### Backend Configuration
 
-The FastAPI backend (`../agr/serve.py`) is configured to:
-- Accept CORS requests from `http://localhost:3000`
+The FastAPI backend (`../agr/agr.py`) is configured to:
+- Accept CORS requests from `http://localhost:3001`
 - Use AWS Bedrock runtime client in `us-east-1` region
 - Handle multimodal inputs (text + images)
 - Return streaming responses
