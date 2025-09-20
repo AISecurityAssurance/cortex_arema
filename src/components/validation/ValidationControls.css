@@ -175,3 +175,25 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
+
+/* Remediation Validation Section */
+.remediation-validation-section {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 2px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.remediation-validation-section .validation-header {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%);
+  padding: var(--space-3);
+  margin: calc(var(--space-3) * -1);
+  margin-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.remediation-validation-section .validation-title {
+  color: var(--color-success);
+}
