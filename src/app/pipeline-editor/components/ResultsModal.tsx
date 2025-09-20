@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { NodeExecutionState } from "../types/execution";
 import { DiagramResult, TextResult, FindingsResult } from "../types/results";
+import { JsonViewer } from "./JsonViewer";
 import "./ResultsModal.css";
 
 interface ResultsModalProps {
@@ -110,22 +111,7 @@ export function ResultsModal({ nodeId, nodeType, executionState, onClose }: Resu
           </div>
           
           {showRawResponse && findingsResults.rawResponse ? (
-            <div style={{
-              background: 'rgba(0,0,0,0.3)',
-              padding: '1rem',
-              borderRadius: '0.25rem',
-              maxHeight: '400px',
-              overflowY: 'auto'
-            }}>
-              <h5 style={{ marginBottom: '0.5rem', color: '#3b82f6' }}>Raw Model Response:</h5>
-              <div className="results-modal-markdown" style={{
-                fontSize: '0.875rem',
-                color: 'rgba(255,255,255,0.9)',
-                lineHeight: '1.6'
-              }}>
-                <ReactMarkdown>{findingsResults.rawResponse}</ReactMarkdown>
-              </div>
-            </div>
+            <JsonViewer data={findingsResults.rawResponse} />
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
               {findingsResults.data.length > 0 ? (
