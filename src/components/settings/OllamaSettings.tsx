@@ -23,10 +23,25 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
 
-  // Load config from localStorage after hydration
+  // Load config from sessionStorage after hydration
   useEffect(() => {
     setIsHydrated(true);
     if (typeof window !== 'undefined') {
+      // Load from sessionStorage first (consistent with other providers)
+      const savedKeys = sessionStorage.getItem('byom_api_keys');
+      if (savedKeys) {
+        try {
+          const parsed = JSON.parse(savedKeys);
+          if (parsed.ollama) {
+            setConfig(parsed.ollama);
+            return;
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Fall back to localStorage for backward compatibility
       const saved = localStorage.getItem('ollama_config');
       if (saved) {
         try {
@@ -40,10 +55,22 @@ export const OllamaSettings: React.FC<OllamaSettingsProps> = ({ onConfigChange }
   }, []);
 
   useEffect(() => {
-    // Only save to localStorage and notify parent after hydration
+    // Only save and notify parent after hydration
     if (isHydrated) {
       if (typeof window !== 'undefined') {
+        // Save to localStorage for backward compatibility
         localStorage.setItem('ollama_config', JSON.stringify(config));
+
+        // Also save to sessionStorage under byom_api_keys for consistency
+        const savedKeys = sessionStorage.getItem('byom_api_keys') || '{}';
+        try {
+          const parsed = JSON.parse(savedKeys);
+          parsed.ollama = config;
+          sessionStorage.setItem('byom_api_keys', JSON.stringify(parsed));
+        } catch {
+          // If parse fails, create new
+          sessionStorage.setItem('byom_api_keys', JSON.stringify({ ollama: config }));
+        }
       }
       // Notify parent of changes
       onConfigChange?.(config);

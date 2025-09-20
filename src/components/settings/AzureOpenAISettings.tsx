@@ -14,9 +14,23 @@ interface AzureOpenAISettingsProps {
 }
 
 export const AzureOpenAISettings: React.FC<AzureOpenAISettingsProps> = ({ onConfigChange }) => {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [config, setConfig] = useState<AzureOpenAIConfig>(() => {
-    // Load from localStorage if available
+    // Load from sessionStorage if available (consistent with other providers)
     if (typeof window !== 'undefined') {
+      const savedKeys = sessionStorage.getItem('byom_api_keys');
+      if (savedKeys) {
+        try {
+          const parsed = JSON.parse(savedKeys);
+          if (parsed.azure) {
+            return parsed.azure;
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Fall back to localStorage for backward compatibility
       const saved = localStorage.getItem('azure_openai_config');
       if (saved) {
         try {
@@ -33,14 +47,36 @@ export const AzureOpenAISettings: React.FC<AzureOpenAISettingsProps> = ({ onConf
 
   const [showApiKey, setShowApiKey] = useState(false);
 
+  // Mark component as hydrated
   useEffect(() => {
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    // Save to both localStorage (for backward compatibility) and sessionStorage (for consistency)
+    if (typeof window !== 'undefined' && isHydrated) {
+      // Save to localStorage for backward compatibility
       localStorage.setItem('azure_openai_config', JSON.stringify(config));
+
+      // Also save to sessionStorage under byom_api_keys for consistency
+      const savedKeys = sessionStorage.getItem('byom_api_keys') || '{}';
+      try {
+        const parsed = JSON.parse(savedKeys);
+        parsed.azure = config;
+        sessionStorage.setItem('byom_api_keys', JSON.stringify(parsed));
+      } catch {
+        // If parse fails, create new
+        sessionStorage.setItem('byom_api_keys', JSON.stringify({ azure: config }));
+      }
     }
-    // Notify parent of changes
-    onConfigChange?.(config);
-  }, [config, onConfigChange]);
+  }, [config]);
+
+  // Separate effect for notifying parent to avoid circular dependencies
+  useEffect(() => {
+    if (isHydrated) {
+      onConfigChange?.(config);
+    }
+  }, [config, onConfigChange, isHydrated]);
 
   const handleEndpointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig(prev => ({
