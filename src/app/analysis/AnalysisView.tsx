@@ -98,39 +98,49 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   useEffect(() => {
     loadTemplates();
 
-    // Load saved provider configurations from session storage
+    // Load saved provider configurations from session storage (single source of truth)
     const savedKeys = sessionStorage.getItem('byom_api_keys');
+    const configured: ModelProvider[] = ['bedrock']; // Always available
+
     if (savedKeys) {
       try {
         const parsed = JSON.parse(savedKeys);
         setProviderConfigs(parsed);
 
         // Update configured providers list based on saved configurations
-        const configured: ModelProvider[] = ['bedrock']; // Always available
         Object.entries(parsed).forEach(([provider, config]) => {
           const p = provider as ModelProvider;
-          if (p === 'ollama' || p === 'azure') {
-            configured.push(p);
+
+          // Check if provider is configured
+          if (p === 'ollama') {
+            // Ollama is configured if it has mode set
+            if (config && typeof config === 'object' && 'mode' in config) {
+              configured.push(p);
+              setOllamaConfig(config as OllamaConfig);
+            }
+          } else if (p === 'azure') {
+            // Azure is configured if it has both endpoint and apiKey
+            if (config && typeof config === 'object' && 'apiKey' in config && 'endpoint' in config) {
+              const azureConfig = config as AzureOpenAIConfig;
+              if (azureConfig.apiKey && azureConfig.endpoint) {
+                configured.push(p);
+                setAzureConfig(azureConfig);
+              }
+            }
           } else if (config && typeof config === 'object' && 'apiKey' in config) {
+            // Other providers just need an API key
             const configWithKey = config as { apiKey?: string };
             if (configWithKey.apiKey) {
               configured.push(p);
             }
           }
         });
-        setConfiguredProviders(configured);
-
-        // Set legacy configs for backward compatibility
-        if (parsed.ollama && 'mode' in parsed.ollama) {
-          setOllamaConfig(parsed.ollama as OllamaConfig);
-        }
-        if (parsed.azure && 'endpoint' in parsed.azure) {
-          setAzureConfig(parsed.azure as AzureOpenAIConfig);
-        }
       } catch (error) {
         console.error('[AnalysisView] Error loading provider configurations:', error);
       }
     }
+
+    setConfiguredProviders(configured);
   }, [loadTemplates]);
 
   // Initialize session if needed
@@ -259,15 +269,16 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       }
 
       // Call both models in parallel
+      // modelA and modelB already contain the model IDs directly
       const [responseA, responseB] = await Promise.all([
         callModel(
-          MODEL_IDS[modelA as keyof typeof MODEL_IDS],
+          modelA,
           finalPrompt,
           systemPrompt,
           base64Image
         ),
         callModel(
-          MODEL_IDS[modelB as keyof typeof MODEL_IDS],
+          modelB,
           finalPrompt,
           systemPrompt,
           base64Image
@@ -588,7 +599,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             <ValidationControls
               finding={selectedFindingData}
               validation={selectedValidation}
+              remediationValidations={validations}
               onValidationUpdate={handleValidationUpdate}
+              onRemediationValidationUpdate={(validation, remediationIndex) => {
+                // Handle remediation validation updates
+                // The validation.findingId is already set to "{findingId}-remediation-{index}"
+                addValidation(validation);
+              }}
             />
           </SlidingPanel>
         }
