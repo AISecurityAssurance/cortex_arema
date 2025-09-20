@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
+import { Settings, ChevronDown, LogOut, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import "./ProfessionalHeader.css";
 
 interface ProfessionalHeaderProps {
@@ -23,6 +24,20 @@ export const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({
   validationCount,
 }) => {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="professional-header">
@@ -53,40 +68,50 @@ export const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({
             <span className="logo-text">Cortex Arena</span>
           </Link>
 
-          <nav className="header-nav">
-            <Link
-              href="/analysis"
-              className={`nav-link ${
-                pathname.startsWith("/analysis") ? "active" : ""
-              }`}
-            >
-              Analysis
-            </Link>
-            <Link
-              href="/sessions"
-              className={`nav-link ${
-                pathname.startsWith("/sessions") ? "active" : ""
-              }`}
-            >
-              Sessions
-            </Link>
-            <Link
-              href="/templates"
-              className={`nav-link ${
-                pathname.startsWith("/templates") ? "active" : ""
-              }`}
-            >
-              Templates
-            </Link>
-            <Link
-              href="/attack-tree"
-              className={`nav-link ${
-                pathname.startsWith("/attack-tree") ? "active" : ""
-              }`}
-            >
-              Attack Tree
-            </Link>
-          </nav>
+          {isAuthenticated && (
+            <nav className="header-nav">
+              <Link
+                href="/analysis"
+                className={`nav-link ${
+                  pathname.startsWith("/analysis") ? "active" : ""
+                }`}
+              >
+                Analysis
+              </Link>
+              <Link
+                href="/sessions"
+                className={`nav-link ${
+                  pathname.startsWith("/sessions") ? "active" : ""
+                }`}
+              >
+                Sessions
+              </Link>
+              <Link
+                href="/templates"
+                className={`nav-link ${
+                  pathname.startsWith("/templates") ? "active" : ""
+                }`}
+              >
+                Templates
+              </Link>
+              <Link
+                href="/attack-tree"
+                className={`nav-link ${
+                  pathname.startsWith("/attack-tree") ? "active" : ""
+                }`}
+              >
+                Attack Tree
+              </Link>
+              <Link
+                href="/pipeline-editor"
+                className={`nav-link ${
+                  pathname.startsWith("/pipeline-editor") ? "active" : ""
+                }`}
+              >
+                Pipeline Editor
+              </Link>
+            </nav>
+          )}
         </div>
 
         <div className="header-center">
@@ -117,14 +142,56 @@ export const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({
               <span className="status-count">{validationCount}</span>
             </div>
           )}
-          <Link
-            href="/settings"
-            className="settings-icon-link"
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Settings size={20} />
-          </Link>
+          {isAuthenticated && user ? (
+            <div className="user-menu" ref={dropdownRef}>
+              <button
+                className="user-avatar-btn"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-label="User menu"
+              >
+                <div className="user-avatar">
+                  {user.initials}
+                </div>
+                <ChevronDown size={16} className={`chevron-icon ${isDropdownOpen ? 'open' : ''}`} />
+              </button>
+              {isDropdownOpen && (
+                <div className="user-dropdown">
+                  <div className="user-info">
+                    <div className="user-name">{user.name}</div>
+                    <div className="user-email">{user.email}</div>
+                  </div>
+                  <div className="dropdown-divider" />
+                  <Link
+                    href="/settings"
+                    className="dropdown-item"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <Settings size={16} />
+                    <span>Settings</span>
+                  </Link>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      logout();
+                    }}
+                  >
+                    <LogOut size={16} />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <Link href="/auth/login" className="auth-btn login-btn">
+                Login
+              </Link>
+              <Link href="/auth/signup" className="auth-btn signup-btn">
+                Start Free
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
