@@ -13,6 +13,7 @@ Cortex Arena is a security analysis platform that compares threat assessments fr
 - **Styling**: Tailwind CSS with CSS modules, styled-jsx for dynamic styles
 - **Backend**: FastAPI server at localhost:8000 (../agr directory)
 - **Path Aliases**: `@/*` maps to `./src/*` for clean imports
+- **Requirements**: Node.js 18+, Python 3.8+, AWS CLI configured for Bedrock
 
 ## Development Commands
 
@@ -27,6 +28,10 @@ npm run typecheck    # TypeScript type checking (tsc --noEmit)
 # Backend (from ../agr directory)
 python agr.py serve  # FastAPI server on localhost:8000 with observability
 python agr.py serve --reload --workers=1  # Development mode with auto-reload
+
+# Testing (when configured)
+npm test             # Run test suite
+npm test -- --watch # Run tests in watch mode
 ```
 
 ## Architecture Overview
@@ -52,8 +57,9 @@ The application routes model requests through a unified API that handles multipl
 ### State Management
 - **Zustand stores**: Template management (`stores/templateStore.ts`), Pipeline state
 - **LocalStorage**: Atomic operations for sessions and validations
-- **React Context**: Toast notifications (`contexts/ToastContext.tsx`), Theme management
+- **React Context**: Toast notifications (`contexts/ToastContext.tsx`), Theme management, Auth (`contexts/AuthContext.tsx`)
 - **Session Management**: `hooks/useAnalysisSession.ts` handles session lifecycle
+- **Authentication**: Mock auth system with protected routes and user context
 
 ### Key Directories
 ```
@@ -61,6 +67,7 @@ src/
 ├── app/                    # Next.js App Router pages
 │   ├── analysis/          # Main analysis feature with model comparison
 │   ├── attack-tree/       # Attack tree visualization and generation
+│   ├── auth/              # Authentication pages (login, signup)
 │   ├── pipeline-editor/   # Visual pipeline builder (drag-and-drop)
 │   ├── templates/         # Template CRUD operations
 │   ├── sessions/          # Session history and management
@@ -75,6 +82,7 @@ src/
 │   ├── attackTree/       # Attack tree parsing and generation
 │   ├── prompts/          # Template processing and variable substitution
 │   └── storage/          # LocalStorage persistence utilities
+├── contexts/             # React contexts (Auth, Toast, Theme)
 ├── stores/               # Zustand state management
 ├── types/                # TypeScript type definitions
 └── hooks/               # Custom React hooks for state and effects
@@ -145,6 +153,15 @@ Multi-dimensional validation scoring for both findings and remediations:
 - **Same Dimensions**: Uses same 4 quality dimensions as finding validation
 - **UI Location**: Appears below finding validation in the right panel when a finding with remediations is selected
 - **Storage**: Stored in the same validation Map structure, differentiated by the ID format
+
+## Authentication System
+
+Mock authentication with protected routes:
+- **Protected Routes**: `/analysis`, `/sessions`, `/templates`, `/attack-tree`, `/pipeline-editor`
+- **Auth Context**: User state management via `AuthContext`
+- **Auto-redirect**: Landing page redirects to `/analysis` when authenticated
+- **Mock Storage**: User data persisted in localStorage as `mockUser`
+- **Login Flow**: Redirects to original destination after authentication
 
 ## Attack Tree System
 
@@ -257,3 +274,4 @@ Currently no test framework is configured. To add testing:
 - Consider Jest + React Testing Library for unit tests
 - Playwright or Cypress for E2E tests
 - Mock the backend `/generate` endpoint for isolated frontend testing
+- When I say make commits you will make appropriately grouped atomic commits
