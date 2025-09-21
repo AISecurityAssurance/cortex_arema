@@ -22,13 +22,10 @@ export const AnalysisLayout: React.FC<AnalysisLayoutProps> = ({
   return (
     <div className="analysis-layout">
       {leftPanel && (
-        <aside 
+        <aside
           className="panel-left"
-          style={{ width: leftPanelWidth }}
         >
-          <div className="panel-content">
-            {leftPanel}
-          </div>
+          {leftPanel}
         </aside>
       )}
 
