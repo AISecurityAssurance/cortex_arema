@@ -58,118 +58,135 @@ export class FindingExtractor {
    * Try to parse JSON or structured format
    */
   private static parseStructuredResponse(response: string): Partial<SecurityFinding>[] {
+    // First check if response starts with ```json and extract it
+    const jsonCodeBlockMatch = response.match(/^```json\s*\n([\s\S]*?)\n```/m);
+    if (jsonCodeBlockMatch) {
+      try {
+        const parsed = JSON.parse(jsonCodeBlockMatch[1]);
+        console.log("Successfully parsed JSON from code block:", parsed);
+        return this.processStructuredData(parsed);
+      } catch (e) {
+        console.log("Failed to parse JSON from code block:", e);
+      }
+    }
+
     // First try to parse as raw JSON (API returns raw JSON)
     try {
       const parsed = JSON.parse(response);
       console.log("Successfully parsed raw JSON:", parsed);
+
+      return this.processStructuredData(parsed);
       
-      // Handle STRIDE format with categories
-      if (parsed.spoofing || parsed.tampering || parsed.repudiation || 
-          parsed.information_disclosure || parsed.denial_of_service || 
-          parsed.elevation_of_privilege) {
-        const findings: Partial<SecurityFinding>[] = [];
-        
-        // Extract findings from each STRIDE category
-        const categories = ['spoofing', 'tampering', 'repudiation', 
-                          'information_disclosure', 'denial_of_service', 
-                          'elevation_of_privilege'];
-        
-        for (const category of categories) {
-          if (parsed[category] && Array.isArray(parsed[category])) {
-            parsed[category].forEach((finding: Partial<SecurityFinding> & {
-              vulnerability?: string;
-              attack_scenario?: string;
-              cwe_id?: string;
-              recommended_mitigations?: string;
-              mitigation?: string;  // Add singular form
-              recommendation?: string;  // Add singular form
-            }) => {
-              // Handle various mitigation field names
-              let mitigations: string[] | undefined;
-
-              if (finding.recommended_mitigations) {
-                mitigations = [finding.recommended_mitigations];
-              } else if (finding.mitigation) {
-                mitigations = [finding.mitigation];
-              } else if (finding.recommendation) {
-                mitigations = [finding.recommendation];
-              } else if (finding.mitigations) {
-                mitigations = Array.isArray(finding.mitigations) ? finding.mitigations : [finding.mitigations];
-              }
-
-
-              findings.push({
-                title: finding.vulnerability || finding.title || 'Untitled Finding',
-                description: finding.attack_scenario || finding.description || 'No description',
-                severity: (finding.severity?.toLowerCase() as 'high' | 'medium' | 'low') || 'medium',
-                category: category.toUpperCase().replace('_', ' '),
-                cweId: finding.cwe_id,
-                mitigations: mitigations
-              });
-            });
-          }
-        }
-        
-        console.log("Extracted STRIDE findings:", findings.length);
-        return findings;
-      }
-      
-      // Handle array format
-      if (Array.isArray(parsed)) {
-        return parsed.map((f: any) => {
-          // Handle various mitigation field names
-          let mitigations: string[] | undefined;
-          if (f.recommended_mitigations) {
-            mitigations = [f.recommended_mitigations];
-          } else if (f.mitigation) {
-            mitigations = [f.mitigation];
-          } else if (f.recommendation) {
-            mitigations = [f.recommendation];
-          } else if (f.mitigations) {
-            mitigations = Array.isArray(f.mitigations) ? f.mitigations : [f.mitigations];
-          }
-          return { ...f, mitigations };
-        });
-      }
-
-      // Handle object with findings array
-      if (parsed.findings && Array.isArray(parsed.findings)) {
-        return parsed.findings.map((f: any) => {
-          // Handle various mitigation field names
-          let mitigations: string[] | undefined;
-          if (f.recommended_mitigations) {
-            mitigations = [f.recommended_mitigations];
-          } else if (f.mitigation) {
-            mitigations = [f.mitigation];
-          } else if (f.recommendation) {
-            mitigations = [f.recommendation];
-          } else if (f.mitigations) {
-            mitigations = Array.isArray(f.mitigations) ? f.mitigations : [f.mitigations];
-          }
-          return { ...f, mitigations };
-        });
-      }
     } catch (e) {
       console.log("Failed to parse as raw JSON, trying markdown format");
     }
-    
-    // Try to extract JSON from markdown code blocks
+
+    // Try to extract JSON from markdown code blocks (anywhere in response)
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[1]);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-        if (parsed.findings && Array.isArray(parsed.findings)) {
-          return parsed.findings;
-        }
+        return this.processStructuredData(parsed);
       } catch (e) {
-        // Continue with text parsing
+        console.log("Failed to parse JSON from markdown block:", e);
       }
     }
-    
+
     return [];
+  }
+
+  /**
+   * Process structured data from various JSON formats
+   */
+  private static processStructuredData(parsed: any): Partial<SecurityFinding>[] {
+    // Handle STRIDE format with categories
+    if (parsed.spoofing || parsed.tampering || parsed.repudiation ||
+        parsed.information_disclosure || parsed.denial_of_service ||
+        parsed.elevation_of_privilege) {
+      const findings: Partial<SecurityFinding>[] = [];
+
+      // Extract findings from each STRIDE category
+      const categories = ['spoofing', 'tampering', 'repudiation',
+                        'information_disclosure', 'denial_of_service',
+                        'elevation_of_privilege'];
+
+      for (const category of categories) {
+        if (parsed[category] && Array.isArray(parsed[category])) {
+          parsed[category].forEach((finding: any) => {
+            findings.push(this.normalizeFinding(finding, category));
+          });
+        }
+      }
+
+      console.log("Extracted STRIDE findings:", findings.length);
+      return findings;
+    }
+
+    // Handle array format
+    if (Array.isArray(parsed)) {
+      return parsed.map((f: any) => this.normalizeFinding(f));
+    }
+
+    // Handle object with findings array
+    if (parsed.findings && Array.isArray(parsed.findings)) {
+      return parsed.findings.map((f: any) => this.normalizeFinding(f));
+    }
+
+    return [];
+  }
+
+  /**
+   * Normalize finding fields from various formats
+   */
+  private static normalizeFinding(finding: any, category?: string): Partial<SecurityFinding> {
+    // Handle various mitigation field names
+    let mitigations: string[] | undefined;
+    if (finding.recommended_mitigations) {
+      mitigations = Array.isArray(finding.recommended_mitigations)
+        ? finding.recommended_mitigations
+        : [finding.recommended_mitigations];
+    } else if (finding.mitigation) {
+      mitigations = Array.isArray(finding.mitigation)
+        ? finding.mitigation
+        : [finding.mitigation];
+    } else if (finding.recommendation) {
+      mitigations = Array.isArray(finding.recommendation)
+        ? finding.recommendation
+        : [finding.recommendation];
+    } else if (finding.mitigations) {
+      mitigations = Array.isArray(finding.mitigations)
+        ? finding.mitigations
+        : [finding.mitigations];
+    }
+
+    // Build description from various fields
+    let description = finding.attack_scenario || finding.description || '';
+
+    // Add affected components to description if present
+    if (finding.affected_components && Array.isArray(finding.affected_components)) {
+      const componentsText = `\n\nAffected Components: ${finding.affected_components.join(', ')}`;
+      description += componentsText;
+    }
+
+    // Normalize severity
+    let severity: 'high' | 'medium' | 'low' = 'medium';
+    if (finding.severity) {
+      const level = finding.severity.toLowerCase();
+      if (level === 'critical' || level === 'high') severity = 'high';
+      else if (level === 'moderate' || level === 'medium') severity = 'medium';
+      else if (level === 'minimal' || level === 'low' || level === 'informational') severity = 'low';
+    }
+
+    return {
+      title: finding.vulnerability || finding.threat || finding.title || 'Untitled Finding',
+      description: description || 'No description provided',
+      severity,
+      category: category ? category.toUpperCase().replace('_', ' ') : (finding.category || 'General'),
+      cweId: finding.cwe_id || finding.cweId,
+      mitigations,
+      impact: finding.impact,
+      confidence: finding.confidence
+    };
   }
 
   /**
