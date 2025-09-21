@@ -6,6 +6,7 @@
   cursor: pointer;
   transition: all 0.15s ease;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .finding-card-minimal:hover {
@@ -96,6 +97,7 @@
   padding: 1rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .finding-card-full:hover {
