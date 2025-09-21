@@ -583,6 +583,17 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       </div>
 
       <AnalysisLayout
+        leftPanel={
+          <SlidingPanel side="left" width="280px">
+            <ModelComparisonView.Sidebar
+              modelAResults={session?.modelAResults || []}
+              modelBResults={session?.modelBResults || []}
+              modelAName={MODEL_CATALOG.find(m => m.id === modelA)?.name || modelA}
+              modelBName={MODEL_CATALOG.find(m => m.id === modelB)?.name || modelB}
+              validations={validationMap}
+            />
+          </SlidingPanel>
+        }
         centerPanel={
           <ModelComparisonView
             modelAResults={session?.modelAResults || []}
@@ -592,6 +603,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             modelAName={MODEL_CATALOG.find(m => m.id === modelA)?.name || modelA}
             modelBName={MODEL_CATALOG.find(m => m.id === modelB)?.name || modelB}
             validations={validationMap}
+            hideSidebar={true}
           />
         }
         rightPanel={
