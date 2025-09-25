@@ -343,9 +343,18 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
         }
         break;
 
+      case 'google':
+        const googleConfig = providerConfigs.google;
+        if (googleConfig && 'apiKey' in googleConfig && googleConfig.apiKey) {
+          requestBody.google_config = {
+            api_key: googleConfig.apiKey,
+            model: modelId
+          };
+        }
+        break;
+
       case 'openai':
       case 'anthropic':
-      case 'google':
       case 'cohere':
       case 'mistral':
         const config = providerConfigs[modelConfig.provider];
