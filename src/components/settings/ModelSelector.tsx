@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
+import { Eye } from 'lucide-react';
 import { ModelConfig, ModelProvider, MODEL_CATALOG, PROVIDER_CONFIGS } from '@/types/modelProvider';
 import './ModelSelector.css';
 
@@ -97,7 +98,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 </span>
                 <span className="model-name">{selectedModel.name}</span>
                 {selectedModel.supportsVision && (
-                  <span className="model-feature-badge">👁️</span>
+                  <Eye className="model-feature-badge" size={16} />
                 )}
               </div>
             ) : (
@@ -147,7 +148,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                               <span className="model-option-name">{model.name}</span>
                               <div className="model-option-features">
                                 {model.supportsVision && (
-                                  <span className="feature-badge" title="Supports vision/images">👁️</span>
+                                  <Eye className="feature-badge" size={14} title="Supports vision/images" />
                                 )}
                                 {model.maxTokens && (
                                   <span className="feature-text" title="Max tokens">

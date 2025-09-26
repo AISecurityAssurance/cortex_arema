@@ -67,7 +67,9 @@
 }
 
 .model-feature-badge {
-  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-secondary);
 }
 
 .placeholder {
@@ -224,7 +226,9 @@
 }
 
 .feature-badge {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-secondary);
 }
 
 .feature-text {
