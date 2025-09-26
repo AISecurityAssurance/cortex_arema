@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { X } from "lucide-react";
 import { PipelineNode } from "../../types/pipeline";
 import { NodeExecutionState } from "../../types/execution";
 
@@ -178,13 +179,14 @@ export function BaseNode({
       <div className={`node-header ${nodeTypeClass}`}>
         <span className="node-title">{getNodeTitle()}</span>
         <button
-          className="node-config-btn"
+          className="node-delete-btn"
           onClick={(e) => {
             e.stopPropagation();
-            onDoubleClick?.(e);
+            onDelete();
           }}
+          title="Delete node"
         >
-          ⚙
+          <X size={14} />
         </button>
       </div>
 

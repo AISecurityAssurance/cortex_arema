@@ -486,16 +486,23 @@
   color: var(--color-text, white);
 }
 
-.node-config-btn {
+.node-delete-btn {
   background: none;
   border: none;
   color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
   cursor: pointer;
   padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, transform 0.2s;
 }
 
-.node-config-btn:hover {
-  color: var(--color-text, white);
+.node-delete-btn:hover {
+  color: var(--node-error);
+  transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 0.25rem;
 }
 
 .node-body {
