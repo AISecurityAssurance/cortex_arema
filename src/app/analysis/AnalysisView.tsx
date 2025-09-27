@@ -66,7 +66,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
 
   // Analysis configuration
   const [prompt, setPrompt] = useState("");
-  const [image, setImage] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'pdf' | null>(null);
   // Removed image validation states - no longer validating if image is architecture diagram
   const [selectedTemplate, setSelectedTemplate] =
     useState<PromptTemplate | null>(null);
@@ -258,14 +259,20 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       );
 
       let finalPrompt = processed.resolvedPrompt;
-      if (image) {
+      if (uploadedFile && fileType === 'image') {
         finalPrompt = PromptProcessor.addImageContext(finalPrompt, true);
       }
 
-      // Prepare image if provided
+      // Prepare file data based on type
       let base64Image: string | undefined;
-      if (image) {
-        base64Image = await fileToBase64(image);
+      let base64Pdf: string | undefined;
+      if (uploadedFile) {
+        const base64Data = await fileToBase64(uploadedFile);
+        if (fileType === 'image') {
+          base64Image = base64Data;
+        } else if (fileType === 'pdf') {
+          base64Pdf = base64Data;
+        }
       }
 
       // Call both models in parallel
@@ -275,13 +282,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
           modelA,
           finalPrompt,
           systemPrompt,
-          base64Image
+          base64Image,
+          base64Pdf
         ),
         callModel(
           modelB,
           finalPrompt,
           systemPrompt,
-          base64Image
+          base64Image,
+          base64Pdf
         ),
       ]);
 
@@ -312,7 +321,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
     modelId: string,
     prompt: string,
     systemPrompt: string,
-    base64Image?: string
+    base64Image?: string,
+    base64Pdf?: string
   ): Promise<string> => {
     // Find the model configuration
     const modelConfig = MODEL_CATALOG.find(m => m.id === modelId);
@@ -325,6 +335,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
       model_id: modelId,
       prompt,
       images: base64Image ? [base64Image] : [],
+      pdfs: base64Pdf ? [base64Pdf] : [],
       system_instructions: systemPrompt,
       provider: modelConfig.provider,
     };
@@ -403,14 +414,29 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
   };
 
 
-  const handleImageUpload = (file: File | null) => {
+  const handleFileUpload = (file: File | null) => {
     if (!file) {
-      setImage(null);
+      setUploadedFile(null);
+      setFileType(null);
       return;
     }
 
-    setImage(file);
-    showToast("Image uploaded successfully", "success");
+    // Determine file type based on MIME type
+    const isPdf = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+
+    if (isPdf) {
+      setFileType('pdf');
+      setUploadedFile(file);
+      showToast("PDF uploaded successfully", "success");
+    } else if (isImage) {
+      setFileType('image');
+      setUploadedFile(file);
+      showToast("Image uploaded successfully", "success");
+    } else {
+      showToast("Please upload an image or PDF file", "error");
+      return;
+    }
   };
 
   const selectedFindingData = selectedFinding
@@ -496,12 +522,12 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
             >
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf,application/pdf"
                 disabled={analysisInProgress}
                 onChange={(e) => {
                   if (analysisInProgress) return;
                   const file = e.target.files?.[0] || null;
-                  handleImageUpload(file);
+                  handleFileUpload(file);
                 }}
                 style={{ display: "none" }}
               />
@@ -509,7 +535,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ sessionId }) => {
                 <svg className="icon" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM5 7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V7zm2 0v6h6V7H7z" />
                 </svg>
-                {image ? image.name.slice(0, 20) : "Upload image"}
+                {uploadedFile
+                  ? `${fileType === 'pdf' ? '📄' : '🖼️'} ${uploadedFile.name.slice(0, 20)}`
+                  : "Upload image/PDF"}
               </span>
             </label>
           </div>
